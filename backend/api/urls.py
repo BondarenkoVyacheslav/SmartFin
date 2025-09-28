@@ -19,6 +19,8 @@ from .views import (
     IntegrationViewSet,
     AdviceViewSet,
     LogoutView,
+    AISuggestView,
+    VectorSearchView,
 )
 
 router = DefaultRouter()
@@ -45,5 +47,10 @@ if TokenObtainPairView and TokenRefreshView:
         path('auth/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
         path('auth/logout/', LogoutView.as_view(), name='auth_logout'),
     ]
+
+urlpatterns += [
+    path('ai/suggest/', AISuggestView.as_view(), name='ai_suggest'),
+    path('ai/search/', VectorSearchView.as_view(), name='vector_search'),
+]
 
 

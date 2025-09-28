@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'django_filters',
+    'django_celery_beat',
     'drf_spectacular',
     'drf_spectacular_sidecar',
     # Local apps
@@ -142,6 +143,16 @@ SPECTACULAR_SETTINGS = {
 # CORS
 CORS_ALLOW_ALL_ORIGINS = env.bool('CORS_ALLOW_ALL_ORIGINS', default=True)
 CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[])
+
+# Celery
+CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default='redis://localhost:6379/1')
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+CELERY_TIMEZONE = 'UTC'
+
+# Qdrant
+QDRANT_URL = env('QDRANT_URL', default='http://localhost:6333')
+QDRANT_API_KEY = env('QDRANT_API_KEY', default='')
 
 
 # Password validation

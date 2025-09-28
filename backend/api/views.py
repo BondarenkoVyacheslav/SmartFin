@@ -20,7 +20,7 @@ from .serializers import (
 	IntegrationSerializer,
 	AdviceSerializer,
 )
-from .tasks import generate_advice_for_portfolio
+from .tasks import generate_advice_for_portfolio, recompute_portfolio_features
 
 
 class CurrencyViewSet(viewsets.ReadOnlyModelViewSet):
@@ -108,5 +108,63 @@ class AISuggestView(APIView):
         portfolio_id = request.data.get('portfolio_id')
         if not portfolio_id:
             return Response({"detail": "portfolio_id is required"}, status=status.HTTP_400_BAD_REQUEST)
-        generate_advice_for_portfolio.delay(portfolio_id)
-        return Response({"status": "queued"})
+        
+        # Queue both feature recomputation and advice generation
+        recompute_task = recompute_portfolio_features.delay(portfolio_id)
+        advice_task = generate_advice_for_portfolio.delay(portfolio_id)
+        
+        return Response({
+            "status": "queued",
+            "tasks": {
+                "recompute_features": recompute_task.id,
+                "generate_advice": advice_task.id
+            }
+        })
+
+
+class VectorSearchView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        """Search for similar portfolios using vector similarity"""
+        from .vector_service import vector_service
+        
+        portfolio_id = request.data.get('portfolio_id')
+        limit = request.data.get('limit', 5)
+        
+        if not portfolio_id:
+            return Response({"detail": "portfolio_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Get portfolio features for similarity search
+            portfolio = Portfolio.objects.get(id=portfolio_id)
+            transactions = Transaction.objects.filter(portfolio=portfolio)
+            assets = Asset.objects.filter(transactions__portfolio=portfolio).distinct()
+            
+            # Create query embedding
+            total_value = sum(t.amount * t.price for t in transactions if t.price)
+            asset_count = assets.count()
+            transaction_count = transactions.count()
+            
+            features = [
+                total_value / 1000000.0,
+                asset_count / 100.0,
+                transaction_count / 1000.0,
+            ]
+            query_embedding = features + [0.0] * (384 - len(features))
+            
+            # Search for similar portfolios
+            similar_portfolios = vector_service.search_similar_portfolios(
+                query_embedding, 
+                limit=limit,
+                filters={"user_id": str(portfolio.user_id)} if portfolio.user_id else None
+            )
+            
+            return Response({
+                "similar_portfolios": similar_portfolios,
+                "query_features": features
+            })
+        except Portfolio.DoesNotExist:
+            return Response({"detail": "Portfolio not found"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
