@@ -20,6 +20,7 @@ from .serializers import (
 	IntegrationSerializer,
 	AdviceSerializer,
 )
+from .tasks import generate_advice_for_portfolio
 
 
 class CurrencyViewSet(viewsets.ReadOnlyModelViewSet):
@@ -98,3 +99,14 @@ class LogoutView(APIView):
         except Exception:
             return Response({"detail": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"detail": "Logged out"})
+
+
+class AISuggestView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        portfolio_id = request.data.get('portfolio_id')
+        if not portfolio_id:
+            return Response({"detail": "portfolio_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        generate_advice_for_portfolio.delay(portfolio_id)
+        return Response({"status": "queued"})

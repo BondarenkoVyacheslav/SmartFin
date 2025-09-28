@@ -1,1 +1,57 @@
-# Python\n__pycache__/\n*.py[cod]\n*.class\n.env\n.venv\n.venv*/\n.env*/\n.env.local\n# Django\n*.log\nstaticfiles/\nmedia/\n# VSCode/IDE\n.vscode/\n.idea/\n# OS\n.DS_Store\nThumbs.db\n# Env and secrets\n*.env\n.env*\n# Byte-compiled / optimized / DLL files\n*.so\n# Test & coverage\n.coverage*\nhtmlcov/\n.pytest_cache/\n# Node\nnode_modules/\n# Docker artifacts\n*.pid\n# Local DB\n*.sqlite3\napp.db\n# Poetry/UV\n.venv\n__pypackages__/\n# PyBuilder\ntarget/\n# Mypy\n.mypy_cache/\n.dmypy.json\n# Pyre\n.pyre/\n# CI\n.tox/\n# Build\nbuild/\ndist/\n.eggs/\n*.egg-info/\n# Coverage reports\ncoverage.xml\n\n# Project-specific\nuv.lock\n
+﻿# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.venv/
+venv/
+env/
+ENV/
+
+# Django
+*.log
+staticfiles/
+media/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Byte-compiled / optimized / DLL files
+*.so
+
+# Test & coverage
+.coverage*
+htmlcov/
+.pytest_cache/
+
+# Type checkers
+.mypy_cache/
+.dmypy.json
+.pyre/
+
+# CI
+.tox/
+
+# Build & dist
+build/
+dist/
+.eggs/
+*.egg-info/
+
+# Node
+node_modules/
+
+# Local DB
+*.sqlite3
+app.db
