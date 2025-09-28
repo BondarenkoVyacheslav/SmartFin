@@ -1,0 +1,14 @@
+{
+  "files.exclude": {
+    "**/__pycache__": true
+  },
+  "search.exclude": {
+    "**/__pycache__": true
+  },
+  "files.watcherExclude": {
+    "**/__pycache__": true
+  },
+  "python.analysis.exclude": [
+    "**/__pycache__/**"
+  ]
+}

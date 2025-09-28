@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:16
+    container_name: finly_db
+    environment:
+      POSTGRES_USER: finly
+      POSTGRES_PASSWORD: finly
+      POSTGRES_DB: finly
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./main_db_script.sql:/docker-entrypoint-initdb.d/01_main_db_script.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U finly"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: finly_backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DJANGO_DEBUG: "true"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1"
+      DATABASE_URL: "postgresql://finly:finly@db:5432/finly"
+      CORS_ALLOW_ALL_ORIGINS: "true"
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./backend:/app/backend
+    command: ["/entrypoint.sh"]
+
+volumes:
+  db_data:
+
