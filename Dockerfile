@@ -25,7 +25,6 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 # Copy source
 COPY backend ./backend
-COPY main_db_script.sql ./main_db_script.sql
 
 # Entrypoint
 COPY backend/entrypoint.sh /entrypoint.sh

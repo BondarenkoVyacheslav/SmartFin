@@ -16,6 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.shortcuts import redirect
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularRedocView,
@@ -23,6 +24,9 @@ from drf_spectacular.views import (
 )
 
 urlpatterns = [
+    # Root redirect to API documentation
+    path('', lambda request: redirect('/api/docs/'), name='home'),
+    
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
     # OpenAPI schema and documentation

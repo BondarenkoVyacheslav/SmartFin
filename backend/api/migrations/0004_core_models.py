@@ -1,5 +1,6 @@
 # Core models migration
 
+import django.db.models.deletion
 import django.utils.timezone
 import uuid
 from django.conf import settings
@@ -45,6 +46,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='user',
             name='base_currency',
-            field=models.ForeignKey(blank=True, null=True, on_delete=models.deletion.SET_NULL, to='api.currency'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='api.currency'),
         ),
     ]

@@ -23,9 +23,10 @@ class Migration(migrations.Migration):
             name='portfolio',
             unique_together={('user', 'name')},
         ),
-        migrations.AlterUniqueTogether(
-            name='price',
-            unique_together={('asset', 'ts', 'source', 'interval')},
+        # Note: interval field is added via SQL, so we use raw SQL for constraint
+        migrations.RunSQL(
+            "ALTER TABLE price ADD CONSTRAINT price_unique_constraint UNIQUE (asset_id, ts, source, interval);",
+            reverse_sql="ALTER TABLE price DROP CONSTRAINT IF EXISTS price_unique_constraint;"
         ),
         migrations.AlterUniqueTogether(
             name='fxrate',

@@ -8,10 +8,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
+    initial = True
 
     dependencies = [
         ('api', '0002_enums'),
         ('auth', '0012_alter_user_first_name_max_length'),
+        ('contenttypes', '0001_initial'),
+    ]
+    
+    run_before = [
+        ('admin', '0001_initial'),
     ]
 
     operations = [

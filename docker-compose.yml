@@ -20,7 +20,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      cache_from:
+        - finly-backend:latest
     container_name: finly_backend
+    image: finly-backend:latest
     depends_on:
       db:
         condition: service_healthy
@@ -42,9 +45,7 @@ services:
       - "6379:6379"
 
   worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: finly-backend:latest
     container_name: finly_worker
     depends_on:
       - db
@@ -62,9 +63,7 @@ services:
       - ./backend:/app/backend
 
   beat:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: finly-backend:latest
     container_name: finly_beat
     depends_on:
       - db
