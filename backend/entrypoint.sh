@@ -27,6 +27,9 @@ else:
 print('Database is up')
 PY
 
+echo "Running Django migrations..."
 python backend/manage.py migrate --noinput
+
+echo "Starting Django development server..."
 exec python backend/manage.py runserver 0.0.0.0:8000
 

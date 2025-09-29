@@ -9,7 +9,8 @@ except Exception:  # package may be missing in some environments
 from .views import (
     CurrencyViewSet,
     ExchangeViewSet,
-    AppUserViewSet,
+    UserViewSet,
+    UserRegistrationView,
     PortfolioViewSet,
     AssetViewSet,
     AssetIdentifierViewSet,
@@ -26,7 +27,7 @@ from .views import (
 router = DefaultRouter()
 router.register(r'currencies', CurrencyViewSet, basename='currency')
 router.register(r'exchanges', ExchangeViewSet, basename='exchange')
-router.register(r'users', AppUserViewSet, basename='appuser')
+router.register(r'users', UserViewSet, basename='user')
 router.register(r'portfolios', PortfolioViewSet, basename='portfolio')
 router.register(r'assets', AssetViewSet, basename='asset')
 router.register(r'asset-identifiers', AssetIdentifierViewSet, basename='assetidentifier')
@@ -42,6 +43,7 @@ urlpatterns = [
 
 if TokenObtainPairView and TokenRefreshView:
     urlpatterns += [
+        path('auth/register/', UserRegistrationView.as_view(), name='user_register'),
         path('auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
         path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
         path('auth/token/verify/', TokenVerifyView.as_view(), name='token_verify'),

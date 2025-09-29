@@ -6,47 +6,74 @@
 #   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
 from django.db import models
+from django.contrib.auth.models import AbstractUser
+from django.conf import settings
+import uuid
+
+
+class User(AbstractUser):
+    """Custom user model that extends Django's AbstractUser with additional fields"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    # Keep email as unique and required
+    email = models.EmailField(unique=True)
+    # Additional fields from AppUser
+    base_currency = models.ForeignKey('Currency', models.SET_NULL, blank=True, null=True)
+    timezone = models.CharField(max_length=100, default='UTC')
+    twofa_secret = models.CharField(max_length=255, blank=True, null=True)
+    
+    # Override username to make it optional (we'll use email as primary identifier)
+    username = models.CharField(max_length=150, unique=True, blank=True, null=True)
+    
+    # Use email as the username field for authentication
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
+    
+    class Meta:
+        db_table = 'auth_user'  # Use the existing auth_user table
+    
+    def save(self, *args, **kwargs):
+        # Auto-generate username from email if not provided
+        if not self.username:
+            self.username = self.email
+        super().save(*args, **kwargs)
 
 
 class Advice(models.Model):
-    id = models.UUIDField(primary_key=True)
-    portfolio = models.ForeignKey('Portfolio', models.DO_NOTHING)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    portfolio = models.ForeignKey('Portfolio', models.CASCADE)
     kind = models.TextField()
     message = models.TextField()
     score = models.DecimalField(max_digits=8, decimal_places=4, blank=True, null=True)
-    payload = models.JSONField()
-    created_at = models.DateTimeField()
+    payload = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'advice'
 
 
-class AppUser(models.Model):
-    id = models.UUIDField(primary_key=True)
-    email = models.TextField(unique=True)  # This field type is a guess.
-    password_hash = models.TextField(blank=True, null=True)
-    is_active = models.BooleanField()
-    twofa_secret = models.TextField(blank=True, null=True)
-    base_currency = models.ForeignKey('Currency', models.DO_NOTHING, blank=True, null=True)
-    timezone = models.TextField()
-    created_at = models.DateTimeField()
-    updated_at = models.DateTimeField()
-
-    class Meta:
-        db_table = 'app_user'
-
-
 class Asset(models.Model):
-    id = models.UUIDField(primary_key=True)
-    class_field = models.TextField(db_column='class')  # Field renamed because it was a Python reserved word. This field type is a guess.
+    ASSET_CLASS_CHOICES = [
+        ('stock', 'Stock'),
+        ('bond', 'Bond'),
+        ('fund', 'Fund'),
+        ('crypto', 'Cryptocurrency'),
+        ('fiat', 'Fiat Currency'),
+        ('metal', 'Precious Metal'),
+        ('cash', 'Cash'),
+        ('deposit', 'Deposit'),
+        ('other', 'Other'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    class_field = models.CharField(max_length=20, choices=ASSET_CLASS_CHOICES, db_column='class', default='other')
     symbol = models.TextField()
     name = models.TextField()
-    trading_currency = models.ForeignKey('Currency', models.DO_NOTHING, blank=True, null=True)
+    trading_currency = models.ForeignKey('Currency', models.CASCADE, blank=True, null=True)
     isin = models.TextField(blank=True, null=True)
-    exchange = models.ForeignKey('Exchange', models.DO_NOTHING, blank=True, null=True)
-    metadata = models.JSONField()
-    is_active = models.BooleanField()
-    created_at = models.DateTimeField()
+    exchange = models.ForeignKey('Exchange', models.CASCADE, blank=True, null=True)
+    metadata = models.JSONField(default=dict)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'asset'
@@ -54,8 +81,8 @@ class Asset(models.Model):
 
 
 class AssetIdentifier(models.Model):
-    id = models.UUIDField(primary_key=True)
-    asset = models.ForeignKey(Asset, models.DO_NOTHING)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    asset = models.ForeignKey(Asset, models.CASCADE)
     id_type = models.TextField()
     id_value = models.TextField()
 
@@ -65,162 +92,51 @@ class AssetIdentifier(models.Model):
 
 
 class AuditLog(models.Model):
-    id = models.UUIDField(primary_key=True)
-    user = models.ForeignKey(AppUser, models.DO_NOTHING, blank=True, null=True)
-    ts = models.DateTimeField()
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, models.SET_NULL, blank=True, null=True)
+    ts = models.DateTimeField(auto_now_add=True)
     action = models.TextField()
     target_type = models.TextField(blank=True, null=True)
     target_id = models.UUIDField(blank=True, null=True)
     ip = models.GenericIPAddressField(blank=True, null=True)
     user_agent = models.TextField(blank=True, null=True)
-    details = models.JSONField()
+    details = models.JSONField(default=dict)
 
     class Meta:
         db_table = 'audit_log'
 
 
-class AuthGroup(models.Model):
-    name = models.CharField(unique=True, max_length=150)
-
-    class Meta:
-        managed = False
-        db_table = 'auth_group'
-
-
-class AuthGroupPermissions(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    group = models.ForeignKey(AuthGroup, models.DO_NOTHING)
-    permission = models.ForeignKey('AuthPermission', models.DO_NOTHING)
-
-    class Meta:
-        managed = False
-        db_table = 'auth_group_permissions'
-        unique_together = (('group', 'permission'),)
-
-
-class AuthPermission(models.Model):
-    name = models.CharField(max_length=255)
-    content_type = models.ForeignKey('DjangoContentType', models.DO_NOTHING)
-    codename = models.CharField(max_length=100)
-
-    class Meta:
-        managed = False
-        db_table = 'auth_permission'
-        unique_together = (('content_type', 'codename'),)
-
-
-class AuthUser(models.Model):
-    password = models.CharField(max_length=128)
-    last_login = models.DateTimeField(blank=True, null=True)
-    is_superuser = models.BooleanField()
-    username = models.CharField(unique=True, max_length=150)
-    first_name = models.CharField(max_length=150)
-    last_name = models.CharField(max_length=150)
-    email = models.CharField(max_length=254)
-    is_staff = models.BooleanField()
-    is_active = models.BooleanField()
-    date_joined = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'auth_user'
-
-
-class AuthUserGroups(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    user = models.ForeignKey(AuthUser, models.DO_NOTHING)
-    group = models.ForeignKey(AuthGroup, models.DO_NOTHING)
-
-    class Meta:
-        managed = False
-        db_table = 'auth_user_groups'
-        unique_together = (('user', 'group'),)
-
-
-class AuthUserUserPermissions(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    user = models.ForeignKey(AuthUser, models.DO_NOTHING)
-    permission = models.ForeignKey(AuthPermission, models.DO_NOTHING)
-
-    class Meta:
-        managed = False
-        db_table = 'auth_user_user_permissions'
-        unique_together = (('user', 'permission'),)
-
 
 class Currency(models.Model):
-    id = models.UUIDField(primary_key=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     code = models.TextField(unique=True)
     name = models.TextField()
-    decimals = models.IntegerField()
-    is_crypto = models.BooleanField()
-    created_at = models.DateTimeField()
+    decimals = models.IntegerField(default=2)
+    is_crypto = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'currency'
 
 
-class DjangoAdminLog(models.Model):
-    action_time = models.DateTimeField()
-    object_id = models.TextField(blank=True, null=True)
-    object_repr = models.CharField(max_length=200)
-    action_flag = models.SmallIntegerField()
-    change_message = models.TextField()
-    content_type = models.ForeignKey('DjangoContentType', models.DO_NOTHING, blank=True, null=True)
-    user = models.ForeignKey(AuthUser, models.DO_NOTHING)
-
-    class Meta:
-        managed = False
-        db_table = 'django_admin_log'
-
-
-class DjangoContentType(models.Model):
-    app_label = models.CharField(max_length=100)
-    model = models.CharField(max_length=100)
-
-    class Meta:
-        managed = False
-        db_table = 'django_content_type'
-        unique_together = (('app_label', 'model'),)
-
-
-class DjangoMigrations(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    app = models.CharField(max_length=255)
-    name = models.CharField(max_length=255)
-    applied = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'django_migrations'
-
-
-class DjangoSession(models.Model):
-    session_key = models.CharField(primary_key=True, max_length=40)
-    session_data = models.TextField()
-    expire_date = models.DateTimeField()
-
-    class Meta:
-        managed = False
-        db_table = 'django_session'
 
 
 class Exchange(models.Model):
-    id = models.UUIDField(primary_key=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     code = models.TextField(unique=True)
     name = models.TextField()
     country = models.TextField(blank=True, null=True)
     timezone = models.TextField(blank=True, null=True)
-    created_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'exchange'
 
 
 class FxRate(models.Model):
-    id = models.UUIDField(primary_key=True)
-    base_currency = models.ForeignKey(Currency, models.DO_NOTHING)
-    quote_currency = models.ForeignKey(Currency, models.DO_NOTHING, related_name='fxrate_quote_currency_set')
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    base_currency = models.ForeignKey(Currency, models.CASCADE, related_name='base_fx_rates')
+    quote_currency = models.ForeignKey(Currency, models.CASCADE, related_name='quote_fx_rates')
     ts = models.DateTimeField()
     rate = models.DecimalField(max_digits=38, decimal_places=10)
     source = models.TextField()
@@ -231,15 +147,15 @@ class FxRate(models.Model):
 
 
 class Integration(models.Model):
-    id = models.UUIDField(primary_key=True)
-    user = models.ForeignKey(AppUser, models.DO_NOTHING)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE)
     provider = models.TextField()
     display_name = models.TextField()
-    status = models.TextField()
+    status = models.TextField(default='active')
     credentials_encrypted = models.TextField()
     last_sync_at = models.DateTimeField(blank=True, null=True)
-    created_at = models.DateTimeField()
-    updated_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'integration'
@@ -247,13 +163,13 @@ class Integration(models.Model):
 
 
 class Portfolio(models.Model):
-    id = models.UUIDField(primary_key=True)
-    user = models.ForeignKey(AppUser, models.DO_NOTHING)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, models.CASCADE)
     name = models.TextField()
-    base_currency = models.ForeignKey(Currency, models.DO_NOTHING)
-    settings = models.JSONField()
-    created_at = models.DateTimeField()
-    updated_at = models.DateTimeField()
+    base_currency = models.ForeignKey(Currency, models.CASCADE)
+    settings = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'portfolio'
@@ -261,15 +177,22 @@ class Portfolio(models.Model):
 
 
 class Price(models.Model):
-    id = models.UUIDField(primary_key=True)
-    asset = models.ForeignKey(Asset, models.DO_NOTHING)
+    PRICE_INTERVAL_CHOICES = [
+        ('tick', 'Tick'),
+        ('min', 'Minute'),
+        ('hour', 'Hour'),
+        ('day', 'Day'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    asset = models.ForeignKey(Asset, models.CASCADE)
     ts = models.DateTimeField()
     price = models.DecimalField(max_digits=38, decimal_places=10)
-    currency = models.ForeignKey(Currency, models.DO_NOTHING)
+    currency = models.ForeignKey(Currency, models.CASCADE)
     source = models.TextField()
-    interval = models.TextField()  # This field type is a guess.
-    metadata = models.JSONField()
-    created_at = models.DateTimeField()
+    interval = models.CharField(max_length=10, choices=PRICE_INTERVAL_CHOICES, default='day')
+    metadata = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'price'
@@ -277,19 +200,35 @@ class Price(models.Model):
 
 
 class Transaction(models.Model):
-    id = models.UUIDField(primary_key=True)
-    portfolio = models.ForeignKey(Portfolio, models.DO_NOTHING)
-    asset = models.ForeignKey(Asset, models.DO_NOTHING)
-    tx_type = models.TextField()  # This field type is a guess.
+    TRANSACTION_TYPE_CHOICES = [
+        ('buy', 'Buy'),
+        ('sell', 'Sell'),
+        ('deposit', 'Deposit'),
+        ('withdraw', 'Withdraw'),
+        ('transfer_in', 'Transfer In'),
+        ('transfer_out', 'Transfer Out'),
+        ('dividend', 'Dividend'),
+        ('coupon', 'Coupon'),
+        ('interest', 'Interest'),
+        ('fee', 'Fee'),
+        ('split', 'Split'),
+        ('merge', 'Merge'),
+        ('adjustment', 'Adjustment'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
+    portfolio = models.ForeignKey(Portfolio, models.CASCADE)
+    asset = models.ForeignKey(Asset, models.CASCADE)
+    tx_type = models.CharField(max_length=20, choices=TRANSACTION_TYPE_CHOICES, default='buy')
     tx_time = models.DateTimeField()
-    quantity = models.DecimalField(max_digits=38, decimal_places=18)
+    quantity = models.DecimalField(max_digits=38, decimal_places=18, default=0)
     price = models.DecimalField(max_digits=38, decimal_places=10, blank=True, null=True)
-    price_currency = models.ForeignKey(Currency, models.DO_NOTHING, blank=True, null=True)
-    fee = models.DecimalField(max_digits=38, decimal_places=10)
+    price_currency = models.ForeignKey(Currency, models.CASCADE, blank=True, null=True)
+    fee = models.DecimalField(max_digits=38, decimal_places=10, default=0)
     notes = models.TextField(blank=True, null=True)
-    metadata = models.JSONField()
-    linked_tx = models.ForeignKey('self', models.DO_NOTHING, blank=True, null=True)
-    created_at = models.DateTimeField()
+    metadata = models.JSONField(default=dict)
+    linked_tx = models.ForeignKey('self', models.SET_NULL, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'transaction'

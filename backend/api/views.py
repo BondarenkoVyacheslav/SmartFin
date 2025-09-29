@@ -6,11 +6,15 @@ try:
     from rest_framework_simplejwt.tokens import RefreshToken
 except Exception:  # simplejwt may be absent in some envs
     RefreshToken = None
-from .models import Currency, Exchange, AppUser, Portfolio, Asset, AssetIdentifier, Transaction, Price, FxRate, Integration, Advice
+from django.contrib.auth import get_user_model
+from .models import Currency, Exchange, Portfolio, Asset, AssetIdentifier, Transaction, Price, FxRate, Integration, Advice
+
+User = get_user_model()
 from .serializers import (
 	CurrencySerializer,
 	ExchangeSerializer,
-	AppUserSerializer,
+	UserSerializer,
+	UserRegistrationSerializer,
 	PortfolioSerializer,
 	AssetSerializer,
 	AssetIdentifierSerializer,
@@ -33,9 +37,9 @@ class ExchangeViewSet(viewsets.ReadOnlyModelViewSet):
 	serializer_class = ExchangeSerializer
 
 
-class AppUserViewSet(viewsets.ReadOnlyModelViewSet):
-	queryset = AppUser.objects.all().order_by('created_at')
-	serializer_class = AppUserSerializer
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
+	queryset = User.objects.all().order_by('date_joined')
+	serializer_class = UserSerializer
 
 
 class PortfolioViewSet(viewsets.ReadOnlyModelViewSet):
@@ -82,6 +86,18 @@ class IntegrationViewSet(viewsets.ReadOnlyModelViewSet):
 class AdviceViewSet(viewsets.ReadOnlyModelViewSet):
 	queryset = Advice.objects.all().order_by('-created_at')
 	serializer_class = AdviceSerializer
+
+
+class UserRegistrationView(APIView):
+    def post(self, request):
+        serializer = UserRegistrationSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response({
+                "user": UserSerializer(user).data,
+                "message": "User created successfully"
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LogoutView(APIView):

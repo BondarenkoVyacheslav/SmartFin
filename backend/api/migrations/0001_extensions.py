@@ -1,4 +1,5 @@
 from django.db import migrations
+from django.contrib.postgres.operations import CreateExtension
 
 
 class Migration(migrations.Migration):
@@ -7,14 +8,9 @@ class Migration(migrations.Migration):
     dependencies = []
 
     operations = [
-        migrations.RunSQL(
-            sql="CREATE EXTENSION IF NOT EXISTS pgcrypto;",
-            reverse_sql=migrations.RunSQL.noop,
-        ),
-        migrations.RunSQL(
-            sql="CREATE EXTENSION IF NOT EXISTS citext;",
-            reverse_sql=migrations.RunSQL.noop,
-        ),
+        # Create PostgreSQL extensions
+        CreateExtension('pgcrypto'),  # For gen_random_uuid()
+        CreateExtension('citext'),    # Case-insensitive text
     ]
 
 

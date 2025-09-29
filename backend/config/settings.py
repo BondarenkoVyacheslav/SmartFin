@@ -103,6 +103,9 @@ DATABASES = {
     )
 }
 
+# Custom user model
+AUTH_USER_MODEL = 'api.User'
+
 # Django REST Framework
 _auth_classes = []
 if _HAS_SIMPLEJWT:
