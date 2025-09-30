@@ -20,16 +20,16 @@ class User(AbstractUser):
     base_currency = models.ForeignKey('Currency', models.SET_NULL, blank=True, null=True)
     timezone = models.CharField(max_length=100, default='UTC')
     twofa_secret = models.CharField(max_length=255, blank=True, null=True)
-    
+
     # Override username to make it optional (we'll use email as primary identifier)
     username = models.CharField(max_length=150, unique=True, blank=True, null=True)
-    
+
     # Use email as the username field for authentication
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
-    
+
     class Meta:
-        db_table = 'auth_user'  # Use the existing auth_user table
+        pass
     
     def save(self, *args, **kwargs):
         # Auto-generate username from email if not provided

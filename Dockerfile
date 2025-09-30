@@ -4,34 +4,29 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     UV_LINK_MODE=copy
 
+# Базовые утилиты
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl ca-certificates netcat-openbsd \
+    && apt-get install -y --no-install-recommends curl ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Install uv (Rust-based Python package manager)
+# Установка uv (менеджер пакетов)
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh \
     && echo 'export PATH="/root/.local/bin:$PATH"' >> /root/.profile
 ENV PATH="/root/.local/bin:$PATH"
 
 WORKDIR /app
 
-# Copy lockfiles first for better caching
+# Ставим зависимости в слой (кэшируемо)
 COPY pyproject.toml uv.lock ./
-
-# Install dependencies into a local venv
 RUN uv sync --frozen --no-dev \
     && echo 'export PATH="/app/.venv/bin:$PATH"' >> /root/.profile
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Copy source
+# Копируем исходники
 COPY backend ./backend
 
-# Entrypoint
-COPY backend/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
+# Докпорт для дев-сервера
 EXPOSE 8000
 
-ENTRYPOINT ["/entrypoint.sh"]
-
-
+# Никакого entrypoint — команды задаём в docker-compose
+CMD ["python", "backend/manage.py", "runserver", "0.0.0.0:8000"]

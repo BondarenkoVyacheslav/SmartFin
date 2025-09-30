@@ -1,95 +1,98 @@
 services:
   db:
     image: postgres:16
-    container_name: finly_db
     environment:
-      POSTGRES_USER: finly
-      POSTGRES_PASSWORD: finly
-      POSTGRES_DB: finly
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-finly}
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U finly"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-finly}"]
+      interval: 2s
       timeout: 5s
-      retries: 20
-    ports:
-      - "5432:5432"
+      retries: 30
+
+  redis:
+    image: redis:7
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  qdrant:
+    image: qdrant/qdrant:v1.15
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/collections"]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+
+  # одноразовый сервис для миграций
+  migrate:
+    image: finly-backend:latest
+    entrypoint: ""
+    command: [ "python", "backend/manage.py", "migrate", "--noinput" ]
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/finly}
+    depends_on:
+      db:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    restart: "no"
+
 
   backend:
     build:
       context: .
       dockerfile: Dockerfile
-      cache_from:
-        - finly-backend:latest
-    container_name: finly_backend
     image: finly-backend:latest
+    entrypoint: ""       # игнорируем ENTRYPOINT из Dockerfile
+    command: ["python", "backend/manage.py", "runserver", "0.0.0.0:8000"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/finly}
     depends_on:
       db:
         condition: service_healthy
-    environment:
-      DJANGO_DEBUG: "true"
-      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1"
-      DATABASE_URL: "postgresql://finly:finly@db:5432/finly"
-      CORS_ALLOW_ALL_ORIGINS: "true"
+      qdrant:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     ports:
-      - "8001:8000"
-    volumes:
-      - ./backend:/app/backend
-    command: ["/entrypoint.sh"]
-
-  redis:
-    image: redis:7-alpine
-    container_name: finly_redis
-    ports:
-      - "6379:6379"
+      - "8000:8000"
 
   worker:
     image: finly-backend:latest
-    container_name: finly_worker
-    depends_on:
-      - db
-      - redis
+    entrypoint: ""
+    command: ["python", "-m", "celery", "-A", "config", "worker", "-l", "info"]
     environment:
-      DJANGO_DEBUG: "true"
-      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1"
-      DATABASE_URL: "postgresql://finly:finly@db:5432/finly"
-      CORS_ALLOW_ALL_ORIGINS: "true"
-      CELERY_BROKER_URL: "redis://redis:6379/0"
-      CELERY_RESULT_BACKEND: "redis://redis:6379/1"
-      QDRANT_URL: "http://qdrant:6333"
-    command: ["bash", "-lc", "celery -A config worker -l info"]
-    volumes:
-      - ./backend:/app/backend
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/finly}
+    depends_on:
+      db:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   beat:
     image: finly-backend:latest
-    container_name: finly_beat
-    depends_on:
-      - db
-      - redis
+    entrypoint: ""
+    command: ["python", "-m", "celery", "-A", "config", "beat", "-l", "info", "-S", "django"]
     environment:
-      DJANGO_DEBUG: "true"
-      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1"
-      DATABASE_URL: "postgresql://finly:finly@db:5432/finly"
-      CORS_ALLOW_ALL_ORIGINS: "true"
-      CELERY_BROKER_URL: "redis://redis:6379/0"
-      CELERY_RESULT_BACKEND: "redis://redis:6379/1"
-      QDRANT_URL: "http://qdrant:6333"
-    command: ["bash", "-lc", "celery -A config beat -l info"]
-    volumes:
-      - ./backend:/app/backend
-
-  qdrant:
-    image: qdrant/qdrant:latest
-    container_name: finly_qdrant
-    ports:
-      - "6333:6333"
-      - "6334:6334"
-    volumes:
-      - qdrant_data:/qdrant/storage
+      DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/finly}
+    depends_on:
+      db:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
 volumes:
   db_data:
   qdrant_data:
-

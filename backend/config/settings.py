@@ -96,12 +96,35 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': env.db(
-        'DATABASE_URL',
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-    )
-}
+import os
+from urllib.parse import urlparse
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if DATABASE_URL:
+    # Парсим вручную postgresql://user:pass@host:port/db
+    u = urlparse(DATABASE_URL)
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": u.path.lstrip("/"),
+            "USER": u.username,
+            "PASSWORD": u.password,
+            "HOST": u.hostname,
+            "PORT": str(u.port or "5432"),
+            # опционально: conn_max_age
+            "CONN_MAX_AGE": 600,
+        }
+    }
+else:
+    # Фолбэк (локально без compose): SQLite
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+        }
+    }
 
 # Custom user model
 AUTH_USER_MODEL = 'api.User'
