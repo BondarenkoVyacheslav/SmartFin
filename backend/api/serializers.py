@@ -94,3 +94,12 @@ class AdviceSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class RegisterSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True, min_length=8)
+    password2 = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        if attrs["password"] != attrs["password2"]:
+            raise serializers.ValidationError("Password do not match")
+        return attrs

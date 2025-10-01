@@ -22,6 +22,7 @@ from .views import (
     LogoutView,
     AISuggestView,
     VectorSearchView,
+    RegisterView
 )
 
 router = DefaultRouter()
@@ -48,6 +49,7 @@ if TokenObtainPairView and TokenRefreshView:
         path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
         path('auth/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
         path('auth/logout/', LogoutView.as_view(), name='auth_logout'),
+        path('auth/register/', RegisterView.as_view(), name="auth-register"),
     ]
 
 urlpatterns += [

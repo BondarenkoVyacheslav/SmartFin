@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -11,18 +12,18 @@ from .models import Currency, Exchange, Portfolio, Asset, AssetIdentifier, Trans
 
 User = get_user_model()
 from .serializers import (
-	CurrencySerializer,
-	ExchangeSerializer,
-	UserSerializer,
-	UserRegistrationSerializer,
-	PortfolioSerializer,
-	AssetSerializer,
-	AssetIdentifierSerializer,
-	TransactionSerializer,
-	PriceSerializer,
-	FxRateSerializer,
-	IntegrationSerializer,
-	AdviceSerializer,
+    CurrencySerializer,
+    ExchangeSerializer,
+    UserSerializer,
+    UserRegistrationSerializer,
+    PortfolioSerializer,
+    AssetSerializer,
+    AssetIdentifierSerializer,
+    TransactionSerializer,
+    PriceSerializer,
+    FxRateSerializer,
+    IntegrationSerializer,
+    AdviceSerializer, RegisterSerializer,
 )
 from .tasks import generate_advice_for_portfolio, recompute_portfolio_features
 
@@ -184,3 +185,16 @@ class VectorSearchView(APIView):
             return Response({"detail": "Portfolio not found"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class RegisterView(APIView):
+    permission_classes = []
+    @extend_schema(request=RegisterSerializer, responses={201: None, 400: None})
+    def post(self, request):
+        ser = RegisterSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        user = User.objects.create_user(
+            email=ser.validated_data["email"],
+            password=ser.validated_data["password"]
+        )
+        return Response(status=status.HTTP_201_CREATED)
