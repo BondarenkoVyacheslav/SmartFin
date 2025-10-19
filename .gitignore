@@ -1,59 +1,8 @@
-﻿# Python
 __pycache__/
-*.py[cod]
-*$py.class
-
-# Environments
-.venv/
-venv/
-env/
-ENV/
-
-# Django
-*.log
-staticfiles/
-media/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# IDE
-.vscode/
-.idea/
-
-# Secrets
 .env
-.env.*
-!.env.example
-
-# Byte-compiled / optimized / DLL files
-*.so
-
-# Test & coverage
-.coverage*
-htmlcov/
-.pytest_cache/
-
-# Type checkers
-.mypy_cache/
-.dmypy.json
-.pyre/
-
-# CI
-.tox/
-
-# Build & dist
-build/
-dist/
-.eggs/
-*.egg-info/
-
-# Node
-node_modules/
-
-# Local DB
-*.sqlite3
-app.db
-
-repomix-output.md
+.venv
+venv/
+.vscode/
+*.xml
+*.iml
+.idea/

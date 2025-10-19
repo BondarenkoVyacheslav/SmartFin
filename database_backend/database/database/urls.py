@@ -1,5 +1,5 @@
 """
-URL configuration for config project.
+URL configuration for database project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/5.2/topics/http/urls/
@@ -16,21 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from django.shortcuts import redirect
-from drf_spectacular.views import (
-    SpectacularAPIView,
-    SpectacularRedocView,
-    SpectacularSwaggerView,
-)
 
 urlpatterns = [
-    # Root redirect to API documentation
-    path('', lambda request: redirect('/api/docs/'), name='home'),
-    
     path('admin/', admin.site.urls),
-    path('api/', include('api.urls')),
-    # OpenAPI schema and documentation
-    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    path('db/', include('configuration.urls')),
 ]
