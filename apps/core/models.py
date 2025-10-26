@@ -37,18 +37,22 @@ class PriceInterval(models.TextChoices):
     HOUR = "hour", "Hour"
     DAY = "day", "Day"
 
-# Опционально: поле, которое мапится на PostgreSQL ENUM (core.*)
-# Можно использовать в будущих managed-моделях, если захочешь создавать таблицы через Django.
-class PostgresEnumField(models.Field):
-    description = "PostgreSQL enum in the core schema"
 
-    def __init__(self, enum_name: str, *args, **kwargs):
-        # передаём choices снаружи, чтобы Django валидировал значения
+class PostgresEnumField(models.Field):
+    """
+    Поле для PG ENUM (schema-qualified), напр. enum_name="core.asset_class_enum".
+    ВАЖНО: enum_name — только keyword-аргумент, чтобы миграционный
+    сериализатор не дублировал значение позиционно и по ключу.
+    """
+    description = "PostgreSQL enum (schema-qualified)"
+
+    def __init__(self, *, enum_name: str, **kwargs):
         self.enum_name = enum_name  # например: "core.asset_class_enum"
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
 
     def deconstruct(self):
         name, path, args, kwargs = super().deconstruct()
+        # Сохраняем enum_name в kwargs, чтобы миграции могли восстановить поле
         kwargs["enum_name"] = self.enum_name
         return name, path, args, kwargs
 
@@ -62,17 +66,26 @@ class PostgresEnumField(models.Field):
     def from_db_value(self, value, expression, connection):
         return value
 
+
 class AssetClassEnumField(PostgresEnumField):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
+        from .models import AssetClass  # если перечисления рядом
         kwargs.setdefault("choices", AssetClass.choices)
-        super().__init__("core.asset_class_enum", *args, **kwargs)
+        kwargs.setdefault("enum_name", "core.asset_class_enum")
+        super().__init__(**kwargs)
+
 
 class TransactionTypeEnumField(PostgresEnumField):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
+        from .models import TransactionType
         kwargs.setdefault("choices", TransactionType.choices)
-        super().__init__("core.transaction_type_enum", *args, **kwargs)
+        kwargs.setdefault("enum_name", "core.transaction_type_enum")
+        super().__init__(**kwargs)
+
 
 class PriceIntervalEnumField(PostgresEnumField):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
+        from .models import PriceInterval
         kwargs.setdefault("choices", PriceInterval.choices)
-        super().__init__("core.price_interval_enum", *args, **kwargs)
+        kwargs.setdefault("enum_name", "core.price_interval_enum")
+        super().__init__(**kwargs)
