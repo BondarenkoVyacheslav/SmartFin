@@ -1,6 +1,6 @@
 # config/graphql/dataloaders.py
 from strawberry.dataloader import DataLoader
-from apps.accounts.selectors import get_profiles_by_ids
+from apps.account.selectors import get_profiles_by_ids
 
 def build_dataloaders():
     return {

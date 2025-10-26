@@ -1,5 +1,5 @@
 """
-URL configuration for config project.
+URL configuration for a config project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/5.2/topics/http/urls/
@@ -16,7 +16,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from strawberry.django.views import AsyncGraphQLView
+from django.views.decorators.csrf import csrf_exempt
+
+from graphql.context import get_context
+from graphql.schema import schema
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path("graphql", csrf_exempt(AsyncGraphQLView.as_view(schema=schema, context_getter=get_context))),
 ]
