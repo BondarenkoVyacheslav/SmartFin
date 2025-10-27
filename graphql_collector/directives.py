@@ -1,4 +1,4 @@
-# config/graphql/directives.py
+# config/graphql_collector/directives.py
 from typing import Any
 import strawberry
 from strawberry.permission import BasePermission

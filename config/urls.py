@@ -19,10 +19,10 @@ from django.urls import path
 from strawberry.django.views import AsyncGraphQLView
 from django.views.decorators.csrf import csrf_exempt
 
-from graphql.context import get_context
-from graphql.schema import schema
+# from graphql_collector.context import get_context
+# from graphql_collector.schema import schema
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path("graphql", csrf_exempt(AsyncGraphQLView.as_view(schema=schema, context_getter=get_context))),
+    # path("graphql_collector", csrf_exempt(AsyncGraphQLView.as_view(schema=schema))),
 ]

@@ -124,6 +124,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "django" },
+    { name = "graphql-core" },
     { name = "psycopg", extra = ["binary"] },
     { name = "strawberry-graphql" },
     { name = "strawberry-graphql-django" },
@@ -132,6 +133,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "django", specifier = ">=5.2.7" },
+    { name = "graphql-core", specifier = ">=3.2,<4" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.2.12" },
     { name = "strawberry-graphql", specifier = ">=0.284.1" },
     { name = "strawberry-graphql-django", specifier = ">=0.67.0" },

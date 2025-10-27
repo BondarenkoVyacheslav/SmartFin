@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict YhB6oNssCbaHCPJcjja8egZhWaxITbRMkFOXUSoa9GQdQwefwEWr0v1gCKc84CC
+\restrict hyz1alvFRcfZ8zxQgbP3EFba0u5wt0mP4QXqyaVrB3MIzcnhbzf2LlrHXZ19gAI
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.6
 
--- Started on 2025-10-26 22:58:41
+-- Started on 2025-10-27 14:04:14
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -130,7 +130,7 @@ CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;
 
 
 --
--- TOC entry 5478 (class 0 OID 0)
+-- TOC entry 5589 (class 0 OID 0)
 -- Dependencies: 3
 -- Name: EXTENSION citext; Type: COMMENT; Schema: -; Owner: 
 --
@@ -147,7 +147,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
 
 
 --
--- TOC entry 5479 (class 0 OID 0)
+-- TOC entry 5590 (class 0 OID 0)
 -- Dependencies: 2
 -- Name: EXTENSION pgcrypto; Type: COMMENT; Schema: -; Owner: 
 --
@@ -156,7 +156,7 @@ COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
 
 
 --
--- TOC entry 976 (class 1247 OID 17817)
+-- TOC entry 989 (class 1247 OID 17817)
 -- Name: asset_class_enum; Type: TYPE; Schema: core; Owner: postgres
 --
 
@@ -176,7 +176,7 @@ CREATE TYPE core.asset_class_enum AS ENUM (
 ALTER TYPE core.asset_class_enum OWNER TO postgres;
 
 --
--- TOC entry 982 (class 1247 OID 17864)
+-- TOC entry 995 (class 1247 OID 17864)
 -- Name: price_interval_enum; Type: TYPE; Schema: core; Owner: postgres
 --
 
@@ -191,7 +191,7 @@ CREATE TYPE core.price_interval_enum AS ENUM (
 ALTER TYPE core.price_interval_enum OWNER TO postgres;
 
 --
--- TOC entry 979 (class 1247 OID 17836)
+-- TOC entry 992 (class 1247 OID 17836)
 -- Name: transaction_type_enum; Type: TYPE; Schema: core; Owner: postgres
 --
 
@@ -215,7 +215,225 @@ CREATE TYPE core.transaction_type_enum AS ENUM (
 ALTER TYPE core.transaction_type_enum OWNER TO postgres;
 
 --
--- TOC entry 323 (class 1255 OID 18484)
+-- TOC entry 285 (class 1255 OID 18632)
+-- Name: recalc_eod(date, uuid); Type: PROCEDURE; Schema: analytics; Owner: postgres
+--
+
+CREATE PROCEDURE analytics.recalc_eod(IN p_as_of date, IN p_portfolio_id uuid DEFAULT NULL::uuid)
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+  rec_port       RECORD;
+  rec_asset      RECORD;
+  rec_tx         RECORD;
+
+  base_ccy       UUID;
+  fx_tx2base     NUMERIC;
+  fx_px2base     NUMERIC;
+
+  qty            NUMERIC := 0;   -- текущее количество
+  avg_cost_base  NUMERIC := 0;   -- средняя себестоимость за 1 ед. в базовой валюте
+  realized       NUMERIC := 0;   -- реализованный P&L (накопленный)
+  income_acc     NUMERIC := 0;   -- накопленный доход
+
+  px             NUMERIC;        -- EOD цена (в валюте котировки)
+  px_ccy         UUID;
+  value_base     NUMERIC;
+  cost_basis     NUMERIC;
+  unrealized     NUMERIC;
+
+  d1             DATE := p_as_of - 1;
+  d7             DATE := p_as_of - 7;
+  d30            DATE := p_as_of - 30;
+BEGIN
+  -- по всем портфелям или одному
+  FOR rec_port IN
+    SELECT id, base_currency_id
+    FROM portfolio.portfolio
+    WHERE p_portfolio_id IS NULL OR id = p_portfolio_id
+  LOOP
+    base_ccy := rec_port.base_currency_id;
+
+    -- убираем старые факты на дату (идемпотентно)
+    DELETE FROM analytics.position_valuation_daily
+     WHERE portfolio_id = rec_port.id AND as_of = p_as_of;
+
+    -- активы с транзакциями до даты
+    FOR rec_asset IN
+      SELECT DISTINCT t.asset_id
+      FROM portfolio.transaction t
+      WHERE t.portfolio_id = rec_port.id
+        AND t.asset_id IS NOT NULL
+        AND t.tx_time::date <= p_as_of
+    LOOP
+      qty           := 0;
+      avg_cost_base := 0;
+      realized      := 0;
+      income_acc    := 0;
+
+      -- леджер по транзакциям (до даты)
+      FOR rec_tx IN
+        SELECT
+          t.tx_time, t.tx_type, t.asset_id,
+          t.quantity, t.price, t.price_currency_id, t.fee
+        FROM portfolio.transaction t
+        WHERE t.portfolio_id = rec_port.id
+          AND t.asset_id     = rec_asset.asset_id
+          AND t.tx_time::date <= p_as_of
+        ORDER BY t.tx_time, t.id
+      LOOP
+        fx_tx2base := CASE
+                         WHEN rec_tx.price_currency_id IS NULL THEN 1
+                         ELSE market.fx_at(rec_tx.tx_time::date, rec_tx.price_currency_id, base_ccy)
+                       END;
+
+        -- BUY / TRANSFER_IN
+        IF rec_tx.tx_type IN ('buy','transfer_in') THEN
+          IF rec_tx.quantity IS NULL OR rec_tx.price IS NULL THEN
+            CONTINUE;
+          END IF;
+
+          -- стоимость покупки в базовой валюте (комиссию прибавляем к cost)
+          -- fee у нас в валюте price (другого поля нет)
+          -- новые средние по формуле WAC
+          DECLARE
+            prev_qty NUMERIC := qty;
+            added_cost_base NUMERIC := (rec_tx.quantity * rec_tx.price * fx_tx2base) + (COALESCE(rec_tx.fee,0) * fx_tx2base);
+          BEGIN
+            qty := qty + rec_tx.quantity;
+            IF qty > 0 THEN
+              avg_cost_base := (prev_qty*avg_cost_base + added_cost_base) / qty;
+            ELSE
+              avg_cost_base := 0;
+            END IF;
+          END;
+
+        -- SELL / TRANSFER_OUT
+        ELSIF rec_tx.tx_type IN ('sell','transfer_out') THEN
+          IF rec_tx.quantity IS NULL OR rec_tx.price IS NULL OR qty <= 0 THEN
+            CONTINUE;
+          END IF;
+
+          DECLARE
+            sell_qty NUMERIC := rec_tx.quantity;               -- ожидаем положительное число
+            proceeds_base NUMERIC := (sell_qty * rec_tx.price * fx_tx2base) - (COALESCE(rec_tx.fee,0) * fx_tx2base);
+          BEGIN
+            realized := realized + (proceeds_base - sell_qty * avg_cost_base);
+            qty := qty - sell_qty;
+            IF qty = 0 THEN
+              avg_cost_base := 0;
+            END IF;
+          END;
+
+        -- ДОХОДЫ (dividend/coupon/interest) — берём сумму как price*quantity (если quantity=0 или NULL — как price)
+        ELSIF rec_tx.tx_type IN ('dividend','coupon','interest') THEN
+          IF rec_tx.price IS NOT NULL THEN
+            income_acc := income_acc + (rec_tx.price * COALESCE(NULLIF(rec_tx.quantity,0),1)) * fx_tx2base;
+          END IF;
+
+        -- ЧИСТАЯ КОМИССИЯ отдельной транзакцией (если такие есть)
+        ELSIF rec_tx.tx_type = 'fee' THEN
+          realized := realized - (COALESCE(rec_tx.fee,0) * fx_tx2base);
+
+        ELSE
+          -- deposit/withdraw/split/merge/adjustment — игнорируем в расчёте WAC на MVP
+          CONTINUE;
+        END IF;
+
+      END LOOP; -- транзакции
+
+      -- цена на конец дня
+      SELECT price, price_currency_id INTO px, px_ccy
+      FROM market.last_daily_price(rec_asset.asset_id, p_as_of);
+
+      -- если цены нет — пропускаем (в твоей таблице analytics.position_valuation_daily price NOT NULL)
+      IF px IS NULL OR px_ccy IS NULL THEN
+        CONTINUE;
+      END IF;
+
+      fx_px2base := market.fx_at(p_as_of, px_ccy, base_ccy);
+
+      cost_basis := qty * avg_cost_base;
+      value_base := qty * px * fx_px2base;
+      unrealized := value_base - cost_basis;
+
+      -- запись факта EOD (UPSERT по уникальному ключу)
+      INSERT INTO analytics.position_valuation_daily (
+        portfolio_id, asset_id, as_of,
+        qty, price, price_currency_id, fx_to_base,
+        value_base, cost_basis_base,
+        realized_pnl_base, unrealized_pnl_base, income_acc_base,
+        metadata
+      )
+      VALUES (
+        rec_port.id, rec_asset.asset_id, p_as_of,
+        COALESCE(qty,0), px, px_ccy, fx_px2base,
+        COALESCE(value_base,0), COALESCE(cost_basis,0),
+        COALESCE(realized,0), COALESCE(unrealized,0), COALESCE(income_acc,0),
+        jsonb_build_object('avg_cost_per_unit_base', COALESCE(avg_cost_base,0))
+      )
+      ON CONFLICT (portfolio_id, asset_id, as_of) DO UPDATE
+      SET qty               = EXCLUDED.qty,
+          price             = EXCLUDED.price,
+          price_currency_id = EXCLUDED.price_currency_id,
+          fx_to_base        = EXCLUDED.fx_to_base,
+          value_base        = EXCLUDED.value_base,
+          cost_basis_base   = EXCLUDED.cost_basis_base,
+          realized_pnl_base = EXCLUDED.realized_pnl_base,
+          unrealized_pnl_base = EXCLUDED.unrealized_pnl_base,
+          income_acc_base   = EXCLUDED.income_acc_base,
+          metadata          = analytics.position_valuation_daily.metadata || EXCLUDED.metadata;
+    END LOOP; -- активы портфеля
+
+    -- ---------- СВОДКА ПО ПОРТФЕЛЮ ----------
+    -- удаляем старый срез за дату
+    DELETE FROM analytics.portfolio_snapshot
+     WHERE portfolio_id = rec_port.id AND as_of = p_as_of::timestamptz;
+
+    WITH
+    today AS (
+      SELECT COALESCE(SUM(value_base),0) AS tv
+      FROM analytics.position_valuation_daily
+      WHERE portfolio_id = rec_port.id AND as_of = p_as_of
+    ),
+    d_1 AS (
+      SELECT COALESCE(SUM(value_base),0) AS tv
+      FROM analytics.position_valuation_daily
+      WHERE portfolio_id = rec_port.id AND as_of = d1
+    ),
+    d_7 AS (
+      SELECT COALESCE(SUM(value_base),0) AS tv
+      FROM analytics.position_valuation_daily
+      WHERE portfolio_id = rec_port.id AND as_of = d7
+    ),
+    d_30 AS (
+      SELECT COALESCE(SUM(value_base),0) AS tv
+      FROM analytics.position_valuation_daily
+      WHERE portfolio_id = rec_port.id AND as_of = d30
+    )
+    INSERT INTO analytics.portfolio_snapshot (portfolio_id, as_of, total_value, pnl_1d, pnl_7d, pnl_30d)
+    SELECT
+      rec_port.id,
+      p_as_of::timestamptz,
+      t.tv,
+      t.tv - d1.tv,
+      t.tv - d7.tv,
+      t.tv - d30.tv
+    FROM today t, d_1 d1, d_7 d7, d_30 d30
+    ON CONFLICT (portfolio_id, as_of) DO UPDATE
+    SET total_value = EXCLUDED.total_value,
+        pnl_1d      = EXCLUDED.pnl_1d,
+        pnl_7d      = EXCLUDED.pnl_7d,
+        pnl_30d     = EXCLUDED.pnl_30d;
+
+  END LOOP; -- портфели
+END $$;
+
+
+ALTER PROCEDURE analytics.recalc_eod(IN p_as_of date, IN p_portfolio_id uuid) OWNER TO postgres;
+
+--
+-- TOC entry 336 (class 1255 OID 18484)
 -- Name: fn_check_account_portfolio_same_user(); Type: FUNCTION; Schema: integrations; Owner: postgres
 --
 
@@ -248,7 +466,74 @@ END$$;
 ALTER FUNCTION integrations.fn_check_account_portfolio_same_user() OWNER TO postgres;
 
 --
--- TOC entry 343 (class 1255 OID 18031)
+-- TOC entry 310 (class 1255 OID 18630)
+-- Name: fx_at(date, uuid, uuid); Type: FUNCTION; Schema: market; Owner: postgres
+--
+
+CREATE FUNCTION market.fx_at(_as_of date, _from uuid, _to uuid) RETURNS numeric
+    LANGUAGE plpgsql STABLE
+    AS $$
+DECLARE
+  r NUMERIC;
+BEGIN
+  IF _from = _to THEN
+    RETURN 1;
+  END IF;
+
+  -- прямое направление
+  SELECT fr.rate INTO r
+  FROM market.fx_rate fr
+  WHERE fr.base_currency_id = _from
+    AND fr.quote_currency_id = _to
+    AND fr.ts::date <= _as_of
+  ORDER BY fr.ts DESC
+  LIMIT 1;
+
+  IF r IS NOT NULL THEN
+    RETURN r;
+  END IF;
+
+  -- инверсия
+  SELECT 1.0 / fr.rate INTO r
+  FROM market.fx_rate fr
+  WHERE fr.base_currency_id = _to
+    AND fr.quote_currency_id = _from
+    AND fr.ts::date <= _as_of
+  ORDER BY fr.ts DESC
+  LIMIT 1;
+
+  IF r IS NULL THEN
+    RAISE EXCEPTION 'FX rate not found for pair (% -> %) as of %', _from, _to, _as_of;
+  END IF;
+
+  RETURN r;
+END $$;
+
+
+ALTER FUNCTION market.fx_at(_as_of date, _from uuid, _to uuid) OWNER TO postgres;
+
+--
+-- TOC entry 289 (class 1255 OID 18631)
+-- Name: last_daily_price(uuid, date); Type: FUNCTION; Schema: market; Owner: postgres
+--
+
+CREATE FUNCTION market.last_daily_price(_asset_id uuid, _as_of date) RETURNS TABLE(price numeric, price_currency_id uuid)
+    LANGUAGE sql STABLE
+    AS $$
+  SELECT p.price, p.currency_id
+  FROM market.price p
+  WHERE p.asset_id = _asset_id
+    AND p."interval" = 'day'
+    AND p.ts::date <= _as_of
+  ORDER BY p.ts DESC
+  LIMIT 1
+$$;
+
+
+ALTER FUNCTION market.last_daily_price(_asset_id uuid, _as_of date) OWNER TO postgres;
+
+--
+-- TOC entry 356 (class 1255 OID 18031)
 -- Name: refresh_mv_latest_daily_price(); Type: FUNCTION; Schema: market; Owner: postgres
 --
 
@@ -323,6 +608,69 @@ CREATE TABLE account.session_token (
 ALTER TABLE account.session_token OWNER TO postgres;
 
 --
+-- TOC entry 265 (class 1259 OID 18528)
+-- Name: benchmark; Type: TABLE; Schema: analytics; Owner: postgres
+--
+
+CREATE TABLE analytics.benchmark (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    code text NOT NULL,
+    name text NOT NULL
+);
+
+
+ALTER TABLE analytics.benchmark OWNER TO postgres;
+
+--
+-- TOC entry 266 (class 1259 OID 18538)
+-- Name: benchmark_component; Type: TABLE; Schema: analytics; Owner: postgres
+--
+
+CREATE TABLE analytics.benchmark_component (
+    benchmark_id uuid NOT NULL,
+    asset_id uuid NOT NULL,
+    weight numeric(20,10) NOT NULL
+);
+
+
+ALTER TABLE analytics.benchmark_component OWNER TO postgres;
+
+--
+-- TOC entry 269 (class 1259 OID 18584)
+-- Name: feature_view; Type: TABLE; Schema: analytics; Owner: postgres
+--
+
+CREATE TABLE analytics.feature_view (
+    entity_type text NOT NULL,
+    entity_id uuid NOT NULL,
+    as_of date NOT NULL,
+    version text DEFAULT 'v1'::text NOT NULL,
+    features jsonb NOT NULL,
+    CONSTRAINT feature_view_entity_type_check CHECK ((entity_type = ANY (ARRAY['portfolio'::text, 'asset'::text, 'position'::text])))
+);
+
+
+ALTER TABLE analytics.feature_view OWNER TO postgres;
+
+--
+-- TOC entry 270 (class 1259 OID 18593)
+-- Name: model_registry; Type: TABLE; Schema: analytics; Owner: postgres
+--
+
+CREATE TABLE analytics.model_registry (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    version text NOT NULL,
+    kind text NOT NULL,
+    params jsonb DEFAULT '{}'::jsonb NOT NULL,
+    trained_at timestamp with time zone,
+    metrics jsonb DEFAULT '{}'::jsonb NOT NULL
+);
+
+
+ALTER TABLE analytics.model_registry OWNER TO postgres;
+
+--
 -- TOC entry 242 (class 1259 OID 18112)
 -- Name: portfolio_snapshot; Type: TABLE; Schema: analytics; Owner: postgres
 --
@@ -339,6 +687,72 @@ CREATE TABLE analytics.portfolio_snapshot (
 
 
 ALTER TABLE analytics.portfolio_snapshot OWNER TO postgres;
+
+--
+-- TOC entry 263 (class 1259 OID 18486)
+-- Name: position_valuation_daily; Type: TABLE; Schema: analytics; Owner: postgres
+--
+
+CREATE TABLE analytics.position_valuation_daily (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    portfolio_id uuid NOT NULL,
+    asset_id uuid NOT NULL,
+    as_of date NOT NULL,
+    qty numeric(38,18) NOT NULL,
+    price numeric(38,10) NOT NULL,
+    price_currency_id uuid NOT NULL,
+    fx_to_base numeric(38,10) NOT NULL,
+    value_base numeric(38,10) NOT NULL,
+    cost_basis_base numeric(38,10),
+    realized_pnl_base numeric(38,10) DEFAULT 0,
+    unrealized_pnl_base numeric(38,10) DEFAULT 0,
+    income_acc_base numeric(38,10) DEFAULT 0,
+    metadata jsonb DEFAULT '{}'::jsonb NOT NULL
+);
+
+
+ALTER TABLE analytics.position_valuation_daily OWNER TO postgres;
+
+--
+-- TOC entry 271 (class 1259 OID 18605)
+-- Name: prediction; Type: TABLE; Schema: analytics; Owner: postgres
+--
+
+CREATE TABLE analytics.prediction (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    model_id uuid NOT NULL,
+    entity_type text NOT NULL,
+    entity_id uuid NOT NULL,
+    as_of timestamp with time zone NOT NULL,
+    horizon text NOT NULL,
+    target text NOT NULL,
+    value numeric(38,10) NOT NULL,
+    confidence numeric(10,5),
+    features_version text,
+    payload jsonb DEFAULT '{}'::jsonb NOT NULL,
+    CONSTRAINT prediction_entity_type_check CHECK ((entity_type = ANY (ARRAY['portfolio'::text, 'asset'::text, 'position'::text])))
+);
+
+
+ALTER TABLE analytics.prediction OWNER TO postgres;
+
+--
+-- TOC entry 272 (class 1259 OID 18622)
+-- Name: training_label; Type: TABLE; Schema: analytics; Owner: postgres
+--
+
+CREATE TABLE analytics.training_label (
+    entity_type text NOT NULL,
+    entity_id uuid NOT NULL,
+    as_of date NOT NULL,
+    horizon text NOT NULL,
+    label_name text NOT NULL,
+    label_value numeric(38,10) NOT NULL,
+    CONSTRAINT training_label_entity_type_check CHECK ((entity_type = ANY (ARRAY['portfolio'::text, 'asset'::text])))
+);
+
+
+ALTER TABLE analytics.training_label OWNER TO postgres;
 
 --
 -- TOC entry 246 (class 1259 OID 18179)
@@ -506,6 +920,38 @@ CREATE TABLE market.asset_identifier (
 
 
 ALTER TABLE market.asset_identifier OWNER TO postgres;
+
+--
+-- TOC entry 264 (class 1259 OID 18516)
+-- Name: asset_tag; Type: TABLE; Schema: market; Owner: postgres
+--
+
+CREATE TABLE market.asset_tag (
+    asset_id uuid NOT NULL,
+    tag_type text NOT NULL,
+    tag_value text NOT NULL
+);
+
+
+ALTER TABLE market.asset_tag OWNER TO postgres;
+
+--
+-- TOC entry 268 (class 1259 OID 18568)
+-- Name: corporate_action; Type: TABLE; Schema: market; Owner: postgres
+--
+
+CREATE TABLE market.corporate_action (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    asset_id uuid NOT NULL,
+    action_type text NOT NULL,
+    ex_date date NOT NULL,
+    ratio numeric(38,10),
+    payload jsonb DEFAULT '{}'::jsonb NOT NULL,
+    CONSTRAINT corporate_action_action_type_check CHECK ((action_type = ANY (ARRAY['split'::text, 'merge'::text, 'symbol_change'::text, 'delisting'::text, 'spin_off'::text])))
+);
+
+
+ALTER TABLE market.corporate_action OWNER TO postgres;
 
 --
 -- TOC entry 232 (class 1259 OID 17909)
@@ -686,6 +1132,19 @@ CREATE TABLE portfolio.portfolio (
 
 
 ALTER TABLE portfolio.portfolio OWNER TO postgres;
+
+--
+-- TOC entry 267 (class 1259 OID 18553)
+-- Name: portfolio_benchmark; Type: TABLE; Schema: portfolio; Owner: postgres
+--
+
+CREATE TABLE portfolio.portfolio_benchmark (
+    portfolio_id uuid NOT NULL,
+    benchmark_id uuid NOT NULL
+);
+
+
+ALTER TABLE portfolio.portfolio_benchmark OWNER TO postgres;
 
 --
 -- TOC entry 240 (class 1259 OID 18055)
@@ -928,7 +1387,7 @@ CREATE TABLE staging.trades_raw (
 ALTER TABLE staging.trades_raw OWNER TO postgres;
 
 --
--- TOC entry 5440 (class 0 OID 17874)
+-- TOC entry 5541 (class 0 OID 17874)
 -- Dependencies: 230
 -- Data for Name: auth_user; Type: TABLE DATA; Schema: account; Owner: postgres
 --
@@ -938,7 +1397,7 @@ COPY account.auth_user (id, username, email, first_name, last_name, password, is
 
 
 --
--- TOC entry 5441 (class 0 OID 17891)
+-- TOC entry 5542 (class 0 OID 17891)
 -- Dependencies: 231
 -- Data for Name: session_token; Type: TABLE DATA; Schema: account; Owner: postgres
 --
@@ -948,7 +1407,47 @@ COPY account.session_token (id, user_id, digest, issued_at, expires_at, revoked_
 
 
 --
--- TOC entry 5452 (class 0 OID 18112)
+-- TOC entry 5576 (class 0 OID 18528)
+-- Dependencies: 265
+-- Data for Name: benchmark; Type: TABLE DATA; Schema: analytics; Owner: postgres
+--
+
+COPY analytics.benchmark (id, code, name) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5577 (class 0 OID 18538)
+-- Dependencies: 266
+-- Data for Name: benchmark_component; Type: TABLE DATA; Schema: analytics; Owner: postgres
+--
+
+COPY analytics.benchmark_component (benchmark_id, asset_id, weight) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5580 (class 0 OID 18584)
+-- Dependencies: 269
+-- Data for Name: feature_view; Type: TABLE DATA; Schema: analytics; Owner: postgres
+--
+
+COPY analytics.feature_view (entity_type, entity_id, as_of, version, features) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5581 (class 0 OID 18593)
+-- Dependencies: 270
+-- Data for Name: model_registry; Type: TABLE DATA; Schema: analytics; Owner: postgres
+--
+
+COPY analytics.model_registry (id, name, version, kind, params, trained_at, metrics) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5553 (class 0 OID 18112)
 -- Dependencies: 242
 -- Data for Name: portfolio_snapshot; Type: TABLE DATA; Schema: analytics; Owner: postgres
 --
@@ -958,7 +1457,37 @@ COPY analytics.portfolio_snapshot (id, portfolio_id, as_of, total_value, pnl_1d,
 
 
 --
--- TOC entry 5456 (class 0 OID 18179)
+-- TOC entry 5574 (class 0 OID 18486)
+-- Dependencies: 263
+-- Data for Name: position_valuation_daily; Type: TABLE DATA; Schema: analytics; Owner: postgres
+--
+
+COPY analytics.position_valuation_daily (id, portfolio_id, asset_id, as_of, qty, price, price_currency_id, fx_to_base, value_base, cost_basis_base, realized_pnl_base, unrealized_pnl_base, income_acc_base, metadata) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5582 (class 0 OID 18605)
+-- Dependencies: 271
+-- Data for Name: prediction; Type: TABLE DATA; Schema: analytics; Owner: postgres
+--
+
+COPY analytics.prediction (id, model_id, entity_type, entity_id, as_of, horizon, target, value, confidence, features_version, payload) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5583 (class 0 OID 18622)
+-- Dependencies: 272
+-- Data for Name: training_label; Type: TABLE DATA; Schema: analytics; Owner: postgres
+--
+
+COPY analytics.training_label (entity_type, entity_id, as_of, horizon, label_name, label_value) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5557 (class 0 OID 18179)
 -- Dependencies: 246
 -- Data for Name: audit_log; Type: TABLE DATA; Schema: infra; Owner: postgres
 --
@@ -968,7 +1497,7 @@ COPY infra.audit_log (id, user_id, ts, action, target_type, target_id, ip, user_
 
 
 --
--- TOC entry 5457 (class 0 OID 18195)
+-- TOC entry 5558 (class 0 OID 18195)
 -- Dependencies: 247
 -- Data for Name: outbox_event; Type: TABLE DATA; Schema: infra; Owner: postgres
 --
@@ -978,7 +1507,7 @@ COPY infra.outbox_event (id, topic, payload, created_at, processed_at, attempts)
 
 
 --
--- TOC entry 5471 (class 0 OID 18446)
+-- TOC entry 5572 (class 0 OID 18446)
 -- Dependencies: 261
 -- Data for Name: account; Type: TABLE DATA; Schema: integrations; Owner: postgres
 --
@@ -988,7 +1517,7 @@ COPY integrations.account (id, integration_id, provider_code, ext_account_id, di
 
 
 --
--- TOC entry 5472 (class 0 OID 18462)
+-- TOC entry 5573 (class 0 OID 18462)
 -- Dependencies: 262
 -- Data for Name: account_portfolio; Type: TABLE DATA; Schema: integrations; Owner: postgres
 --
@@ -998,7 +1527,7 @@ COPY integrations.account_portfolio (id, account_id, portfolio_id, instrument_ty
 
 
 --
--- TOC entry 5453 (class 0 OID 18126)
+-- TOC entry 5554 (class 0 OID 18126)
 -- Dependencies: 243
 -- Data for Name: integration; Type: TABLE DATA; Schema: integrations; Owner: postgres
 --
@@ -1008,7 +1537,7 @@ COPY integrations.integration (id, user_id, provider, display_name, status, cred
 
 
 --
--- TOC entry 5454 (class 0 OID 18144)
+-- TOC entry 5555 (class 0 OID 18144)
 -- Dependencies: 244
 -- Data for Name: sync_log; Type: TABLE DATA; Schema: integrations; Owner: postgres
 --
@@ -1018,7 +1547,7 @@ COPY integrations.sync_log (id, integration_id, started_at, finished_at, status,
 
 
 --
--- TOC entry 5455 (class 0 OID 18164)
+-- TOC entry 5556 (class 0 OID 18164)
 -- Dependencies: 245
 -- Data for Name: advice; Type: TABLE DATA; Schema: llm; Owner: postgres
 --
@@ -1028,7 +1557,7 @@ COPY llm.advice (id, portfolio_id, kind, message, score, payload, created_at) FR
 
 
 --
--- TOC entry 5444 (class 0 OID 17933)
+-- TOC entry 5545 (class 0 OID 17933)
 -- Dependencies: 234
 -- Data for Name: asset; Type: TABLE DATA; Schema: market; Owner: postgres
 --
@@ -1038,7 +1567,7 @@ COPY market.asset (id, class, symbol, name, trading_currency_id, isin, exchange_
 
 
 --
--- TOC entry 5445 (class 0 OID 17956)
+-- TOC entry 5546 (class 0 OID 17956)
 -- Dependencies: 235
 -- Data for Name: asset_identifier; Type: TABLE DATA; Schema: market; Owner: postgres
 --
@@ -1048,7 +1577,27 @@ COPY market.asset_identifier (id, asset_id, id_type, id_value) FROM stdin;
 
 
 --
--- TOC entry 5442 (class 0 OID 17909)
+-- TOC entry 5575 (class 0 OID 18516)
+-- Dependencies: 264
+-- Data for Name: asset_tag; Type: TABLE DATA; Schema: market; Owner: postgres
+--
+
+COPY market.asset_tag (asset_id, tag_type, tag_value) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5579 (class 0 OID 18568)
+-- Dependencies: 268
+-- Data for Name: corporate_action; Type: TABLE DATA; Schema: market; Owner: postgres
+--
+
+COPY market.corporate_action (id, asset_id, action_type, ex_date, ratio, payload) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5543 (class 0 OID 17909)
 -- Dependencies: 232
 -- Data for Name: currency; Type: TABLE DATA; Schema: market; Owner: postgres
 --
@@ -1058,7 +1607,7 @@ COPY market.currency (id, code, name, decimals, is_crypto, created_at) FROM stdi
 
 
 --
--- TOC entry 5443 (class 0 OID 17922)
+-- TOC entry 5544 (class 0 OID 17922)
 -- Dependencies: 233
 -- Data for Name: exchange; Type: TABLE DATA; Schema: market; Owner: postgres
 --
@@ -1068,7 +1617,7 @@ COPY market.exchange (id, code, name, country, timezone, created_at) FROM stdin;
 
 
 --
--- TOC entry 5447 (class 0 OID 17998)
+-- TOC entry 5548 (class 0 OID 17998)
 -- Dependencies: 237
 -- Data for Name: fx_rate; Type: TABLE DATA; Schema: market; Owner: postgres
 --
@@ -1078,7 +1627,7 @@ COPY market.fx_rate (id, base_currency_id, quote_currency_id, ts, rate, source) 
 
 
 --
--- TOC entry 5446 (class 0 OID 17973)
+-- TOC entry 5547 (class 0 OID 17973)
 -- Dependencies: 236
 -- Data for Name: price; Type: TABLE DATA; Schema: market; Owner: postgres
 --
@@ -1088,7 +1637,7 @@ COPY market.price (id, asset_id, ts, price, currency_id, source, "interval", met
 
 
 --
--- TOC entry 5459 (class 0 OID 18221)
+-- TOC entry 5560 (class 0 OID 18221)
 -- Dependencies: 249
 -- Data for Name: feed; Type: TABLE DATA; Schema: marketdata; Owner: postgres
 --
@@ -1098,7 +1647,7 @@ COPY marketdata.feed (id, provider_id, feed_type, universe, schedule, enabled) F
 
 
 --
--- TOC entry 5463 (class 0 OID 18295)
+-- TOC entry 5564 (class 0 OID 18295)
 -- Dependencies: 253
 -- Data for Name: fetch_log; Type: TABLE DATA; Schema: marketdata; Owner: postgres
 --
@@ -1108,7 +1657,7 @@ COPY marketdata.fetch_log (id, feed_id, started_at, finished_at, status, rows_in
 
 
 --
--- TOC entry 5458 (class 0 OID 18209)
+-- TOC entry 5559 (class 0 OID 18209)
 -- Dependencies: 248
 -- Data for Name: provider; Type: TABLE DATA; Schema: marketdata; Owner: postgres
 --
@@ -1118,7 +1667,7 @@ COPY marketdata.provider (id, code, kind, sla, cost, created_at) FROM stdin;
 
 
 --
--- TOC entry 5460 (class 0 OID 18239)
+-- TOC entry 5561 (class 0 OID 18239)
 -- Dependencies: 250
 -- Data for Name: symbol_map; Type: TABLE DATA; Schema: marketdata; Owner: postgres
 --
@@ -1128,7 +1677,7 @@ COPY marketdata.symbol_map (id, provider_id, external_symbol, exchange_code, ass
 
 
 --
--- TOC entry 5449 (class 0 OID 18032)
+-- TOC entry 5550 (class 0 OID 18032)
 -- Dependencies: 239
 -- Data for Name: portfolio; Type: TABLE DATA; Schema: portfolio; Owner: postgres
 --
@@ -1138,7 +1687,17 @@ COPY portfolio.portfolio (id, user_id, name, base_currency_id, settings, created
 
 
 --
--- TOC entry 5450 (class 0 OID 18055)
+-- TOC entry 5578 (class 0 OID 18553)
+-- Dependencies: 267
+-- Data for Name: portfolio_benchmark; Type: TABLE DATA; Schema: portfolio; Owner: postgres
+--
+
+COPY portfolio.portfolio_benchmark (portfolio_id, benchmark_id) FROM stdin;
+\.
+
+
+--
+-- TOC entry 5551 (class 0 OID 18055)
 -- Dependencies: 240
 -- Data for Name: position; Type: TABLE DATA; Schema: portfolio; Owner: postgres
 --
@@ -1148,7 +1707,7 @@ COPY portfolio."position" (id, portfolio_id, asset_id, qty, cost_basis, updated_
 
 
 --
--- TOC entry 5451 (class 0 OID 18076)
+-- TOC entry 5552 (class 0 OID 18076)
 -- Dependencies: 241
 -- Data for Name: transaction; Type: TABLE DATA; Schema: portfolio; Owner: postgres
 --
@@ -1158,7 +1717,7 @@ COPY portfolio.transaction (id, portfolio_id, asset_id, tx_type, tx_time, quanti
 
 
 --
--- TOC entry 5469 (class 0 OID 18413)
+-- TOC entry 5570 (class 0 OID 18413)
 -- Dependencies: 259
 -- Data for Name: balances_raw; Type: TABLE DATA; Schema: staging; Owner: postgres
 --
@@ -1168,7 +1727,7 @@ COPY staging.balances_raw (id, integration_id, pulled_at, payload, ext_account_i
 
 
 --
--- TOC entry 5464 (class 0 OID 18331)
+-- TOC entry 5565 (class 0 OID 18331)
 -- Dependencies: 254
 -- Data for Name: broker_positions_raw; Type: TABLE DATA; Schema: staging; Owner: postgres
 --
@@ -1178,7 +1737,7 @@ COPY staging.broker_positions_raw (id, integration_id, pulled_at, payload, ext_s
 
 
 --
--- TOC entry 5467 (class 0 OID 18379)
+-- TOC entry 5568 (class 0 OID 18379)
 -- Dependencies: 257
 -- Data for Name: cashflows_raw; Type: TABLE DATA; Schema: staging; Owner: postgres
 --
@@ -1188,7 +1747,7 @@ COPY staging.cashflows_raw (id, integration_id, pulled_at, payload, ext_account_
 
 
 --
--- TOC entry 5470 (class 0 OID 18429)
+-- TOC entry 5571 (class 0 OID 18429)
 -- Dependencies: 260
 -- Data for Name: funding_raw; Type: TABLE DATA; Schema: staging; Owner: postgres
 --
@@ -1198,7 +1757,7 @@ COPY staging.funding_raw (id, integration_id, pulled_at, payload, ext_account_id
 
 
 --
--- TOC entry 5462 (class 0 OID 18278)
+-- TOC entry 5563 (class 0 OID 18278)
 -- Dependencies: 252
 -- Data for Name: fx_raw; Type: TABLE DATA; Schema: staging; Owner: postgres
 --
@@ -1208,7 +1767,7 @@ COPY staging.fx_raw (id, provider_id, base_code, quote_code, ts, rate, payload, 
 
 
 --
--- TOC entry 5468 (class 0 OID 18396)
+-- TOC entry 5569 (class 0 OID 18396)
 -- Dependencies: 258
 -- Data for Name: orders_raw; Type: TABLE DATA; Schema: staging; Owner: postgres
 --
@@ -1218,7 +1777,7 @@ COPY staging.orders_raw (id, integration_id, pulled_at, payload, ext_account_id,
 
 
 --
--- TOC entry 5465 (class 0 OID 18346)
+-- TOC entry 5566 (class 0 OID 18346)
 -- Dependencies: 255
 -- Data for Name: positions_raw; Type: TABLE DATA; Schema: staging; Owner: postgres
 --
@@ -1228,7 +1787,7 @@ COPY staging.positions_raw (id, integration_id, pulled_at, payload, ext_account_
 
 
 --
--- TOC entry 5461 (class 0 OID 18261)
+-- TOC entry 5562 (class 0 OID 18261)
 -- Dependencies: 251
 -- Data for Name: price_raw; Type: TABLE DATA; Schema: staging; Owner: postgres
 --
@@ -1238,7 +1797,7 @@ COPY staging.price_raw (id, provider_id, external_symbol, ts, price, currency_co
 
 
 --
--- TOC entry 5466 (class 0 OID 18362)
+-- TOC entry 5567 (class 0 OID 18362)
 -- Dependencies: 256
 -- Data for Name: trades_raw; Type: TABLE DATA; Schema: staging; Owner: postgres
 --
@@ -1248,7 +1807,7 @@ COPY staging.trades_raw (id, integration_id, pulled_at, payload, ext_account_id,
 
 
 --
--- TOC entry 5480 (class 0 OID 0)
+-- TOC entry 5591 (class 0 OID 0)
 -- Dependencies: 229
 -- Name: auth_user_id_seq; Type: SEQUENCE SET; Schema: account; Owner: postgres
 --
@@ -1257,7 +1816,7 @@ SELECT pg_catalog.setval('account.auth_user_id_seq', 1, false);
 
 
 --
--- TOC entry 5121 (class 2606 OID 17887)
+-- TOC entry 5182 (class 2606 OID 17887)
 -- Name: auth_user auth_user_pkey; Type: CONSTRAINT; Schema: account; Owner: postgres
 --
 
@@ -1266,7 +1825,7 @@ ALTER TABLE ONLY account.auth_user
 
 
 --
--- TOC entry 5123 (class 2606 OID 17889)
+-- TOC entry 5184 (class 2606 OID 17889)
 -- Name: auth_user auth_user_username_key; Type: CONSTRAINT; Schema: account; Owner: postgres
 --
 
@@ -1275,7 +1834,7 @@ ALTER TABLE ONLY account.auth_user
 
 
 --
--- TOC entry 5127 (class 2606 OID 17902)
+-- TOC entry 5188 (class 2606 OID 17902)
 -- Name: session_token session_token_digest_key; Type: CONSTRAINT; Schema: account; Owner: postgres
 --
 
@@ -1284,7 +1843,7 @@ ALTER TABLE ONLY account.session_token
 
 
 --
--- TOC entry 5129 (class 2606 OID 17900)
+-- TOC entry 5190 (class 2606 OID 17900)
 -- Name: session_token session_token_pkey; Type: CONSTRAINT; Schema: account; Owner: postgres
 --
 
@@ -1293,7 +1852,61 @@ ALTER TABLE ONLY account.session_token
 
 
 --
--- TOC entry 5175 (class 2606 OID 18117)
+-- TOC entry 5324 (class 2606 OID 18537)
+-- Name: benchmark benchmark_code_key; Type: CONSTRAINT; Schema: analytics; Owner: postgres
+--
+
+ALTER TABLE ONLY analytics.benchmark
+    ADD CONSTRAINT benchmark_code_key UNIQUE (code);
+
+
+--
+-- TOC entry 5328 (class 2606 OID 18542)
+-- Name: benchmark_component benchmark_component_pkey; Type: CONSTRAINT; Schema: analytics; Owner: postgres
+--
+
+ALTER TABLE ONLY analytics.benchmark_component
+    ADD CONSTRAINT benchmark_component_pkey PRIMARY KEY (benchmark_id, asset_id);
+
+
+--
+-- TOC entry 5326 (class 2606 OID 18535)
+-- Name: benchmark benchmark_pkey; Type: CONSTRAINT; Schema: analytics; Owner: postgres
+--
+
+ALTER TABLE ONLY analytics.benchmark
+    ADD CONSTRAINT benchmark_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 5335 (class 2606 OID 18592)
+-- Name: feature_view feature_view_pkey; Type: CONSTRAINT; Schema: analytics; Owner: postgres
+--
+
+ALTER TABLE ONLY analytics.feature_view
+    ADD CONSTRAINT feature_view_pkey PRIMARY KEY (entity_type, entity_id, as_of, version);
+
+
+--
+-- TOC entry 5337 (class 2606 OID 18604)
+-- Name: model_registry model_registry_name_version_key; Type: CONSTRAINT; Schema: analytics; Owner: postgres
+--
+
+ALTER TABLE ONLY analytics.model_registry
+    ADD CONSTRAINT model_registry_name_version_key UNIQUE (name, version);
+
+
+--
+-- TOC entry 5339 (class 2606 OID 18602)
+-- Name: model_registry model_registry_pkey; Type: CONSTRAINT; Schema: analytics; Owner: postgres
+--
+
+ALTER TABLE ONLY analytics.model_registry
+    ADD CONSTRAINT model_registry_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 5236 (class 2606 OID 18117)
 -- Name: portfolio_snapshot portfolio_snapshot_pkey; Type: CONSTRAINT; Schema: analytics; Owner: postgres
 --
 
@@ -1302,7 +1915,7 @@ ALTER TABLE ONLY analytics.portfolio_snapshot
 
 
 --
--- TOC entry 5177 (class 2606 OID 18119)
+-- TOC entry 5238 (class 2606 OID 18119)
 -- Name: portfolio_snapshot portfolio_snapshot_portfolio_id_as_of_key; Type: CONSTRAINT; Schema: analytics; Owner: postgres
 --
 
@@ -1311,7 +1924,52 @@ ALTER TABLE ONLY analytics.portfolio_snapshot
 
 
 --
--- TOC entry 5188 (class 2606 OID 18188)
+-- TOC entry 5318 (class 2606 OID 18497)
+-- Name: position_valuation_daily position_valuation_daily_pkey; Type: CONSTRAINT; Schema: analytics; Owner: postgres
+--
+
+ALTER TABLE ONLY analytics.position_valuation_daily
+    ADD CONSTRAINT position_valuation_daily_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 5320 (class 2606 OID 18499)
+-- Name: position_valuation_daily position_valuation_daily_portfolio_id_asset_id_as_of_key; Type: CONSTRAINT; Schema: analytics; Owner: postgres
+--
+
+ALTER TABLE ONLY analytics.position_valuation_daily
+    ADD CONSTRAINT position_valuation_daily_portfolio_id_asset_id_as_of_key UNIQUE (portfolio_id, asset_id, as_of);
+
+
+--
+-- TOC entry 5341 (class 2606 OID 18616)
+-- Name: prediction prediction_model_id_entity_type_entity_id_as_of_horizon_tar_key; Type: CONSTRAINT; Schema: analytics; Owner: postgres
+--
+
+ALTER TABLE ONLY analytics.prediction
+    ADD CONSTRAINT prediction_model_id_entity_type_entity_id_as_of_horizon_tar_key UNIQUE (model_id, entity_type, entity_id, as_of, horizon, target);
+
+
+--
+-- TOC entry 5343 (class 2606 OID 18614)
+-- Name: prediction prediction_pkey; Type: CONSTRAINT; Schema: analytics; Owner: postgres
+--
+
+ALTER TABLE ONLY analytics.prediction
+    ADD CONSTRAINT prediction_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 5345 (class 2606 OID 18629)
+-- Name: training_label training_label_pkey; Type: CONSTRAINT; Schema: analytics; Owner: postgres
+--
+
+ALTER TABLE ONLY analytics.training_label
+    ADD CONSTRAINT training_label_pkey PRIMARY KEY (entity_type, entity_id, as_of, horizon, label_name);
+
+
+--
+-- TOC entry 5249 (class 2606 OID 18188)
 -- Name: audit_log audit_log_pkey; Type: CONSTRAINT; Schema: infra; Owner: postgres
 --
 
@@ -1320,7 +1978,7 @@ ALTER TABLE ONLY infra.audit_log
 
 
 --
--- TOC entry 5192 (class 2606 OID 18204)
+-- TOC entry 5253 (class 2606 OID 18204)
 -- Name: outbox_event outbox_event_pkey; Type: CONSTRAINT; Schema: infra; Owner: postgres
 --
 
@@ -1329,7 +1987,7 @@ ALTER TABLE ONLY infra.outbox_event
 
 
 --
--- TOC entry 5247 (class 2606 OID 18456)
+-- TOC entry 5308 (class 2606 OID 18456)
 -- Name: account account_integration_id_ext_account_id_key; Type: CONSTRAINT; Schema: integrations; Owner: postgres
 --
 
@@ -1338,7 +1996,7 @@ ALTER TABLE ONLY integrations.account
 
 
 --
--- TOC entry 5249 (class 2606 OID 18454)
+-- TOC entry 5310 (class 2606 OID 18454)
 -- Name: account account_pkey; Type: CONSTRAINT; Schema: integrations; Owner: postgres
 --
 
@@ -1347,7 +2005,7 @@ ALTER TABLE ONLY integrations.account
 
 
 --
--- TOC entry 5251 (class 2606 OID 18472)
+-- TOC entry 5312 (class 2606 OID 18472)
 -- Name: account_portfolio account_portfolio_account_id_portfolio_id_key; Type: CONSTRAINT; Schema: integrations; Owner: postgres
 --
 
@@ -1356,7 +2014,7 @@ ALTER TABLE ONLY integrations.account_portfolio
 
 
 --
--- TOC entry 5253 (class 2606 OID 18470)
+-- TOC entry 5314 (class 2606 OID 18470)
 -- Name: account_portfolio account_portfolio_pkey; Type: CONSTRAINT; Schema: integrations; Owner: postgres
 --
 
@@ -1365,7 +2023,7 @@ ALTER TABLE ONLY integrations.account_portfolio
 
 
 --
--- TOC entry 5179 (class 2606 OID 18136)
+-- TOC entry 5240 (class 2606 OID 18136)
 -- Name: integration integration_pkey; Type: CONSTRAINT; Schema: integrations; Owner: postgres
 --
 
@@ -1374,7 +2032,7 @@ ALTER TABLE ONLY integrations.integration
 
 
 --
--- TOC entry 5181 (class 2606 OID 18138)
+-- TOC entry 5242 (class 2606 OID 18138)
 -- Name: integration integration_user_id_provider_display_name_key; Type: CONSTRAINT; Schema: integrations; Owner: postgres
 --
 
@@ -1383,7 +2041,7 @@ ALTER TABLE ONLY integrations.integration
 
 
 --
--- TOC entry 5184 (class 2606 OID 18157)
+-- TOC entry 5245 (class 2606 OID 18157)
 -- Name: sync_log sync_log_pkey; Type: CONSTRAINT; Schema: integrations; Owner: postgres
 --
 
@@ -1392,7 +2050,7 @@ ALTER TABLE ONLY integrations.sync_log
 
 
 --
--- TOC entry 5186 (class 2606 OID 18173)
+-- TOC entry 5247 (class 2606 OID 18173)
 -- Name: advice advice_pkey; Type: CONSTRAINT; Schema: llm; Owner: postgres
 --
 
@@ -1401,7 +2059,7 @@ ALTER TABLE ONLY llm.advice
 
 
 --
--- TOC entry 5143 (class 2606 OID 17967)
+-- TOC entry 5204 (class 2606 OID 17967)
 -- Name: asset_identifier asset_identifier_asset_id_id_type_key; Type: CONSTRAINT; Schema: market; Owner: postgres
 --
 
@@ -1410,7 +2068,7 @@ ALTER TABLE ONLY market.asset_identifier
 
 
 --
--- TOC entry 5145 (class 2606 OID 17965)
+-- TOC entry 5206 (class 2606 OID 17965)
 -- Name: asset_identifier asset_identifier_id_type_id_value_key; Type: CONSTRAINT; Schema: market; Owner: postgres
 --
 
@@ -1419,7 +2077,7 @@ ALTER TABLE ONLY market.asset_identifier
 
 
 --
--- TOC entry 5147 (class 2606 OID 17963)
+-- TOC entry 5208 (class 2606 OID 17963)
 -- Name: asset_identifier asset_identifier_pkey; Type: CONSTRAINT; Schema: market; Owner: postgres
 --
 
@@ -1428,7 +2086,7 @@ ALTER TABLE ONLY market.asset_identifier
 
 
 --
--- TOC entry 5139 (class 2606 OID 17943)
+-- TOC entry 5200 (class 2606 OID 17943)
 -- Name: asset asset_pkey; Type: CONSTRAINT; Schema: market; Owner: postgres
 --
 
@@ -1437,7 +2095,25 @@ ALTER TABLE ONLY market.asset
 
 
 --
--- TOC entry 5131 (class 2606 OID 17921)
+-- TOC entry 5322 (class 2606 OID 18522)
+-- Name: asset_tag asset_tag_pkey; Type: CONSTRAINT; Schema: market; Owner: postgres
+--
+
+ALTER TABLE ONLY market.asset_tag
+    ADD CONSTRAINT asset_tag_pkey PRIMARY KEY (asset_id, tag_type, tag_value);
+
+
+--
+-- TOC entry 5332 (class 2606 OID 18577)
+-- Name: corporate_action corporate_action_pkey; Type: CONSTRAINT; Schema: market; Owner: postgres
+--
+
+ALTER TABLE ONLY market.corporate_action
+    ADD CONSTRAINT corporate_action_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 5192 (class 2606 OID 17921)
 -- Name: currency currency_code_key; Type: CONSTRAINT; Schema: market; Owner: postgres
 --
 
@@ -1446,7 +2122,7 @@ ALTER TABLE ONLY market.currency
 
 
 --
--- TOC entry 5133 (class 2606 OID 17919)
+-- TOC entry 5194 (class 2606 OID 17919)
 -- Name: currency currency_pkey; Type: CONSTRAINT; Schema: market; Owner: postgres
 --
 
@@ -1455,7 +2131,7 @@ ALTER TABLE ONLY market.currency
 
 
 --
--- TOC entry 5135 (class 2606 OID 17932)
+-- TOC entry 5196 (class 2606 OID 17932)
 -- Name: exchange exchange_code_key; Type: CONSTRAINT; Schema: market; Owner: postgres
 --
 
@@ -1464,7 +2140,7 @@ ALTER TABLE ONLY market.exchange
 
 
 --
--- TOC entry 5137 (class 2606 OID 17930)
+-- TOC entry 5198 (class 2606 OID 17930)
 -- Name: exchange exchange_pkey; Type: CONSTRAINT; Schema: market; Owner: postgres
 --
 
@@ -1473,7 +2149,7 @@ ALTER TABLE ONLY market.exchange
 
 
 --
--- TOC entry 5155 (class 2606 OID 18007)
+-- TOC entry 5216 (class 2606 OID 18007)
 -- Name: fx_rate fx_rate_base_currency_id_quote_currency_id_ts_source_key; Type: CONSTRAINT; Schema: market; Owner: postgres
 --
 
@@ -1482,7 +2158,7 @@ ALTER TABLE ONLY market.fx_rate
 
 
 --
--- TOC entry 5157 (class 2606 OID 18005)
+-- TOC entry 5218 (class 2606 OID 18005)
 -- Name: fx_rate fx_rate_pkey; Type: CONSTRAINT; Schema: market; Owner: postgres
 --
 
@@ -1491,7 +2167,7 @@ ALTER TABLE ONLY market.fx_rate
 
 
 --
--- TOC entry 5151 (class 2606 OID 17985)
+-- TOC entry 5212 (class 2606 OID 17985)
 -- Name: price price_asset_id_ts_source_interval_key; Type: CONSTRAINT; Schema: market; Owner: postgres
 --
 
@@ -1500,7 +2176,7 @@ ALTER TABLE ONLY market.price
 
 
 --
--- TOC entry 5153 (class 2606 OID 17983)
+-- TOC entry 5214 (class 2606 OID 17983)
 -- Name: price price_pkey; Type: CONSTRAINT; Schema: market; Owner: postgres
 --
 
@@ -1509,7 +2185,7 @@ ALTER TABLE ONLY market.price
 
 
 --
--- TOC entry 5141 (class 2606 OID 17945)
+-- TOC entry 5202 (class 2606 OID 17945)
 -- Name: asset uq_market_asset_symbol_exch; Type: CONSTRAINT; Schema: market; Owner: postgres
 --
 
@@ -1518,7 +2194,7 @@ ALTER TABLE ONLY market.asset
 
 
 --
--- TOC entry 5198 (class 2606 OID 18231)
+-- TOC entry 5259 (class 2606 OID 18231)
 -- Name: feed feed_pkey; Type: CONSTRAINT; Schema: marketdata; Owner: postgres
 --
 
@@ -1527,7 +2203,7 @@ ALTER TABLE ONLY marketdata.feed
 
 
 --
--- TOC entry 5200 (class 2606 OID 18233)
+-- TOC entry 5261 (class 2606 OID 18233)
 -- Name: feed feed_provider_id_feed_type_universe_key; Type: CONSTRAINT; Schema: marketdata; Owner: postgres
 --
 
@@ -1536,7 +2212,7 @@ ALTER TABLE ONLY marketdata.feed
 
 
 --
--- TOC entry 5215 (class 2606 OID 18308)
+-- TOC entry 5276 (class 2606 OID 18308)
 -- Name: fetch_log fetch_log_pkey; Type: CONSTRAINT; Schema: marketdata; Owner: postgres
 --
 
@@ -1545,7 +2221,7 @@ ALTER TABLE ONLY marketdata.fetch_log
 
 
 --
--- TOC entry 5194 (class 2606 OID 18220)
+-- TOC entry 5255 (class 2606 OID 18220)
 -- Name: provider provider_code_key; Type: CONSTRAINT; Schema: marketdata; Owner: postgres
 --
 
@@ -1554,7 +2230,7 @@ ALTER TABLE ONLY marketdata.provider
 
 
 --
--- TOC entry 5196 (class 2606 OID 18218)
+-- TOC entry 5257 (class 2606 OID 18218)
 -- Name: provider provider_pkey; Type: CONSTRAINT; Schema: marketdata; Owner: postgres
 --
 
@@ -1563,7 +2239,7 @@ ALTER TABLE ONLY marketdata.provider
 
 
 --
--- TOC entry 5202 (class 2606 OID 18248)
+-- TOC entry 5263 (class 2606 OID 18248)
 -- Name: symbol_map symbol_map_pkey; Type: CONSTRAINT; Schema: marketdata; Owner: postgres
 --
 
@@ -1572,7 +2248,7 @@ ALTER TABLE ONLY marketdata.symbol_map
 
 
 --
--- TOC entry 5204 (class 2606 OID 18260)
+-- TOC entry 5265 (class 2606 OID 18260)
 -- Name: symbol_map ux_symbol_map; Type: CONSTRAINT; Schema: marketdata; Owner: postgres
 --
 
@@ -1581,7 +2257,16 @@ ALTER TABLE ONLY marketdata.symbol_map
 
 
 --
--- TOC entry 5161 (class 2606 OID 18042)
+-- TOC entry 5330 (class 2606 OID 18557)
+-- Name: portfolio_benchmark portfolio_benchmark_pkey; Type: CONSTRAINT; Schema: portfolio; Owner: postgres
+--
+
+ALTER TABLE ONLY portfolio.portfolio_benchmark
+    ADD CONSTRAINT portfolio_benchmark_pkey PRIMARY KEY (portfolio_id);
+
+
+--
+-- TOC entry 5222 (class 2606 OID 18042)
 -- Name: portfolio portfolio_pkey; Type: CONSTRAINT; Schema: portfolio; Owner: postgres
 --
 
@@ -1590,7 +2275,7 @@ ALTER TABLE ONLY portfolio.portfolio
 
 
 --
--- TOC entry 5163 (class 2606 OID 18044)
+-- TOC entry 5224 (class 2606 OID 18044)
 -- Name: portfolio portfolio_user_id_name_key; Type: CONSTRAINT; Schema: portfolio; Owner: postgres
 --
 
@@ -1599,7 +2284,7 @@ ALTER TABLE ONLY portfolio.portfolio
 
 
 --
--- TOC entry 5165 (class 2606 OID 18063)
+-- TOC entry 5226 (class 2606 OID 18063)
 -- Name: position position_pkey; Type: CONSTRAINT; Schema: portfolio; Owner: postgres
 --
 
@@ -1608,7 +2293,7 @@ ALTER TABLE ONLY portfolio."position"
 
 
 --
--- TOC entry 5167 (class 2606 OID 18065)
+-- TOC entry 5228 (class 2606 OID 18065)
 -- Name: position position_portfolio_id_asset_id_key; Type: CONSTRAINT; Schema: portfolio; Owner: postgres
 --
 
@@ -1617,7 +2302,7 @@ ALTER TABLE ONLY portfolio."position"
 
 
 --
--- TOC entry 5172 (class 2606 OID 18088)
+-- TOC entry 5233 (class 2606 OID 18088)
 -- Name: transaction transaction_pkey; Type: CONSTRAINT; Schema: portfolio; Owner: postgres
 --
 
@@ -1626,7 +2311,7 @@ ALTER TABLE ONLY portfolio.transaction
 
 
 --
--- TOC entry 5239 (class 2606 OID 18421)
+-- TOC entry 5300 (class 2606 OID 18421)
 -- Name: balances_raw balances_raw_pkey; Type: CONSTRAINT; Schema: staging; Owner: postgres
 --
 
@@ -1635,7 +2320,7 @@ ALTER TABLE ONLY staging.balances_raw
 
 
 --
--- TOC entry 5217 (class 2606 OID 18339)
+-- TOC entry 5278 (class 2606 OID 18339)
 -- Name: broker_positions_raw broker_positions_raw_pkey; Type: CONSTRAINT; Schema: staging; Owner: postgres
 --
 
@@ -1644,7 +2329,7 @@ ALTER TABLE ONLY staging.broker_positions_raw
 
 
 --
--- TOC entry 5229 (class 2606 OID 18387)
+-- TOC entry 5290 (class 2606 OID 18387)
 -- Name: cashflows_raw cashflows_raw_pkey; Type: CONSTRAINT; Schema: staging; Owner: postgres
 --
 
@@ -1653,7 +2338,7 @@ ALTER TABLE ONLY staging.cashflows_raw
 
 
 --
--- TOC entry 5243 (class 2606 OID 18437)
+-- TOC entry 5304 (class 2606 OID 18437)
 -- Name: funding_raw funding_raw_pkey; Type: CONSTRAINT; Schema: staging; Owner: postgres
 --
 
@@ -1662,7 +2347,7 @@ ALTER TABLE ONLY staging.funding_raw
 
 
 --
--- TOC entry 5210 (class 2606 OID 18287)
+-- TOC entry 5271 (class 2606 OID 18287)
 -- Name: fx_raw fx_raw_pkey; Type: CONSTRAINT; Schema: staging; Owner: postgres
 --
 
@@ -1671,7 +2356,7 @@ ALTER TABLE ONLY staging.fx_raw
 
 
 --
--- TOC entry 5212 (class 2606 OID 18289)
+-- TOC entry 5273 (class 2606 OID 18289)
 -- Name: fx_raw fx_raw_provider_id_base_code_quote_code_ts_key; Type: CONSTRAINT; Schema: staging; Owner: postgres
 --
 
@@ -1680,7 +2365,7 @@ ALTER TABLE ONLY staging.fx_raw
 
 
 --
--- TOC entry 5235 (class 2606 OID 18404)
+-- TOC entry 5296 (class 2606 OID 18404)
 -- Name: orders_raw orders_raw_pkey; Type: CONSTRAINT; Schema: staging; Owner: postgres
 --
 
@@ -1689,7 +2374,7 @@ ALTER TABLE ONLY staging.orders_raw
 
 
 --
--- TOC entry 5221 (class 2606 OID 18354)
+-- TOC entry 5282 (class 2606 OID 18354)
 -- Name: positions_raw positions_raw_pkey; Type: CONSTRAINT; Schema: staging; Owner: postgres
 --
 
@@ -1698,7 +2383,7 @@ ALTER TABLE ONLY staging.positions_raw
 
 
 --
--- TOC entry 5206 (class 2606 OID 18270)
+-- TOC entry 5267 (class 2606 OID 18270)
 -- Name: price_raw price_raw_pkey; Type: CONSTRAINT; Schema: staging; Owner: postgres
 --
 
@@ -1707,7 +2392,7 @@ ALTER TABLE ONLY staging.price_raw
 
 
 --
--- TOC entry 5208 (class 2606 OID 18272)
+-- TOC entry 5269 (class 2606 OID 18272)
 -- Name: price_raw price_raw_provider_id_external_symbol_ts_interval_key; Type: CONSTRAINT; Schema: staging; Owner: postgres
 --
 
@@ -1716,7 +2401,7 @@ ALTER TABLE ONLY staging.price_raw
 
 
 --
--- TOC entry 5225 (class 2606 OID 18370)
+-- TOC entry 5286 (class 2606 OID 18370)
 -- Name: trades_raw trades_raw_pkey; Type: CONSTRAINT; Schema: staging; Owner: postgres
 --
 
@@ -1725,7 +2410,7 @@ ALTER TABLE ONLY staging.trades_raw
 
 
 --
--- TOC entry 5232 (class 2606 OID 18389)
+-- TOC entry 5293 (class 2606 OID 18389)
 -- Name: cashflows_raw uq_cashflows_raw; Type: CONSTRAINT; Schema: staging; Owner: postgres
 --
 
@@ -1734,7 +2419,7 @@ ALTER TABLE ONLY staging.cashflows_raw
 
 
 --
--- TOC entry 5237 (class 2606 OID 18406)
+-- TOC entry 5298 (class 2606 OID 18406)
 -- Name: orders_raw uq_orders_raw; Type: CONSTRAINT; Schema: staging; Owner: postgres
 --
 
@@ -1743,7 +2428,7 @@ ALTER TABLE ONLY staging.orders_raw
 
 
 --
--- TOC entry 5227 (class 2606 OID 18372)
+-- TOC entry 5288 (class 2606 OID 18372)
 -- Name: trades_raw uq_trades_raw; Type: CONSTRAINT; Schema: staging; Owner: postgres
 --
 
@@ -1752,7 +2437,7 @@ ALTER TABLE ONLY staging.trades_raw
 
 
 --
--- TOC entry 5125 (class 1259 OID 17908)
+-- TOC entry 5186 (class 1259 OID 17908)
 -- Name: ix_account_session_user_active; Type: INDEX; Schema: account; Owner: postgres
 --
 
@@ -1760,7 +2445,7 @@ CREATE INDEX ix_account_session_user_active ON account.session_token USING btree
 
 
 --
--- TOC entry 5124 (class 1259 OID 17890)
+-- TOC entry 5185 (class 1259 OID 17890)
 -- Name: ix_auth_user_email; Type: INDEX; Schema: account; Owner: postgres
 --
 
@@ -1768,7 +2453,7 @@ CREATE INDEX ix_auth_user_email ON account.auth_user USING btree (email);
 
 
 --
--- TOC entry 5173 (class 1259 OID 18125)
+-- TOC entry 5234 (class 1259 OID 18125)
 -- Name: ix_analytics_snapshot_portfolio_asof; Type: INDEX; Schema: analytics; Owner: postgres
 --
 
@@ -1776,7 +2461,15 @@ CREATE INDEX ix_analytics_snapshot_portfolio_asof ON analytics.portfolio_snapsho
 
 
 --
--- TOC entry 5189 (class 1259 OID 18194)
+-- TOC entry 5316 (class 1259 OID 18515)
+-- Name: ix_pvd_portfolio_date; Type: INDEX; Schema: analytics; Owner: postgres
+--
+
+CREATE INDEX ix_pvd_portfolio_date ON analytics.position_valuation_daily USING btree (portfolio_id, as_of DESC);
+
+
+--
+-- TOC entry 5250 (class 1259 OID 18194)
 -- Name: ix_infra_audit_ts; Type: INDEX; Schema: infra; Owner: postgres
 --
 
@@ -1784,7 +2477,7 @@ CREATE INDEX ix_infra_audit_ts ON infra.audit_log USING btree (ts DESC);
 
 
 --
--- TOC entry 5190 (class 1259 OID 18205)
+-- TOC entry 5251 (class 1259 OID 18205)
 -- Name: ix_infra_outbox_unprocessed; Type: INDEX; Schema: infra; Owner: postgres
 --
 
@@ -1792,7 +2485,7 @@ CREATE INDEX ix_infra_outbox_unprocessed ON infra.outbox_event USING btree (proc
 
 
 --
--- TOC entry 5254 (class 1259 OID 18483)
+-- TOC entry 5315 (class 1259 OID 18483)
 -- Name: ix_acc_portf_portfolio; Type: INDEX; Schema: integrations; Owner: postgres
 --
 
@@ -1800,7 +2493,7 @@ CREATE INDEX ix_acc_portf_portfolio ON integrations.account_portfolio USING btre
 
 
 --
--- TOC entry 5182 (class 1259 OID 18163)
+-- TOC entry 5243 (class 1259 OID 18163)
 -- Name: ix_integrations_sync_log_integration_time; Type: INDEX; Schema: integrations; Owner: postgres
 --
 
@@ -1808,7 +2501,15 @@ CREATE INDEX ix_integrations_sync_log_integration_time ON integrations.sync_log 
 
 
 --
--- TOC entry 5158 (class 1259 OID 18018)
+-- TOC entry 5333 (class 1259 OID 18583)
+-- Name: ix_ca_asset_exdate; Type: INDEX; Schema: market; Owner: postgres
+--
+
+CREATE INDEX ix_ca_asset_exdate ON market.corporate_action USING btree (asset_id, ex_date);
+
+
+--
+-- TOC entry 5219 (class 1259 OID 18018)
 -- Name: ix_market_fx_pair_ts; Type: INDEX; Schema: market; Owner: postgres
 --
 
@@ -1816,7 +2517,7 @@ CREATE INDEX ix_market_fx_pair_ts ON market.fx_rate USING btree (base_currency_i
 
 
 --
--- TOC entry 5148 (class 1259 OID 17996)
+-- TOC entry 5209 (class 1259 OID 17996)
 -- Name: ix_market_price_asset_ts; Type: INDEX; Schema: market; Owner: postgres
 --
 
@@ -1824,7 +2525,7 @@ CREATE INDEX ix_market_price_asset_ts ON market.price USING btree (asset_id, ts 
 
 
 --
--- TOC entry 5149 (class 1259 OID 17997)
+-- TOC entry 5210 (class 1259 OID 17997)
 -- Name: ix_market_price_source; Type: INDEX; Schema: market; Owner: postgres
 --
 
@@ -1832,7 +2533,7 @@ CREATE INDEX ix_market_price_source ON market.price USING btree (source);
 
 
 --
--- TOC entry 5159 (class 1259 OID 18030)
+-- TOC entry 5220 (class 1259 OID 18030)
 -- Name: ix_mv_latest_daily_price_asset; Type: INDEX; Schema: market; Owner: postgres
 --
 
@@ -1840,7 +2541,7 @@ CREATE INDEX ix_mv_latest_daily_price_asset ON market.mv_latest_daily_price USIN
 
 
 --
--- TOC entry 5213 (class 1259 OID 18314)
+-- TOC entry 5274 (class 1259 OID 18314)
 -- Name: fetch_log_feed_id_started_at_idx; Type: INDEX; Schema: marketdata; Owner: postgres
 --
 
@@ -1848,7 +2549,7 @@ CREATE INDEX fetch_log_feed_id_started_at_idx ON marketdata.fetch_log USING btre
 
 
 --
--- TOC entry 5168 (class 1259 OID 18110)
+-- TOC entry 5229 (class 1259 OID 18110)
 -- Name: ix_portfolio_tx_asset_time; Type: INDEX; Schema: portfolio; Owner: postgres
 --
 
@@ -1856,7 +2557,7 @@ CREATE INDEX ix_portfolio_tx_asset_time ON portfolio.transaction USING btree (as
 
 
 --
--- TOC entry 5169 (class 1259 OID 18109)
+-- TOC entry 5230 (class 1259 OID 18109)
 -- Name: ix_portfolio_tx_portfolio_time; Type: INDEX; Schema: portfolio; Owner: postgres
 --
 
@@ -1864,7 +2565,7 @@ CREATE INDEX ix_portfolio_tx_portfolio_time ON portfolio.transaction USING btree
 
 
 --
--- TOC entry 5170 (class 1259 OID 18111)
+-- TOC entry 5231 (class 1259 OID 18111)
 -- Name: ix_portfolio_tx_type; Type: INDEX; Schema: portfolio; Owner: postgres
 --
 
@@ -1872,7 +2573,7 @@ CREATE INDEX ix_portfolio_tx_type ON portfolio.transaction USING btree (tx_type)
 
 
 --
--- TOC entry 5240 (class 1259 OID 18427)
+-- TOC entry 5301 (class 1259 OID 18427)
 -- Name: ix_balances_raw_account; Type: INDEX; Schema: staging; Owner: postgres
 --
 
@@ -1880,7 +2581,7 @@ CREATE INDEX ix_balances_raw_account ON staging.balances_raw USING btree (integr
 
 
 --
--- TOC entry 5230 (class 1259 OID 18395)
+-- TOC entry 5291 (class 1259 OID 18395)
 -- Name: ix_cashflows_raw_time; Type: INDEX; Schema: staging; Owner: postgres
 --
 
@@ -1888,7 +2589,7 @@ CREATE INDEX ix_cashflows_raw_time ON staging.cashflows_raw USING btree (integra
 
 
 --
--- TOC entry 5244 (class 1259 OID 18444)
+-- TOC entry 5305 (class 1259 OID 18444)
 -- Name: ix_funding_raw_time; Type: INDEX; Schema: staging; Owner: postgres
 --
 
@@ -1896,7 +2597,7 @@ CREATE INDEX ix_funding_raw_time ON staging.funding_raw USING btree (integration
 
 
 --
--- TOC entry 5233 (class 1259 OID 18412)
+-- TOC entry 5294 (class 1259 OID 18412)
 -- Name: ix_orders_raw_account; Type: INDEX; Schema: staging; Owner: postgres
 --
 
@@ -1904,7 +2605,7 @@ CREATE INDEX ix_orders_raw_account ON staging.orders_raw USING btree (integratio
 
 
 --
--- TOC entry 5219 (class 1259 OID 18361)
+-- TOC entry 5280 (class 1259 OID 18361)
 -- Name: ix_positions_raw_pull; Type: INDEX; Schema: staging; Owner: postgres
 --
 
@@ -1912,7 +2613,7 @@ CREATE INDEX ix_positions_raw_pull ON staging.positions_raw USING btree (integra
 
 
 --
--- TOC entry 5223 (class 1259 OID 18378)
+-- TOC entry 5284 (class 1259 OID 18378)
 -- Name: ix_trades_raw_time; Type: INDEX; Schema: staging; Owner: postgres
 --
 
@@ -1920,7 +2621,7 @@ CREATE INDEX ix_trades_raw_time ON staging.trades_raw USING btree (integration_i
 
 
 --
--- TOC entry 5241 (class 1259 OID 18428)
+-- TOC entry 5302 (class 1259 OID 18428)
 -- Name: ux_balances_raw_point; Type: INDEX; Schema: staging; Owner: postgres
 --
 
@@ -1928,7 +2629,7 @@ CREATE UNIQUE INDEX ux_balances_raw_point ON staging.balances_raw USING btree (i
 
 
 --
--- TOC entry 5218 (class 1259 OID 18345)
+-- TOC entry 5279 (class 1259 OID 18345)
 -- Name: ux_broker_positions_raw_dedup; Type: INDEX; Schema: staging; Owner: postgres
 --
 
@@ -1936,7 +2637,7 @@ CREATE UNIQUE INDEX ux_broker_positions_raw_dedup ON staging.broker_positions_ra
 
 
 --
--- TOC entry 5245 (class 1259 OID 18443)
+-- TOC entry 5306 (class 1259 OID 18443)
 -- Name: ux_funding_raw_dedup; Type: INDEX; Schema: staging; Owner: postgres
 --
 
@@ -1944,7 +2645,7 @@ CREATE UNIQUE INDEX ux_funding_raw_dedup ON staging.funding_raw USING btree (int
 
 
 --
--- TOC entry 5222 (class 1259 OID 18360)
+-- TOC entry 5283 (class 1259 OID 18360)
 -- Name: ux_positions_raw_dedup; Type: INDEX; Schema: staging; Owner: postgres
 --
 
@@ -1952,7 +2653,7 @@ CREATE UNIQUE INDEX ux_positions_raw_dedup ON staging.positions_raw USING btree 
 
 
 --
--- TOC entry 5292 (class 2620 OID 18485)
+-- TOC entry 5393 (class 2620 OID 18485)
 -- Name: account_portfolio trg_check_acc_portf_user; Type: TRIGGER; Schema: integrations; Owner: postgres
 --
 
@@ -1960,7 +2661,7 @@ CREATE TRIGGER trg_check_acc_portf_user BEFORE INSERT OR UPDATE ON integrations.
 
 
 --
--- TOC entry 5255 (class 2606 OID 17903)
+-- TOC entry 5346 (class 2606 OID 17903)
 -- Name: session_token session_token_user_id_fkey; Type: FK CONSTRAINT; Schema: account; Owner: postgres
 --
 
@@ -1969,7 +2670,25 @@ ALTER TABLE ONLY account.session_token
 
 
 --
--- TOC entry 5271 (class 2606 OID 18120)
+-- TOC entry 5387 (class 2606 OID 18548)
+-- Name: benchmark_component benchmark_component_asset_id_fkey; Type: FK CONSTRAINT; Schema: analytics; Owner: postgres
+--
+
+ALTER TABLE ONLY analytics.benchmark_component
+    ADD CONSTRAINT benchmark_component_asset_id_fkey FOREIGN KEY (asset_id) REFERENCES market.asset(id);
+
+
+--
+-- TOC entry 5388 (class 2606 OID 18543)
+-- Name: benchmark_component benchmark_component_benchmark_id_fkey; Type: FK CONSTRAINT; Schema: analytics; Owner: postgres
+--
+
+ALTER TABLE ONLY analytics.benchmark_component
+    ADD CONSTRAINT benchmark_component_benchmark_id_fkey FOREIGN KEY (benchmark_id) REFERENCES analytics.benchmark(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 5362 (class 2606 OID 18120)
 -- Name: portfolio_snapshot portfolio_snapshot_portfolio_id_fkey; Type: FK CONSTRAINT; Schema: analytics; Owner: postgres
 --
 
@@ -1978,7 +2697,43 @@ ALTER TABLE ONLY analytics.portfolio_snapshot
 
 
 --
--- TOC entry 5275 (class 2606 OID 18189)
+-- TOC entry 5383 (class 2606 OID 18505)
+-- Name: position_valuation_daily position_valuation_daily_asset_id_fkey; Type: FK CONSTRAINT; Schema: analytics; Owner: postgres
+--
+
+ALTER TABLE ONLY analytics.position_valuation_daily
+    ADD CONSTRAINT position_valuation_daily_asset_id_fkey FOREIGN KEY (asset_id) REFERENCES market.asset(id);
+
+
+--
+-- TOC entry 5384 (class 2606 OID 18500)
+-- Name: position_valuation_daily position_valuation_daily_portfolio_id_fkey; Type: FK CONSTRAINT; Schema: analytics; Owner: postgres
+--
+
+ALTER TABLE ONLY analytics.position_valuation_daily
+    ADD CONSTRAINT position_valuation_daily_portfolio_id_fkey FOREIGN KEY (portfolio_id) REFERENCES portfolio.portfolio(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 5385 (class 2606 OID 18510)
+-- Name: position_valuation_daily position_valuation_daily_price_currency_id_fkey; Type: FK CONSTRAINT; Schema: analytics; Owner: postgres
+--
+
+ALTER TABLE ONLY analytics.position_valuation_daily
+    ADD CONSTRAINT position_valuation_daily_price_currency_id_fkey FOREIGN KEY (price_currency_id) REFERENCES market.currency(id);
+
+
+--
+-- TOC entry 5392 (class 2606 OID 18617)
+-- Name: prediction prediction_model_id_fkey; Type: FK CONSTRAINT; Schema: analytics; Owner: postgres
+--
+
+ALTER TABLE ONLY analytics.prediction
+    ADD CONSTRAINT prediction_model_id_fkey FOREIGN KEY (model_id) REFERENCES analytics.model_registry(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 5366 (class 2606 OID 18189)
 -- Name: audit_log audit_log_user_id_fkey; Type: FK CONSTRAINT; Schema: infra; Owner: postgres
 --
 
@@ -1987,7 +2742,7 @@ ALTER TABLE ONLY infra.audit_log
 
 
 --
--- TOC entry 5289 (class 2606 OID 18457)
+-- TOC entry 5380 (class 2606 OID 18457)
 -- Name: account account_integration_id_fkey; Type: FK CONSTRAINT; Schema: integrations; Owner: postgres
 --
 
@@ -1996,7 +2751,7 @@ ALTER TABLE ONLY integrations.account
 
 
 --
--- TOC entry 5290 (class 2606 OID 18473)
+-- TOC entry 5381 (class 2606 OID 18473)
 -- Name: account_portfolio account_portfolio_account_id_fkey; Type: FK CONSTRAINT; Schema: integrations; Owner: postgres
 --
 
@@ -2005,7 +2760,7 @@ ALTER TABLE ONLY integrations.account_portfolio
 
 
 --
--- TOC entry 5291 (class 2606 OID 18478)
+-- TOC entry 5382 (class 2606 OID 18478)
 -- Name: account_portfolio account_portfolio_portfolio_id_fkey; Type: FK CONSTRAINT; Schema: integrations; Owner: postgres
 --
 
@@ -2014,7 +2769,7 @@ ALTER TABLE ONLY integrations.account_portfolio
 
 
 --
--- TOC entry 5272 (class 2606 OID 18139)
+-- TOC entry 5363 (class 2606 OID 18139)
 -- Name: integration integration_user_id_fkey; Type: FK CONSTRAINT; Schema: integrations; Owner: postgres
 --
 
@@ -2023,7 +2778,7 @@ ALTER TABLE ONLY integrations.integration
 
 
 --
--- TOC entry 5273 (class 2606 OID 18158)
+-- TOC entry 5364 (class 2606 OID 18158)
 -- Name: sync_log sync_log_integration_id_fkey; Type: FK CONSTRAINT; Schema: integrations; Owner: postgres
 --
 
@@ -2032,7 +2787,7 @@ ALTER TABLE ONLY integrations.sync_log
 
 
 --
--- TOC entry 5274 (class 2606 OID 18174)
+-- TOC entry 5365 (class 2606 OID 18174)
 -- Name: advice advice_portfolio_id_fkey; Type: FK CONSTRAINT; Schema: llm; Owner: postgres
 --
 
@@ -2041,7 +2796,7 @@ ALTER TABLE ONLY llm.advice
 
 
 --
--- TOC entry 5256 (class 2606 OID 17951)
+-- TOC entry 5347 (class 2606 OID 17951)
 -- Name: asset asset_exchange_id_fkey; Type: FK CONSTRAINT; Schema: market; Owner: postgres
 --
 
@@ -2050,7 +2805,7 @@ ALTER TABLE ONLY market.asset
 
 
 --
--- TOC entry 5258 (class 2606 OID 17968)
+-- TOC entry 5349 (class 2606 OID 17968)
 -- Name: asset_identifier asset_identifier_asset_id_fkey; Type: FK CONSTRAINT; Schema: market; Owner: postgres
 --
 
@@ -2059,7 +2814,16 @@ ALTER TABLE ONLY market.asset_identifier
 
 
 --
--- TOC entry 5257 (class 2606 OID 17946)
+-- TOC entry 5386 (class 2606 OID 18523)
+-- Name: asset_tag asset_tag_asset_id_fkey; Type: FK CONSTRAINT; Schema: market; Owner: postgres
+--
+
+ALTER TABLE ONLY market.asset_tag
+    ADD CONSTRAINT asset_tag_asset_id_fkey FOREIGN KEY (asset_id) REFERENCES market.asset(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 5348 (class 2606 OID 17946)
 -- Name: asset asset_trading_currency_id_fkey; Type: FK CONSTRAINT; Schema: market; Owner: postgres
 --
 
@@ -2068,7 +2832,16 @@ ALTER TABLE ONLY market.asset
 
 
 --
--- TOC entry 5261 (class 2606 OID 18008)
+-- TOC entry 5391 (class 2606 OID 18578)
+-- Name: corporate_action corporate_action_asset_id_fkey; Type: FK CONSTRAINT; Schema: market; Owner: postgres
+--
+
+ALTER TABLE ONLY market.corporate_action
+    ADD CONSTRAINT corporate_action_asset_id_fkey FOREIGN KEY (asset_id) REFERENCES market.asset(id);
+
+
+--
+-- TOC entry 5352 (class 2606 OID 18008)
 -- Name: fx_rate fx_rate_base_currency_id_fkey; Type: FK CONSTRAINT; Schema: market; Owner: postgres
 --
 
@@ -2077,7 +2850,7 @@ ALTER TABLE ONLY market.fx_rate
 
 
 --
--- TOC entry 5262 (class 2606 OID 18013)
+-- TOC entry 5353 (class 2606 OID 18013)
 -- Name: fx_rate fx_rate_quote_currency_id_fkey; Type: FK CONSTRAINT; Schema: market; Owner: postgres
 --
 
@@ -2086,7 +2859,7 @@ ALTER TABLE ONLY market.fx_rate
 
 
 --
--- TOC entry 5259 (class 2606 OID 17986)
+-- TOC entry 5350 (class 2606 OID 17986)
 -- Name: price price_asset_id_fkey; Type: FK CONSTRAINT; Schema: market; Owner: postgres
 --
 
@@ -2095,7 +2868,7 @@ ALTER TABLE ONLY market.price
 
 
 --
--- TOC entry 5260 (class 2606 OID 17991)
+-- TOC entry 5351 (class 2606 OID 17991)
 -- Name: price price_currency_id_fkey; Type: FK CONSTRAINT; Schema: market; Owner: postgres
 --
 
@@ -2104,7 +2877,7 @@ ALTER TABLE ONLY market.price
 
 
 --
--- TOC entry 5276 (class 2606 OID 18234)
+-- TOC entry 5367 (class 2606 OID 18234)
 -- Name: feed feed_provider_id_fkey; Type: FK CONSTRAINT; Schema: marketdata; Owner: postgres
 --
 
@@ -2113,7 +2886,7 @@ ALTER TABLE ONLY marketdata.feed
 
 
 --
--- TOC entry 5281 (class 2606 OID 18309)
+-- TOC entry 5372 (class 2606 OID 18309)
 -- Name: fetch_log fetch_log_feed_id_fkey; Type: FK CONSTRAINT; Schema: marketdata; Owner: postgres
 --
 
@@ -2122,7 +2895,7 @@ ALTER TABLE ONLY marketdata.fetch_log
 
 
 --
--- TOC entry 5277 (class 2606 OID 18254)
+-- TOC entry 5368 (class 2606 OID 18254)
 -- Name: symbol_map symbol_map_asset_id_fkey; Type: FK CONSTRAINT; Schema: marketdata; Owner: postgres
 --
 
@@ -2131,7 +2904,7 @@ ALTER TABLE ONLY marketdata.symbol_map
 
 
 --
--- TOC entry 5278 (class 2606 OID 18249)
+-- TOC entry 5369 (class 2606 OID 18249)
 -- Name: symbol_map symbol_map_provider_id_fkey; Type: FK CONSTRAINT; Schema: marketdata; Owner: postgres
 --
 
@@ -2140,7 +2913,7 @@ ALTER TABLE ONLY marketdata.symbol_map
 
 
 --
--- TOC entry 5263 (class 2606 OID 18050)
+-- TOC entry 5354 (class 2606 OID 18050)
 -- Name: portfolio portfolio_base_currency_id_fkey; Type: FK CONSTRAINT; Schema: portfolio; Owner: postgres
 --
 
@@ -2149,7 +2922,25 @@ ALTER TABLE ONLY portfolio.portfolio
 
 
 --
--- TOC entry 5264 (class 2606 OID 18045)
+-- TOC entry 5389 (class 2606 OID 18563)
+-- Name: portfolio_benchmark portfolio_benchmark_benchmark_id_fkey; Type: FK CONSTRAINT; Schema: portfolio; Owner: postgres
+--
+
+ALTER TABLE ONLY portfolio.portfolio_benchmark
+    ADD CONSTRAINT portfolio_benchmark_benchmark_id_fkey FOREIGN KEY (benchmark_id) REFERENCES analytics.benchmark(id);
+
+
+--
+-- TOC entry 5390 (class 2606 OID 18558)
+-- Name: portfolio_benchmark portfolio_benchmark_portfolio_id_fkey; Type: FK CONSTRAINT; Schema: portfolio; Owner: postgres
+--
+
+ALTER TABLE ONLY portfolio.portfolio_benchmark
+    ADD CONSTRAINT portfolio_benchmark_portfolio_id_fkey FOREIGN KEY (portfolio_id) REFERENCES portfolio.portfolio(id) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 5355 (class 2606 OID 18045)
 -- Name: portfolio portfolio_user_id_fkey; Type: FK CONSTRAINT; Schema: portfolio; Owner: postgres
 --
 
@@ -2158,7 +2949,7 @@ ALTER TABLE ONLY portfolio.portfolio
 
 
 --
--- TOC entry 5265 (class 2606 OID 18071)
+-- TOC entry 5356 (class 2606 OID 18071)
 -- Name: position position_asset_id_fkey; Type: FK CONSTRAINT; Schema: portfolio; Owner: postgres
 --
 
@@ -2167,7 +2958,7 @@ ALTER TABLE ONLY portfolio."position"
 
 
 --
--- TOC entry 5266 (class 2606 OID 18066)
+-- TOC entry 5357 (class 2606 OID 18066)
 -- Name: position position_portfolio_id_fkey; Type: FK CONSTRAINT; Schema: portfolio; Owner: postgres
 --
 
@@ -2176,7 +2967,7 @@ ALTER TABLE ONLY portfolio."position"
 
 
 --
--- TOC entry 5267 (class 2606 OID 18094)
+-- TOC entry 5358 (class 2606 OID 18094)
 -- Name: transaction transaction_asset_id_fkey; Type: FK CONSTRAINT; Schema: portfolio; Owner: postgres
 --
 
@@ -2185,7 +2976,7 @@ ALTER TABLE ONLY portfolio.transaction
 
 
 --
--- TOC entry 5268 (class 2606 OID 18104)
+-- TOC entry 5359 (class 2606 OID 18104)
 -- Name: transaction transaction_linked_tx_id_fkey; Type: FK CONSTRAINT; Schema: portfolio; Owner: postgres
 --
 
@@ -2194,7 +2985,7 @@ ALTER TABLE ONLY portfolio.transaction
 
 
 --
--- TOC entry 5269 (class 2606 OID 18089)
+-- TOC entry 5360 (class 2606 OID 18089)
 -- Name: transaction transaction_portfolio_id_fkey; Type: FK CONSTRAINT; Schema: portfolio; Owner: postgres
 --
 
@@ -2203,7 +2994,7 @@ ALTER TABLE ONLY portfolio.transaction
 
 
 --
--- TOC entry 5270 (class 2606 OID 18099)
+-- TOC entry 5361 (class 2606 OID 18099)
 -- Name: transaction transaction_price_currency_id_fkey; Type: FK CONSTRAINT; Schema: portfolio; Owner: postgres
 --
 
@@ -2212,7 +3003,7 @@ ALTER TABLE ONLY portfolio.transaction
 
 
 --
--- TOC entry 5287 (class 2606 OID 18422)
+-- TOC entry 5378 (class 2606 OID 18422)
 -- Name: balances_raw balances_raw_integration_id_fkey; Type: FK CONSTRAINT; Schema: staging; Owner: postgres
 --
 
@@ -2221,7 +3012,7 @@ ALTER TABLE ONLY staging.balances_raw
 
 
 --
--- TOC entry 5282 (class 2606 OID 18340)
+-- TOC entry 5373 (class 2606 OID 18340)
 -- Name: broker_positions_raw broker_positions_raw_integration_id_fkey; Type: FK CONSTRAINT; Schema: staging; Owner: postgres
 --
 
@@ -2230,7 +3021,7 @@ ALTER TABLE ONLY staging.broker_positions_raw
 
 
 --
--- TOC entry 5285 (class 2606 OID 18390)
+-- TOC entry 5376 (class 2606 OID 18390)
 -- Name: cashflows_raw cashflows_raw_integration_id_fkey; Type: FK CONSTRAINT; Schema: staging; Owner: postgres
 --
 
@@ -2239,7 +3030,7 @@ ALTER TABLE ONLY staging.cashflows_raw
 
 
 --
--- TOC entry 5288 (class 2606 OID 18438)
+-- TOC entry 5379 (class 2606 OID 18438)
 -- Name: funding_raw funding_raw_integration_id_fkey; Type: FK CONSTRAINT; Schema: staging; Owner: postgres
 --
 
@@ -2248,7 +3039,7 @@ ALTER TABLE ONLY staging.funding_raw
 
 
 --
--- TOC entry 5280 (class 2606 OID 18290)
+-- TOC entry 5371 (class 2606 OID 18290)
 -- Name: fx_raw fx_raw_provider_id_fkey; Type: FK CONSTRAINT; Schema: staging; Owner: postgres
 --
 
@@ -2257,7 +3048,7 @@ ALTER TABLE ONLY staging.fx_raw
 
 
 --
--- TOC entry 5286 (class 2606 OID 18407)
+-- TOC entry 5377 (class 2606 OID 18407)
 -- Name: orders_raw orders_raw_integration_id_fkey; Type: FK CONSTRAINT; Schema: staging; Owner: postgres
 --
 
@@ -2266,7 +3057,7 @@ ALTER TABLE ONLY staging.orders_raw
 
 
 --
--- TOC entry 5283 (class 2606 OID 18355)
+-- TOC entry 5374 (class 2606 OID 18355)
 -- Name: positions_raw positions_raw_integration_id_fkey; Type: FK CONSTRAINT; Schema: staging; Owner: postgres
 --
 
@@ -2275,7 +3066,7 @@ ALTER TABLE ONLY staging.positions_raw
 
 
 --
--- TOC entry 5279 (class 2606 OID 18273)
+-- TOC entry 5370 (class 2606 OID 18273)
 -- Name: price_raw price_raw_provider_id_fkey; Type: FK CONSTRAINT; Schema: staging; Owner: postgres
 --
 
@@ -2284,7 +3075,7 @@ ALTER TABLE ONLY staging.price_raw
 
 
 --
--- TOC entry 5284 (class 2606 OID 18373)
+-- TOC entry 5375 (class 2606 OID 18373)
 -- Name: trades_raw trades_raw_integration_id_fkey; Type: FK CONSTRAINT; Schema: staging; Owner: postgres
 --
 
@@ -2293,19 +3084,19 @@ ALTER TABLE ONLY staging.trades_raw
 
 
 --
--- TOC entry 5448 (class 0 OID 18019)
--- Dependencies: 238 5474
+-- TOC entry 5549 (class 0 OID 18019)
+-- Dependencies: 238 5585
 -- Name: mv_latest_daily_price; Type: MATERIALIZED VIEW DATA; Schema: market; Owner: postgres
 --
 
 REFRESH MATERIALIZED VIEW market.mv_latest_daily_price;
 
 
--- Completed on 2025-10-26 22:58:41
+-- Completed on 2025-10-27 14:04:14
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict YhB6oNssCbaHCPJcjja8egZhWaxITbRMkFOXUSoa9GQdQwefwEWr0v1gCKc84CC
+\unrestrict hyz1alvFRcfZ8zxQgbP3EFba0u5wt0mP4QXqyaVrB3MIzcnhbzf2LlrHXZ19gAI
 

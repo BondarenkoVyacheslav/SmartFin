@@ -1,4 +1,4 @@
-# config/graphql/scalars.py
+# config/graphql_collector/scalars.py
 import datetime as dt
 from decimal import Decimal, InvalidOperation
 import strawberry
