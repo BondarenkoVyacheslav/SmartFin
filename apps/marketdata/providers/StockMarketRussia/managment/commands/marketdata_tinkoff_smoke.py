@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from apps.marketdata.providers.tinkoff.provider import TinkoffProvider
+from apps.marketdata.providers.StockMarketRussia.tinkoff.provider import TinkoffProvider
 from apps.marketdata.providers.transports import TinkoffCreds, TransportPrefs, Transport
 
 class Command(BaseCommand):

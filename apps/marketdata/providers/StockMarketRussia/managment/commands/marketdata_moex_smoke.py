@@ -1,6 +1,6 @@
 from datetime import date
 from django.core.management.base import BaseCommand
-from apps.marketdata.providers.moex import MoexISSProvider
+from apps.marketdata.providers.StockMarketRussia.moex import MoexISSProvider
 
 class Command(BaseCommand):
     help = "Быстрый smoke-тест MOEX ISS провайдера (без записи в БД)."

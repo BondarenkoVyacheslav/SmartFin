@@ -1,7 +1,7 @@
 from typing import Dict, Type
 from .base import Provider
-from .moex import MoexISSProvider
-from .tinkoff.provider import TinkoffProvider
+from apps.marketdata.providers.StockMarketRussia.moex import MoexISSProvider
+from apps.marketdata.providers.StockMarketRussia.tinkoff.provider import TinkoffProvider
 
 PROVIDERS: Dict[str, Type[Provider]] = {
     "tinkoff": TinkoffProvider,
