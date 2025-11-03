@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     'apps.core',
     'apps.integrations',
     'apps.llm',
-    'apps.market',
+    'apps.assets',
     'apps.marketdata',
     'apps.portfolio',
 ]
@@ -89,7 +89,7 @@ DATABASES = {
         "PORT": "5432",
         # (опционально) если используешь несколько схем в БД:
         "OPTIONS": {
-            "options": "-c search_path=public,account,analytics,core,infra,integrations,llm,market,marketdata,portfolio,staging"
+            "options": "-c search_path=public,account,analytics,core,infra,integrations,llm,assets,marketdata,portfolio,staging"
         },
     }
 }

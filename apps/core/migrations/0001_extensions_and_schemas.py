@@ -2,7 +2,7 @@
 
 from django.db import migrations
 
-SCHEMAS = ["account","analytics","integrations","llm","market","marketdata","portfolio"]
+SCHEMAS = ["account","analytics","integrations","llm","assets","marketdata","portfolio"]
 
 SQL = [
     "CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;",

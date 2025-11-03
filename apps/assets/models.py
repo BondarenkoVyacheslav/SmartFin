@@ -1,4 +1,4 @@
-# apps/market/models.py
+# apps/assets/models.py
 from django.db import models
 from apps.core.models import AssetClassEnumField, PriceIntervalEnumField
 from django.db import models
@@ -16,7 +16,7 @@ class Currency(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'market"."currency'
+        db_table = 'assets"."currency'
         managed = True
 
 
@@ -29,7 +29,7 @@ class Exchange(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'market"."exchange'
+        db_table = 'assets"."exchange'
         managed = True
 
 
@@ -51,7 +51,7 @@ class Asset(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'market"."asset'
+        db_table = 'assets"."asset'
         managed = True
         constraints = [
             models.UniqueConstraint(fields=['symbol', 'exchange'], name='ux_market_asset_symbol_exchange'),
@@ -65,7 +65,7 @@ class AssetIdentifier(models.Model):
     id_value = models.CharField(max_length=255)
 
     class Meta:
-        db_table = 'market"."asset_identifier'
+        db_table = 'assets"."asset_identifier'
         managed = True
         constraints = [
             models.UniqueConstraint(fields=['asset', 'id_type'], name='ux_asset_identifier_asset_id_type'),
@@ -93,7 +93,7 @@ class Price(models.Model):
     )
 
     class Meta:
-        db_table = 'market"."price'
+        db_table = 'assets"."price'
         managed = True
         indexes = [
             models.Index(fields=['asset', '-ts'], name='ix_market_price_asset_ts'),
@@ -125,7 +125,7 @@ class FxRate(models.Model):
     )
 
     class Meta:
-        db_table = 'market"."fx_rate'
+        db_table = 'assets"."fx_rate'
         managed = True
         indexes = [
             models.Index(fields=['base_currency', 'quote_currency', '-ts'], name='ix_market_fx_pair_ts'),
@@ -140,7 +140,7 @@ class FxRate(models.Model):
 # --- QUOTE ---------------------------------------------------------------
 class Quote(models.Model):
     id = models.UUIDField(primary_key=True)
-    asset = models.ForeignKey('market.Asset', on_delete=models.CASCADE,
+    asset = models.ForeignKey('assets.Asset', on_delete=models.CASCADE,
                               db_column='asset_id', related_name='quotes')
     ts = models.DateTimeField()
     bid = models.DecimalField(max_digits=38, decimal_places=10, null=True, blank=True)
@@ -158,7 +158,7 @@ class Quote(models.Model):
         db_persist=True,
         null=True, blank=True,
     )
-    currency = models.ForeignKey('market.Currency', on_delete=models.PROTECT,
+    currency = models.ForeignKey('assets.Currency', on_delete=models.PROTECT,
                                  db_column='currency_id', related_name='quotes')
     provider = models.ForeignKey('marketdata.Provider', on_delete=models.SET_NULL,
                                  db_column='provider_id', related_name='quotes',
@@ -168,7 +168,7 @@ class Quote(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'market"."quote'
+        db_table = 'assets"."quote'
         managed = True  # таблица уже есть в БД
         indexes = [
             models.Index(fields=['asset', '-ts'], name='ix_quote_asset_ts'),
@@ -211,7 +211,7 @@ class CorporateAction(models.Model):
         SPIN_OFF = 'spin_off', 'Spin-off'
 
     id = models.UUIDField(primary_key=True)
-    asset = models.ForeignKey('market.Asset', on_delete=models.PROTECT,
+    asset = models.ForeignKey('assets.Asset', on_delete=models.PROTECT,
                               db_column='asset_id', related_name='corporate_actions')
     action_type = models.CharField(max_length=32, choices=ActionType.choices)
     ex_date = models.DateField()
@@ -219,7 +219,7 @@ class CorporateAction(models.Model):
     payload = models.JSONField(default=dict)
 
     class Meta:
-        db_table = 'market"."corporate_action'
+        db_table = 'assets"."corporate_action'
         managed = True
         indexes = [
             models.Index(fields=['asset', 'ex_date'], name='ix_ca_asset_exdate'),
@@ -239,12 +239,12 @@ class CorporateAction(models.Model):
 # --- ASSET TAG  (композитный PK в БД) -----------------------------------
 class AssetTag(models.Model):
     id = models.UUIDField(primary_key=True)
-    asset = models.ForeignKey('market.Asset', on_delete=models.CASCADE, db_column='asset_id', related_name='tags')
+    asset = models.ForeignKey('assets.Asset', on_delete=models.CASCADE, db_column='asset_id', related_name='tags')
     tag_type = models.TextField()
     tag_value = models.TextField()
 
     class Meta:
-        db_table = 'market"."asset_tag'
+        db_table = 'assets"."asset_tag'
         constraints = [
             models.UniqueConstraint(fields=['asset', 'tag_type', 'tag_value'], name='ux_asset_tag')
         ]
@@ -263,7 +263,7 @@ class AssetTag(models.Model):
 # --- BAR (OHLCV) ---------------------------------------------------------
 class Bar(models.Model):
     id = models.UUIDField(primary_key=True)
-    asset = models.ForeignKey('market.Asset', on_delete=models.CASCADE,
+    asset = models.ForeignKey('assets.Asset', on_delete=models.CASCADE,
                               db_column='asset_id', related_name='bars')
     ts = models.DateTimeField()
     interval = PriceIntervalEnumField(db_column='interval')  # core.price_interval_enum
@@ -273,7 +273,7 @@ class Bar(models.Model):
     close = models.DecimalField(max_digits=38, decimal_places=10)
     volume = models.DecimalField(max_digits=38, decimal_places=18, null=True, blank=True)
     trades_count = models.IntegerField(null=True, blank=True)
-    currency = models.ForeignKey('market.Currency', on_delete=models.PROTECT,
+    currency = models.ForeignKey('assets.Currency', on_delete=models.PROTECT,
                                  db_column='currency_id', related_name='bars')
     provider = models.ForeignKey('marketdata.Provider', on_delete=models.SET_NULL,
                                  db_column='provider_id', related_name='bars',
@@ -282,7 +282,7 @@ class Bar(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'market"."bar'
+        db_table = 'assets"."bar'
         managed = True
         constraints = [
             models.CheckConstraint(

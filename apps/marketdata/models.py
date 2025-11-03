@@ -34,9 +34,9 @@ class SymbolMap(models.Model):
 
     external_symbol = models.TextField()
 
-    # FK по НЕ-PK полю: market.exchange.code  (ON DELETE SET NULL)
+    # FK по НЕ-PK полю: assets.exchange.code  (ON DELETE SET NULL)
     exchange = models.ForeignKey(
-        'market.Exchange',
+        'assets.Exchange',
         to_field='code',
         db_column='exchange_code',
         on_delete=models.SET_NULL,
@@ -45,9 +45,9 @@ class SymbolMap(models.Model):
         related_name='symbol_maps',
     )
 
-    # FK → market.asset (NO ACTION в SQL ≈ PROTECT в Django)
+    # FK → assets.asset (NO ACTION в SQL ≈ PROTECT в Django)
     asset = models.ForeignKey(
-        'market.Asset',
+        'assets.Asset',
         db_column='asset_id',
         on_delete=models.PROTECT,
         null=True,

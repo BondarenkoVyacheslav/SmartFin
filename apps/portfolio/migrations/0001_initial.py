@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('market', '0001_initial'),
+        ('assets', '0001_initial'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
                 ('settings', models.JSONField(default=dict)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
-                ('base_currency', models.ForeignKey(db_column='base_currency_id', on_delete=django.db.models.deletion.PROTECT, related_name='portfolios', to='market.currency')),
+                ('base_currency', models.ForeignKey(db_column='base_currency_id', on_delete=django.db.models.deletion.PROTECT, related_name='portfolios', to='assets.currency')),
                 ('user', models.ForeignKey(db_column='user_id', on_delete=django.db.models.deletion.CASCADE, related_name='portfolios', to=settings.AUTH_USER_MODEL)),
             ],
             options={
@@ -39,7 +39,7 @@ class Migration(migrations.Migration):
                 ('qty', models.DecimalField(decimal_places=18, default=0, max_digits=38)),
                 ('cost_basis', models.DecimalField(decimal_places=10, default=0, max_digits=38)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
-                ('asset', models.ForeignKey(db_column='asset_id', on_delete=django.db.models.deletion.PROTECT, related_name='portfolio_positions', to='market.asset')),
+                ('asset', models.ForeignKey(db_column='asset_id', on_delete=django.db.models.deletion.PROTECT, related_name='portfolio_positions', to='assets.asset')),
                 ('portfolio', models.ForeignKey(db_column='portfolio_id', on_delete=django.db.models.deletion.CASCADE, related_name='positions', to='portfolio.portfolio')),
             ],
             options={
@@ -59,10 +59,10 @@ class Migration(migrations.Migration):
                 ('notes', models.TextField(blank=True, null=True)),
                 ('metadata', models.JSONField(default=dict)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('asset', models.ForeignKey(db_column='asset_id', on_delete=django.db.models.deletion.PROTECT, related_name='transactions', to='market.asset')),
+                ('asset', models.ForeignKey(db_column='asset_id', on_delete=django.db.models.deletion.PROTECT, related_name='transactions', to='assets.asset')),
                 ('linked_tx', models.ForeignKey(blank=True, db_column='linked_tx_id', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='linked_children', to='portfolio.transaction')),
                 ('portfolio', models.ForeignKey(db_column='portfolio_id', on_delete=django.db.models.deletion.CASCADE, related_name='transactions', to='portfolio.portfolio')),
-                ('price_currency', models.ForeignKey(blank=True, db_column='price_currency_id', null=True, on_delete=django.db.models.deletion.PROTECT, related_name='priced_transactions', to='market.currency')),
+                ('price_currency', models.ForeignKey(blank=True, db_column='price_currency_id', null=True, on_delete=django.db.models.deletion.PROTECT, related_name='priced_transactions', to='assets.currency')),
             ],
             options={
                 'db_table': 'portfolio"."transaction',

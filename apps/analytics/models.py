@@ -43,7 +43,7 @@ class PositionValuationDaily(models.Model):
         related_name='valuations_daily',
     )
     asset = models.ForeignKey(
-        to='market.Asset',
+        to='assets.Asset',
         db_column='asset_id',
         on_delete=models.PROTECT,
         related_name='valuations_daily',
@@ -55,7 +55,7 @@ class PositionValuationDaily(models.Model):
     price = models.DecimalField(max_digits=38, decimal_places=10)
 
     price_currency = models.ForeignKey(
-        to='market.Currency',
+        to='assets.Currency',
         db_column='price_currency_id',
         on_delete=models.PROTECT,
         related_name='valuations_daily_prices',

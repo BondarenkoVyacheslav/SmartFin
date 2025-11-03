@@ -9,7 +9,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('market', '0001_initial'),
+        ('assets', '0001_initial'),
         ('marketdata', '0001_initial'),
     ]
 
@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
                 ('tag_value', models.TextField()),
             ],
             options={
-                'db_table': 'market"."asset_tag',
+                'db_table': 'assets"."asset_tag',
             },
         ),
         migrations.CreateModel(
@@ -41,7 +41,7 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
             ],
             options={
-                'db_table': 'market"."bar',
+                'db_table': 'assets"."bar',
                 'managed': True,
             },
         ),
@@ -55,7 +55,7 @@ class Migration(migrations.Migration):
                 ('payload', models.JSONField(default=dict)),
             ],
             options={
-                'db_table': 'market"."corporate_action',
+                'db_table': 'assets"."corporate_action',
                 'managed': True,
             },
         ),
@@ -72,7 +72,7 @@ class Migration(migrations.Migration):
                 ('created_at', models.DateTimeField(auto_now_add=True)),
             ],
             options={
-                'db_table': 'market"."quote',
+                'db_table': 'assets"."quote',
                 'managed': True,
             },
         ),
@@ -97,17 +97,17 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='assettag',
             name='asset',
-            field=models.ForeignKey(db_column='asset_id', on_delete=django.db.models.deletion.CASCADE, related_name='tags', to='market.asset'),
+            field=models.ForeignKey(db_column='asset_id', on_delete=django.db.models.deletion.CASCADE, related_name='tags', to='assets.asset'),
         ),
         migrations.AddField(
             model_name='bar',
             name='asset',
-            field=models.ForeignKey(db_column='asset_id', on_delete=django.db.models.deletion.CASCADE, related_name='bars', to='market.asset'),
+            field=models.ForeignKey(db_column='asset_id', on_delete=django.db.models.deletion.CASCADE, related_name='bars', to='assets.asset'),
         ),
         migrations.AddField(
             model_name='bar',
             name='currency',
-            field=models.ForeignKey(db_column='currency_id', on_delete=django.db.models.deletion.PROTECT, related_name='bars', to='market.currency'),
+            field=models.ForeignKey(db_column='currency_id', on_delete=django.db.models.deletion.PROTECT, related_name='bars', to='assets.currency'),
         ),
         migrations.AddField(
             model_name='bar',
@@ -117,17 +117,17 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='corporateaction',
             name='asset',
-            field=models.ForeignKey(db_column='asset_id', on_delete=django.db.models.deletion.PROTECT, related_name='corporate_actions', to='market.asset'),
+            field=models.ForeignKey(db_column='asset_id', on_delete=django.db.models.deletion.PROTECT, related_name='corporate_actions', to='assets.asset'),
         ),
         migrations.AddField(
             model_name='quote',
             name='asset',
-            field=models.ForeignKey(db_column='asset_id', on_delete=django.db.models.deletion.CASCADE, related_name='quotes', to='market.asset'),
+            field=models.ForeignKey(db_column='asset_id', on_delete=django.db.models.deletion.CASCADE, related_name='quotes', to='assets.asset'),
         ),
         migrations.AddField(
             model_name='quote',
             name='currency',
-            field=models.ForeignKey(db_column='currency_id', on_delete=django.db.models.deletion.PROTECT, related_name='quotes', to='market.currency'),
+            field=models.ForeignKey(db_column='currency_id', on_delete=django.db.models.deletion.PROTECT, related_name='quotes', to='assets.currency'),
         ),
         migrations.AddField(
             model_name='quote',

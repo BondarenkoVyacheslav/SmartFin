@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('market', '0001_initial'),
+        ('assets', '0001_initial'),
     ]
 
     operations = [
@@ -37,8 +37,8 @@ class Migration(migrations.Migration):
                 ('metadata', models.JSONField(default=dict)),
                 ('valid_from', models.DateField(default=datetime.date(1970, 1, 1))),
                 ('valid_to', models.DateField(default=datetime.date(9999, 12, 31))),
-                ('asset', models.ForeignKey(blank=True, db_column='asset_id', null=True, on_delete=django.db.models.deletion.PROTECT, related_name='symbol_maps', to='market.asset')),
-                ('exchange', models.ForeignKey(blank=True, db_column='exchange_code', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='symbol_maps', to='market.exchange', to_field='code')),
+                ('asset', models.ForeignKey(blank=True, db_column='asset_id', null=True, on_delete=django.db.models.deletion.PROTECT, related_name='symbol_maps', to='assets.asset')),
+                ('exchange', models.ForeignKey(blank=True, db_column='exchange_code', null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='symbol_maps', to='assets.exchange', to_field='code')),
                 ('provider', models.ForeignKey(db_column='provider_id', on_delete=django.db.models.deletion.CASCADE, related_name='symbol_maps', to='marketdata.provider')),
             ],
             options={

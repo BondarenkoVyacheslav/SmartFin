@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('market', '0001_initial'),
+        ('assets', '0001_initial'),
         ('portfolio', '0001_initial'),
     ]
 
@@ -46,9 +46,9 @@ class Migration(migrations.Migration):
                 ('unrealized_pnl_base', models.DecimalField(decimal_places=10, default=0, max_digits=38)),
                 ('income_acc_base', models.DecimalField(decimal_places=10, default=0, max_digits=38)),
                 ('metadata', models.JSONField(default=dict)),
-                ('asset', models.ForeignKey(db_column='asset_id', on_delete=django.db.models.deletion.PROTECT, related_name='valuations_daily', to='market.asset')),
+                ('asset', models.ForeignKey(db_column='asset_id', on_delete=django.db.models.deletion.PROTECT, related_name='valuations_daily', to='assets.asset')),
                 ('portfolio', models.ForeignKey(db_column='portfolio_id', on_delete=django.db.models.deletion.CASCADE, related_name='valuations_daily', to='portfolio.portfolio')),
-                ('price_currency', models.ForeignKey(db_column='price_currency_id', on_delete=django.db.models.deletion.PROTECT, related_name='valuations_daily_prices', to='market.currency')),
+                ('price_currency', models.ForeignKey(db_column='price_currency_id', on_delete=django.db.models.deletion.PROTECT, related_name='valuations_daily_prices', to='assets.currency')),
             ],
             options={
                 'db_table': 'analytics"."position_valuation_daily',
