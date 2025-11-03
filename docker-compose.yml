@@ -5,7 +5,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./Smartfin:/Smartfin
+      - ./SmartFin:/SmartFin
     environment:
       - DB_HOST=database
       - DB_NAME=dbname

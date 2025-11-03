@@ -3,9 +3,9 @@ FROM python:3.12-alpine3.22
 RUN adduser --disabled-password appuser
 
 COPY requirements.txt /temp/requirements.txt
-COPY Smartfin /Smartfin
+COPY SmartFin /SmartFin
 
-WORKDIR /Smartfin
+WORKDIR /SmartFin
 EXPOSE 8000
 
 RUN apk add postgresql-client build-base postgresql-dev
