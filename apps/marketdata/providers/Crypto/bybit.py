@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import List, Optional
 from datetime import datetime
 from pybit.unified_trading import HTTP
-from apps.marketdata.providers.Provider import Provider, Quote, Candle
+from apps.marketdata.providers.provider import Provider, Quote, Candle
 from apps.marketdata.services.redis_cache import RedisCacheService  # ПРАВИЛЬНЫЙ импорт
 
 class BybitProvider(Provider):

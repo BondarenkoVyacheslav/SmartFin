@@ -1,5 +1,5 @@
 from typing import Dict, Type
-from .Provider import Provider
+from .provider import Provider
 from apps.marketdata.providers.StockMarketRussia.moex import MoexISSProvider
 from apps.marketdata.providers.StockMarketRussia.tinkoff.provider import TinkoffProvider
 

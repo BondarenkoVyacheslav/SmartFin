@@ -4,7 +4,7 @@ from typing import List, Optional, Dict
 
 import httpx
 
-from apps.marketdata.providers.Provider import Provider, Quote, Candle
+from apps.marketdata.providers.provider import Provider, Quote, Candle
 
 # Базовая конфигурация MOEX ISS
 DEFAULT_BASE_URL = "https://iss.moex.com/iss"

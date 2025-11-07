@@ -2,7 +2,7 @@ from __future__ import annotations
 from datetime import datetime, date
 from typing import List, Optional, Iterable
 
-from apps.marketdata.providers.Provider import Provider, Quote, Candle
+from apps.marketdata.providers.provider import Provider, Quote, Candle
 from apps.marketdata.providers.transports import Transport, TransportPrefs, TinkoffCreds, InMemoryRateLimiter
 from .clients import TinkoffRestClient, TinkoffGrpcClient, TinkoffWsClient
 
