@@ -1,0 +1,3 @@
+Exchange Rates API - CoinAPI — should-have
+Исторические и текущие курсы фиата (USD/EUR/RUB и др.) для пересчёта PnL, отчётности и единой валюты портфеля.
+

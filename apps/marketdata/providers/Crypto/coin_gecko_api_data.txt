@@ -1,0 +1,94 @@
+https://docs.coingecko.com/v3.0.1/reference/authentication
+
+Ограничения: Лимиты Demo: стабильные ~30 запросов/мин и 10 000 запросов/мес (нужен бесплатный API-ключ).
+
+Ping / Auth
+GET /ping — проверка статуса API. Возвращает объект вида: { "gecko_says": "(V3) To the Moon!" }.
+Аутентификация (Demo) — ключ передаётся в заголовке x-cg-demo-api-key или как x_cg_demo_api_key в query.
+
+Simple
+GET /simple/price — текущие цены по списку coin IDs в требуемых валютах. Опционально можно добавить рыночную капитализацию, объём за 24ч, проценты изменения и метку времени (include_market_cap, include_24hr_vol, include_24hr_change, include_last_updated_at). Ответ: словарь {coin_id: {vs_cur: price, ...}}.
+GET /simple/token_price/{asset_platform_id} — то же, но по контрактным адресам (Ethereum, BSC и т.д.). Возвращает цены/метрики по адресам, сгруппированным внутри платформы.
+GET /simple/supported_vs_currencies — массив строк с кодами поддерживаемых валют котирования (usd, eur, rub, btc, …).
+
+Coins
+GET /coins/list — список всех коинов: id, symbol, name (+ опционально platforms при include_platform=true).
+GET /coins/markets — рыночные данные по коинам (пагинация, сортировка):
+основные поля на элемент: id, symbol, name, image, current_price, market_cap, market_cap_rank, fully_diluted_valuation, total_volume, high_24h, low_24h, price_change_24h, price_change_percentage_24h, market_cap_change_24h, circulating_supply, total_supply, max_supply, ath, atl, last_updated и др.
+GET /coins/{id} — «карточка» коина с метаданными (название, логотипы, ссылки/соцсети, описание, алгоритм, дата генезиса, происхождение и пр.) и market_data (текущая цена, капа, FDV, объёмы, изменения, ROI и т.д.), а также community_data, developer_data, tickers (срез 100 штук).
+GET /coins/{id}/tickers — полный список тикеров (CEX и DEX) для коина: base, target, market (биржа), last, volume, флаги is_anomaly/is_stale, и т.д. Пагинация.
+GET /coins/{id}/history — исторические данные на конкретную дату: цена, рыночная капа, объём и часть метаданных на ту дату.
+GET /coins/{id}/ohlc и /coins/{id}/ohlc/range — OHLC-свечи по коинам (интервалы выбираются автоматически, для /range — по меткам времени).
+
+Contract (по адресу токена)
+
+GET /coins/{asset_platform_id}/contract/{contract_address} — та же «карточка» коина/токена, но поиск по адресу смарт-контракта: метаданные + market data + тикеры.
+GET /coins/{asset_platform_id}/contract/{contract_address}/market_chart и /market_chart/range — исторические ряды цены, капы и объёма по токену (по дням/часам; для range — по Unix-диапазону).
+
+Asset Platforms
+GET /asset_platforms — список поддерживаемых блокчейнов (asset platforms) с полями вроде: id, name, chain_identifier, shortname, native_coin_id (удобно для соответствия сети и «родного» коина).
+GET /token_lists/{asset_platform_id}/all.json — (для совместимых сетей) полный токен-лист в формате Ethereum Token List.
+
+Categories
+GET /coins/categories/list — id-мапа категорий: category_id, name.
+GET /coins/categories — категории с рыночными данными: капитализация, объём, изменения и др.
+
+Exchanges
+GET /exchanges — список бирж с данными: id, name, year_established, country, trust_score, trade_volume_24h_btc и т.п. (активные по объёму).
+GET /exchanges/list — укороченный список: id, name.
+GET /exchanges/{id} — карточка биржи + объём в BTC + до 100 тикеров. Полезный параметр dex_pair_format (адреса/символы для DEX-пар).
+GET /exchanges/{id}/tickers — все тикеры биржи (пагинация): base/target, last, volume, converted_last, bid_ask_spread_percentage, is_anomaly, is_stale, и т.д.
+GET /exchanges/{id}/volume_chart — исторический график объёмов биржи в BTC (временной ряд).
+
+Derivatives
+GET /derivatives — лента деривативных тикеров (перечень контрактов с полями цены, объёмов, funding, expiring_at и др.).
+GET /derivatives/exchanges — список деривативных бирж с данными (id, name, open interest и т.д.).
+GET /derivatives/exchanges/{id} — карточка конкретной деривативной биржи с её агрегированными метриками.
+
+NFTs (Beta)
+GET /nfts/list — список NFT-коллекций: id, contract_address, asset_platform_id, symbol, name.
+GET /nfts/{id} — данные коллекции по ID: name, image, floor_price, market_cap, 24h_volume, метаданные, площадки и др.
+GET /nfts/{asset_platform_id}/contract/{contract_address} — то же, но поиск по адресу контракта.
+GET /nfts/markets — перечень коллекций с рыночными данными (флор, капа, объёмы, изменения).
+(Также есть исторические графики: /nfts/{id}/market_chart и вариант по контракту.)
+
+
+Exchange Rates
+GET /exchange_rates — таблица курсов BTC к другим валютам (фиат/крипто), удобна для конвертации метрик, возвращаемых в BTC.
+
+Search & Trending
+GET /search — поиск по CoinGecko: монеты, категории, рынки/биржи, NFT. Параметр query. Ответ содержит соответствующие секции результатов.
+GET /search/trending — трендовые запросы за 24 часа: популярные коины, NFT и категории.
+
+Global
+GET /global — сводка по рынку: кол-во активных коинов/рынков, total_market_cap/total_volume по валютам, доля BTC/ETH, доля стейблкоинов, DeFi и т.п.
+GET /global/market_cap_chart — исторические ряды глобальной капы/объёма за N последних дней (подходит для «Total Market Cap» графиков).
+GET /global/decentralized_finance_defi — сводка по DeFi (капитализация, объёмы и пр.).
+
+Public Treasury
+GET /{entity}/public_treasury/{coin_id} — публичные крипто-холдинги компаний/правительств по конкретному коину: состав, стоимость, изменения и др. (entity: companies или governments).
+
+Onchain DEX Demo API (GeckoTerminal внутри CoinGecko)
+Примечание: это отдельный блок «/onchain/*» для данных из DEX (сети, пулы, цены по адресам и т.д.).
+
+Networks
+GET /onchain/networks — список поддерживаемых сетей (id, имя, префиксы).
+GET /onchain/networks/{network}/dexes — перечень DEX-бирж в сети (с id DEX для последующих запросов).
+
+Pools
+GET /onchain/networks/{network}/pools — топ-пулы сети (обычно сортированы по объёму за 24ч). Каждый пул содержит ликвидность, объёмы, цены, адрес пула, DEX и базовую/котируемую пару.
+GET /onchain/networks/{network}/pools/{pool_address}/info — метаданные пула: базовый/котируемый токены, их изображения, ссылки, описания, адреса контрактов и т.п.
+GET /onchain/networks/{network}/new_pools — лента недавно созданных пулов по всем сетям или по сети.
+(Есть и «trending pools»; в демо-плане часть onchain-эндпоинтов может быть ограничена.)
+
+Tokens
+GET /onchain/networks/{network}/tokens/{address} — данные токена по адресу: цена, ликвидность, объёмы, рыночные метрики, связанные пулы и др.
+
+OHLCV
+GET /onchain/networks/{network}/pools/{pool_address}/ohlcv/{timeframe} — свечи OHLCV по пулу для построения графиков.
+
+Trades
+(REST: трейды по пулам доступны через onchain-эндпоинты; для реал-тайма есть WebSocket-канал OnchainTrade с полями: тип сделки buy/sell, tx hash, объём, цена на момент сделки и др.).
+
+Simple (Onchain)
+GET /onchain/simple/networks/{network}/token_price/{address1,address2,...} — быстрые USD-цены нескольких токенов по адресам в конкретной сети (плюс market cap/FDV, если доступно).

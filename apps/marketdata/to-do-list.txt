@@ -1,0 +1,22 @@
+Что еще нужно српоектировать
+-схема для GraphQL
+-Логику DTO-шек для работы внутри app-а marketdata
+-логику провайдеров(самое сложное)
+
+Domains: Crypto, Currency, StockMarketRussia, StockMarketUSA, Products
+
+Логика провайдеров
+-Crypto
+ - Bybit
+ - OKX
+-Currency
+ -
+-StockMarketRussia
+ - MOEX
+ - Tinkoff
+-StockMarketUSA
+ -
+ -
+-Products
+ -
+ -
