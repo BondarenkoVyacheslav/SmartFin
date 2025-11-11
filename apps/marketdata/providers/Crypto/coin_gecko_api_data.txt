@@ -1,6 +1,7 @@
 https://docs.coingecko.com/v3.0.1/reference/authentication
 
 Ограничения: Лимиты Demo: стабильные ~30 запросов/мин и 10 000 запросов/мес (нужен бесплатный API-ключ).
+https://docs.coingecko.com/docs/common-errors-rate-limit?utm_source=chatgpt.com
 
 Ping / Auth
 GET /ping — проверка статуса API. Возвращает объект вида: { "gecko_says": "(V3) To the Moon!" }.

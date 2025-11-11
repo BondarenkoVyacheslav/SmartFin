@@ -1,3 +1,4 @@
+import os
 import redis
 import json
 import pickle
@@ -29,7 +30,7 @@ class RedisCacheService:
         self._client = None
         self._connect()
 
-    def _connect(self):
+    async def _connect(self):
         """Установка подключения к Redis с retry логикой"""
         for attempt in range(self.max_retries):
             try:
@@ -51,7 +52,7 @@ class RedisCacheService:
                     raise
                 time.sleep(1)  # Задержка перед повторной попыткой
 
-    def _ensure_connection(self):
+    async def _ensure_connection(self):
         """Проверка и восстановление подключения при необходимости"""
         try:
             self._client.ping()
@@ -59,7 +60,7 @@ class RedisCacheService:
             logger.warning("Redis connection lost, attempting to reconnect...")
             self._connect()
 
-    def get(self, key: str, default: Any = None) -> Optional[Any]:
+    async def get(self, key: str, default: Any = None) -> Optional[Any]:
         """
         Получить значение по ключу
 
@@ -87,7 +88,7 @@ class RedisCacheService:
             logger.error(f"Redis get error for key {key}: {e}")
             return default
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None,
+    async def set(self, key: str, value: Any, ttl: Optional[int] = None,
             serialize_method: str = 'json') -> bool:
         """
         Установить значение по ключу
@@ -117,7 +118,7 @@ class RedisCacheService:
             logger.error(f"Redis set error for key {key}: {e}")
             return False
 
-    def _json_serializer(self, obj):
+    async def _json_serializer(self, obj):
         """Кастомный сериализатор для JSON"""
         if isinstance(obj, (datetime, timedelta)):
             return obj.isoformat()
@@ -125,7 +126,7 @@ class RedisCacheService:
             return obj.__dict__
         raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
 
-    def delete(self, key: str) -> bool:
+    async def delete(self, key: str) -> bool:
         """Удалить ключ"""
         try:
             self._ensure_connection()
@@ -134,7 +135,7 @@ class RedisCacheService:
             logger.error(f"Redis delete error for key {key}: {e}")
             return False
 
-    def get_many(self, keys: List[str]) -> Dict[str, Optional[Any]]:
+    async def get_many(self, keys: List[str]) -> Dict[str, Optional[Any]]:
         """
         Получить несколько значений за один запрос
 
@@ -167,7 +168,7 @@ class RedisCacheService:
             logger.error(f"Redis get_many error for keys {keys}: {e}")
             return {key: None for key in keys}
 
-    def set_many(self, data: Dict[str, Any], ttl: Optional[int] = None) -> bool:
+    async def set_many(self, data: Dict[str, Any], ttl: Optional[int] = None) -> bool:
         """
         Установить несколько значений
 
@@ -196,7 +197,7 @@ class RedisCacheService:
 
         return success
 
-    def exists(self, key: str) -> bool:
+    async def exists(self, key: str) -> bool:
         """Проверить существование ключа"""
         try:
             self._ensure_connection()
@@ -205,7 +206,7 @@ class RedisCacheService:
             logger.error(f"Redis exists error for key {key}: {e}")
             return False
 
-    def ttl(self, key: str) -> Optional[int]:
+    async def ttl(self, key: str) -> Optional[int]:
         """Получить оставшееся время жизни ключа"""
         try:
             self._ensure_connection()
@@ -215,7 +216,7 @@ class RedisCacheService:
             logger.error(f"Redis ttl error for key {key}: {e}")
             return None
 
-    def expire(self, key: str, ttl: int) -> bool:
+    async def expire(self, key: str, ttl: int) -> bool:
         """Установить TTL для ключа"""
         try:
             self._ensure_connection()
@@ -224,7 +225,7 @@ class RedisCacheService:
             logger.error(f"Redis expire error for key {key}: {e}")
             return False
 
-    def keys(self, pattern: str = "*") -> List[str]:
+    async def keys(self, pattern: str = "*") -> List[str]:
         """Найти ключи по паттерну"""
         try:
             self._ensure_connection()
@@ -233,7 +234,7 @@ class RedisCacheService:
             logger.error(f"Redis keys error for pattern {pattern}: {e}")
             return []
 
-    def delete_many(self, keys: List[str]) -> int:
+    async def delete_many(self, keys: List[str]) -> int:
         """Удалить несколько ключей"""
         try:
             self._ensure_connection()
@@ -244,7 +245,7 @@ class RedisCacheService:
             logger.error(f"Redis delete_many error for {len(keys)} keys: {e}")
             return 0
 
-    def delete_pattern(self, pattern: str) -> int:
+    async def delete_pattern(self, pattern: str) -> int:
         """Удалить все ключи по паттерну"""
         try:
             self._ensure_connection()
@@ -256,7 +257,7 @@ class RedisCacheService:
             logger.error(f"Redis delete_pattern error for pattern {pattern}: {e}")
             return 0
 
-    def increment(self, key: str, amount: int = 1, ttl: Optional[int] = None) -> Optional[int]:
+    async def increment(self, key: str, amount: int = 1, ttl: Optional[int] = None) -> Optional[int]:
         """Инкремент числового значения"""
         try:
             self._ensure_connection()
@@ -270,7 +271,7 @@ class RedisCacheService:
             logger.error(f"Redis increment error for key {key}: {e}")
             return None
 
-    def decrement(self, key: str, amount: int = 1, ttl: Optional[int] = None) -> Optional[int]:
+    async def decrement(self, key: str, amount: int = 1, ttl: Optional[int] = None) -> Optional[int]:
         """Декремент числового значения"""
         try:
             self._ensure_connection()
@@ -284,7 +285,7 @@ class RedisCacheService:
             logger.error(f"Redis decrement error for key {key}: {e}")
             return None
 
-    def hash_set(self, key: str, field: str, value: Any) -> bool:
+    async def hash_set(self, key: str, field: str, value: Any) -> bool:
         """Установить значение в hash"""
         try:
             self._ensure_connection()
@@ -294,7 +295,7 @@ class RedisCacheService:
             logger.error(f"Redis hash_set error for key {key}.{field}: {e}")
             return False
 
-    def hash_get(self, key: str, field: str, default: Any = None) -> Any:
+    async def hash_get(self, key: str, field: str, default: Any = None) -> Any:
         """Получить значение из hash"""
         try:
             self._ensure_connection()
@@ -306,7 +307,7 @@ class RedisCacheService:
             logger.error(f"Redis hash_get error for key {key}.{field}: {e}")
             return default
 
-    def hash_get_all(self, key: str) -> Dict[str, Any]:
+    async def hash_get_all(self, key: str) -> Dict[str, Any]:
         """Получить все поля hash"""
         try:
             self._ensure_connection()
@@ -319,7 +320,7 @@ class RedisCacheService:
             logger.error(f"Redis hash_get_all error for key {key}: {e}")
             return {}
 
-    def list_push(self, key: str, value: Any, side: str = 'right', ttl: Optional[int] = None) -> bool:
+    async def list_push(self, key: str, value: Any, side: str = 'right', ttl: Optional[int] = None) -> bool:
         """Добавить элемент в список"""
         try:
             self._ensure_connection()
@@ -340,7 +341,7 @@ class RedisCacheService:
             logger.error(f"Redis list_push error for key {key}: {e}")
             return False
 
-    def list_range(self, key: str, start: int = 0, end: int = -1) -> List[Any]:
+    async def list_range(self, key: str, start: int = 0, end: int = -1) -> List[Any]:
         """Получить диапазон элементов списка"""
         try:
             self._ensure_connection()
@@ -350,7 +351,7 @@ class RedisCacheService:
             logger.error(f"Redis list_range error for key {key}: {e}")
             return []
 
-    def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> Dict[str, Any]:
         """Проверка здоровья Redis подключения"""
         try:
             self._ensure_connection()
@@ -371,7 +372,7 @@ class RedisCacheService:
                 'timestamp': datetime.now().isoformat()
             }
 
-    def clear_all(self) -> bool:
+    async def clear_all(self) -> bool:
         """Очистить всю базу (осторожно!)"""
         try:
             self._ensure_connection()
@@ -380,7 +381,7 @@ class RedisCacheService:
             logger.error(f"Redis clear_all error: {e}")
             return False
 
-    def get_stats(self) -> Dict[str, Any]:
+    async def get_stats(self) -> Dict[str, Any]:
         """Получить статистику использования кеша"""
         try:
             self._ensure_connection()
@@ -400,7 +401,7 @@ class RedisCacheService:
             logger.error(f"Redis get_stats error: {e}")
             return {}
 
-    def _calculate_hit_rate(self, info: Dict) -> float:
+    async def _calculate_hit_rate(self, info: Dict) -> float:
         """Рассчитать hit rate"""
         hits = info.get('keyspace_hits', 0)
         misses = info.get('keyspace_misses', 0)
@@ -446,7 +447,7 @@ def cached(ttl: int = 300, key_prefix: str = "func_cache"):
 _global_cache_instance = None
 
 
-def get_redis_cache(redis_url: str = None, **kwargs) -> RedisCacheService:
+async def get_redis_cache(redis_url: str = None, **kwargs) -> RedisCacheService:
     """Фабричная функция для получения экземпляра RedisCacheService"""
     global _global_cache_instance
 

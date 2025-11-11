@@ -64,7 +64,7 @@ GET /ping — проверка статуса API. Возвращает объе
 Simple
 GET /simple/price — текущие цены по списку coin IDs в требуемых валютах. Опционально можно добавить рыночную капитализацию, объём за 24ч, проценты изменения и метку времени (include_market_cap, include_24hr_vol, include_24hr_change, include_last_updated_at). Ответ: словарь {coin_id: {vs_cur: price, ...}}.
 GET /simple/token_price/{asset_platform_id} — то же, но по контрактным адресам (Ethereum, BSC и т.д.). Возвращает цены/метрики по адресам, сгруппированным внутри платформы.
-GET /simple/supported_vs_currencies — массив строк с кодами поддерживаемых валют котирования (usd, eur, rub, btc, …).
+GET /simple/supported_vs_currencies — массив ст  рок с кодами поддерживаемых валют котирования (usd, eur, rub, btc, …).
 
 Coins
 GET /coins/list — список всех коинов: id, symbol, name (+ опционально platforms при include_platform=true).
