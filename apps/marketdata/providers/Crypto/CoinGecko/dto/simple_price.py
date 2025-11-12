@@ -20,7 +20,7 @@ def _to_float(x) -> Optional[float]:
 
 async def parse_simple_price(raw: Dict[str, Dict[str, Any]]) -> List[SimplePriceEntry]:
     """
-    /simple/price -> List[SimplePriceEntry]
+   /simple/price -> List[Simple PriceEntry]
     - парсим все монеты и все валюты
     - ts храним ТАК КАК ПРИШЁЛ (если есть) — без конверсий
     """
