@@ -7,9 +7,15 @@ import os
 from hashlib import md5
 from enum import Enum
 
+from apps.marketdata.providers.Crypto.CoinGecko.dto.coin_history import CoinHistory, parse_coin_history
+from apps.marketdata.providers.Crypto.CoinGecko.dto.coin_tickers import CoinTickers, parse_coin_tickers
 from apps.marketdata.providers.Crypto.CoinGecko.dto.coins_list import Coin, parse_coins_list, CoinsList
 from apps.marketdata.providers.Crypto.CoinGecko.dto.coins_markets import CoinsMarket, parse_coins_markets
-from apps.marketdata.providers.Crypto.CoinGecko.dto.coinst_id import CoinDetail, parse_coin_detail
+from apps.marketdata.providers.Crypto.CoinGecko.dto.coins_id import CoinDetail, parse_coin_detail
+from apps.marketdata.providers.Crypto.CoinGecko.dto.exchange_detail import parse_exchange
+from apps.marketdata.providers.Crypto.CoinGecko.dto.exchanges import Exchanges, parse_exchanges
+from apps.marketdata.providers.Crypto.CoinGecko.dto.exchanges_list import ExchangesList, parse_exchanges_list
+from apps.marketdata.providers.Crypto.CoinGecko.dto.exchange_detail import Exchange, parse_exchange as parse_exchange_for_exchange_detail
 from apps.marketdata.providers.Crypto.CoinGecko.dto.ping import parser_ping, Ping
 from apps.marketdata.providers.Crypto.CoinGecko.dto.simple_price import parse_simple_price, SimplePriceEntry
 from apps.marketdata.providers.Crypto.CoinGecko.dto.supported_vs_currencies import SupportedVSCurrencies, \
@@ -365,41 +371,61 @@ class CoinGeckoProvider(Provider):
         SYMBOL = "symbol"
 
     async def coin_tickers(self, coin_id: str, *, page: int = 1, exchange_ids: Optional[str] = None,
-                           include_exchange_logo: bool = True, order: OrderEnum = OrderEnum.TRUST_SCORE_DESC, depth: bool = False) -> \
-    Dict[str, Any]:
-        params: Dict[str, Any] = {"page": page, "include_exchange_logo": str(include_exchange_logo).lower(),
-                                  "order": order, "depth": str(depth).lower()}
+                           include_exchange_logo: bool = True, order: OrderEnum = OrderEnum.TRUST_SCORE_DESC,
+                           depth: bool = False) -> CoinTickers:
+        params: Dict[str, Any] = {
+            "page": page,
+            "include_exchange_logo": str(include_exchange_logo).lower(),
+            "order": order, "depth": str(depth).lower()
+        }
         if exchange_ids:
             params["exchange_ids"] = exchange_ids
         data = await self._get(f"/coins/{coin_id}/tickers", params)
-        await self.cache.set(self.k_coin_tickers(coin_id, page), data, ttl=self.TTL_COIN_TICKERS)
-        return data
 
-    async def coin_history(self, coin_id: str, date_ddmmyyyy: str, *, localization: bool = False) -> Dict[str, Any]:
+        coin_tickers: CoinTickers = parse_coin_tickers(data)
+
+        await self.cache.set(self.k_coin_tickers(coin_id, page), coin_tickers.to_redis_value(),
+                             ttl=self.TTL_COIN_TICKERS)
+        return coin_tickers
+
+    async def coin_history(self, coin_id: str, date_ddmmyyyy: str, *, localization: bool = False) -> CoinHistory:
         params = {"date": date_ddmmyyyy, "localization": str(localization).lower()}
         data = await self._get(f"/coins/{coin_id}/history", params)
-        await self.cache.set(self.k_coin_history(coin_id, date_ddmmyyyy, localization), data, ttl=self.TTL_COIN_HISTORY)
-        return data
+        coin_history: CoinHistory = parse_coin_history(data, date=date_ddmmyyyy)
+        await self.cache.set(self.k_coin_history(coin_id, date_ddmmyyyy, localization), coin_history.to_redis_value(), ttl=self.TTL_COIN_HISTORY)
+        return coin_history
 
     # Exchanges
-    async def exchanges(self, *, per_page: int = 250, page: int = 1) -> List[Dict[str, Any]]:
+    async def exchanges(self, *, per_page: int = 250, page: int = 1) -> Exchanges:
         params = {"per_page": per_page, "page": page}
         data = await self._get("/exchanges", params)
-        await self.cache.set(self.k_exchanges(page), data, ttl=self.TTL_EXCHANGES)
-        return data
+        exchanges: Exchanges = parse_exchanges(data)
 
-    async def exchanges_list(self) -> List[Dict[str, Any]]:
+        await self.cache.set(self.k_exchanges(page), exchanges.to_redis_value(), ttl=self.TTL_EXCHANGES)
+        return exchanges
+
+    async def exchanges_list(self) -> ExchangesList:
         data = await self._get("/exchanges/list")
-        await self.cache.set(self.k_exchanges_list(), data, ttl=self.TTL_EXCHANGES_LIST)
-        return data
+        exchanges_list: ExchangesList = parse_exchanges_list(data)
+        await self.cache.set(self.k_exchanges_list(), exchanges_list.to_redis_value(), ttl=self.TTL_EXCHANGES_LIST)
+        return exchanges_list
 
-    async def exchange_detail(self, ex_id: str) -> Dict[str, Any]:
+    async def exchange_detail(self, ex_id: str) -> Exchange:
         data = await self._get(f"/exchanges/{ex_id}")
-        await self.cache.set(self.k_exchange_detail(ex_id), data, ttl=self.TTL_EXCHANGE_DETAIL)
-        return data
+        exchange: Exchange = parse_exchange_for_exchange_detail(data)
+        await self.cache.set(self.k_exchange_detail(ex_id), exchange.to_redis_value(), ttl=self.TTL_EXCHANGE_DETAIL)
+        return exchange
+
+    class ExchangeTickersOrderEnum(str, Enum):
+        MARKET_CAP_ASC = "market_cap_asc"
+        MARKET_CAP_DESC = "market_cap_desc"
+        TRUST_SCORE_DESC = "trust_score_desc"
+        TRUST_SCORE_ASC = "trust_score_asc"
+        VOLUME_DESC = "volume_desc"
+        BASE_TARGET = "base_target"
 
     async def exchange_tickers(self, ex_id: str, *, page: int = 1, coin_ids: Optional[str] = None, depth: bool = False,
-                               order: str = "trust_score_desc") -> Dict[str, Any]:
+                               order: ExchangeTickersOrderEnum = ExchangeTickersOrderEnum.TRUST_SCORE_DESC) -> Dict[str, Any]:
         params: Dict[str, Any] = {"page": page, "depth": str(depth).lower(), "order": order}
         if coin_ids:
             params["coin_ids"] = coin_ids

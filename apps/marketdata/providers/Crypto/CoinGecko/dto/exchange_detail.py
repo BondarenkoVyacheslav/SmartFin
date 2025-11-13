@@ -1,8 +1,9 @@
 import dataclasses
+import datetime
+import decimal
 import json
-from typing import List, Optional, Dict, Any
-
 import strawberry
+from typing import Optional, Any
 
 
 @strawberry.type
@@ -19,7 +20,6 @@ class MarketRef:
     has_trading_incentive: bool | None = None
 
     logo: str | None = None
-
 
 @strawberry.type
 class Ticker:
@@ -66,22 +66,42 @@ class Ticker:
     # оценка капы базовой монеты в USD (если отдают)
     coin_mcap_usd: Optional[float] = None
 
-
 @strawberry.type
-class CoinTickers:
-    name: str | None = None
-    tickers: list[Ticker] = strawberry.field(default_factory=list)
+class Exchange:
+    id: str
+    name: str
+    year_established: datetime.date
+    country: str
+    description: str | None
+    url: str | None
+    image: str | None
+    facebook_url: str | None
+    reddit_url: str | None
+    telegram_url: str | None
+    slack_url: str | None
+    other_url_1: str | None
+    other_url_2: str | None
+    twitter_handle: str | None
+    has_trading_incentive: bool | None
+    centralized: bool | None
+    public_notice: str | None
+    alert_notice: str | None
+    trust_score: int | None
+    trust_score_rank: int | None
+    trade_volume_24h_btc: decimal | None
+    coins: int | None
+    pairs: int | None
+    tickers: Ticker | None
 
     def to_redis_value(self) -> str:
         return json.dumps(dataclasses.asdict(self), ensure_ascii=False, separators=(",", ":"))
 
     @classmethod
-    def from_redis_value(cls, value: str) -> "CoinTickers":
+    def from_redis_value(cls, value: str) -> "Exchange":
         data = json.loads(value)
 
-        raw: CoinTickers = data.get("coin_tickers")
-        return parse_coin_tickers(raw)
-
+        raw: Exchange = data.get("exchanges_list")
+        return parse_exchange(raw)
 
 
 def _to_float(x: Any) -> Optional[float]:
@@ -143,14 +163,32 @@ def _parse_ticker(t: Any) -> Ticker | None:
     )
 
 
-def parse_coin_tickers(raw: dict[str, Any]) -> CoinTickers:
-    """Принимает JSON от /coins/{id}/tickers и нормализует в DTO."""
-    name = raw.get("name")
-    tickers_raw = raw.get("tickers") or []
-    parsed = []
-    for t in tickers_raw:
-        dt = _parse_ticker(t)
-        if dt is not None:
-            parsed.append(dt)
+def parse_exchange(raw: dict[str, Any]) -> Exchange:
+    return (
+        Exchange(
+            id=raw.get("id"),
+            name=raw.get("name"),
+            year_established=raw.get("established"),
+            country=raw.get("country"),
+            description=raw.get("description"),
+            url=raw.get("url"),
+            image=raw.get("image"),
+            facebook_url=raw.get("facebook_url"),
+            reddit_url=raw.get("reddit_url"),
+            telegram_url=raw.get("telegram_url"),
+            slack_url=raw.get("slack_url"),
+            other_url_1=raw.get("other_url_1"),
+            other_url_2=raw.get("other_url_2"),
+            twitter_handle=raw.get("twitter_handle"),
+            has_trading_incentive=raw.get("has_trading_incentive"),
+            centralized=raw.get("centralized"),
+            public_notice=raw.get("public_notice"),
+            alert_notice=raw.get("alert_notice"),
+            trust_score=raw.get("trust_score"),
+            trust_score_rank=raw.get("trust_score_rank"),
+            trade_volume_24h_btc=raw.get("trade_volume_24h_btc"),
+            coins=raw.get("coins"),
+            pairs=raw.get("pairs"),
+            tickers=_parse_ticker(raw.get("tickers")),
+        ))
 
-    return CoinTickers(name=name, tickers=parsed)
