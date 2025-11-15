@@ -12,12 +12,28 @@ from apps.marketdata.providers.Crypto.CoinGecko.dto.coin_tickers import CoinTick
 from apps.marketdata.providers.Crypto.CoinGecko.dto.coins_list import Coin, parse_coins_list, CoinsList
 from apps.marketdata.providers.Crypto.CoinGecko.dto.coins_markets import CoinsMarket, parse_coins_markets
 from apps.marketdata.providers.Crypto.CoinGecko.dto.coins_id import CoinDetail, parse_coin_detail
+from apps.marketdata.providers.Crypto.CoinGecko.dto.derivatives import parse_derivatives, Derivatives
+from apps.marketdata.providers.Crypto.CoinGecko.dto.derivatives_exchange_detail import DerivativesExchangeDetails, \
+    parse_derivatives_exchange_details
+from apps.marketdata.providers.Crypto.CoinGecko.dto.derivatives_exchanges import DerivativesExchangesPage, \
+    parse_derivatives_exchanges
+from apps.marketdata.providers.Crypto.CoinGecko.dto.derivatives_exchanges_list import DerivativesExchangesList, \
+    parse_derivatives_exchanges_list
 from apps.marketdata.providers.Crypto.CoinGecko.dto.exchange_detail import parse_exchange
+from apps.marketdata.providers.Crypto.CoinGecko.dto.exchange_rates import ExchangeRates, parse_exchange_rates
+from apps.marketdata.providers.Crypto.CoinGecko.dto.exchange_tickers import parse_exchange_tickers, ExchangeTickers
+from apps.marketdata.providers.Crypto.CoinGecko.dto.exchange_volume_chart import parse_exchange_volume_chart, \
+    ExchangeVolumeChart
 from apps.marketdata.providers.Crypto.CoinGecko.dto.exchanges import Exchanges, parse_exchanges
 from apps.marketdata.providers.Crypto.CoinGecko.dto.exchanges_list import ExchangesList, parse_exchanges_list
-from apps.marketdata.providers.Crypto.CoinGecko.dto.exchange_detail import Exchange, parse_exchange as parse_exchange_for_exchange_detail
+from apps.marketdata.providers.Crypto.CoinGecko.dto.exchange_detail import Exchange, \
+    parse_exchange as parse_exchange_for_exchange_detail
+from apps.marketdata.providers.Crypto.CoinGecko.dto.global_defi import parse_global_defi_data, GlobalDefiData
 from apps.marketdata.providers.Crypto.CoinGecko.dto.ping import parser_ping, Ping
+from apps.marketdata.providers.Crypto.CoinGecko.dto.search import SearchResult, parse_search_result
+from apps.marketdata.providers.Crypto.CoinGecko.dto.search_trending import SearchTrendingResult, parse_search_trending
 from apps.marketdata.providers.Crypto.CoinGecko.dto.simple_price import parse_simple_price, SimplePriceEntry
+from apps.marketdata.providers.Crypto.CoinGecko.dto.global_data import GlobalData, parse_global
 from apps.marketdata.providers.Crypto.CoinGecko.dto.supported_vs_currencies import SupportedVSCurrencies, \
     parse_supported_vs_currencies
 from apps.marketdata.providers.provider import Provider
@@ -392,7 +408,11 @@ class CoinGeckoProvider(Provider):
         params = {"date": date_ddmmyyyy, "localization": str(localization).lower()}
         data = await self._get(f"/coins/{coin_id}/history", params)
         coin_history: CoinHistory = parse_coin_history(data, date=date_ddmmyyyy)
-        await self.cache.set(self.k_coin_history(coin_id, date_ddmmyyyy, localization), coin_history.to_redis_value(), ttl=self.TTL_COIN_HISTORY)
+        await self.cache.set(
+            self.k_coin_history(coin_id, date_ddmmyyyy, localization),
+            coin_history.to_redis_value(),
+            ttl=self.TTL_COIN_HISTORY
+        )
         return coin_history
 
     # Exchanges
@@ -424,76 +444,86 @@ class CoinGeckoProvider(Provider):
         VOLUME_DESC = "volume_desc"
         BASE_TARGET = "base_target"
 
-    async def exchange_tickers(self, ex_id: str, *, page: int = 1, coin_ids: Optional[str] = None, depth: bool = False,
-                               order: ExchangeTickersOrderEnum = ExchangeTickersOrderEnum.TRUST_SCORE_DESC) -> Dict[str, Any]:
+    async def exchange_tickers(
+            self, ex_id: str,
+            *,
+            page: int = 1,
+            coin_ids: Optional[str] = None,
+            depth: bool = False,
+            order: ExchangeTickersOrderEnum = ExchangeTickersOrderEnum.TRUST_SCORE_DESC
+    ) -> ExchangeTickers:
         params: Dict[str, Any] = {"page": page, "depth": str(depth).lower(), "order": order}
         if coin_ids:
             params["coin_ids"] = coin_ids
         data = await self._get(f"/exchanges/{ex_id}/tickers", params)
-        await self.cache.set(self.k_exchange_tickers(ex_id, page), data, ttl=self.TTL_EXCHANGE_TICKERS)
-        return data
+        ex_tickers: ExchangeTickers = parse_exchange_tickers(ex_id, data)
+        await self.cache.set(self.k_exchange_tickers(ex_id, page), ex_tickers.to_redis_value(), ttl=self.TTL_EXCHANGE_TICKERS)
+        return ex_tickers
 
-    async def exchange_volume_chart(self, ex_id: str, days: int = 1) -> List[Tuple[int, float]]:
+    async def exchange_volume_chart(self, ex_id: str, days: int = 1) -> ExchangeVolumeChart:
         data = await self._get(f"/exchanges/{ex_id}/volume_chart", {"days": days})
-        await self.cache.set(self.k_exchange_volume_chart(ex_id, days), data, ttl=self.TTL_EXCHANGE_VOLUME_CHART)
-        return data
+        ex_volume_chart: ExchangeVolumeChart = parse_exchange_volume_chart(ex_id, days, data)
+        await self.cache.set(
+            self.k_exchange_volume_chart(ex_id, days),
+            ex_volume_chart.to_redis_value(),
+            ttl=self.TTL_EXCHANGE_VOLUME_CHART
+        )
+        return ex_volume_chart
 
     # Derivatives
-    async def derivatives(self) -> List[Dict[str, Any]]:
+    async def derivatives(self) -> Derivatives:
         data = await self._get("/derivatives")
-        await self.cache.set(self.k_derivatives(), data, ttl=self.TTL_DERIVATIVES)
-        return data
+        derivatives: Derivatives = parse_derivatives(data)
+        await self.cache.set(self.k_derivatives(), derivatives.to_redis_value(), ttl=self.TTL_DERIVATIVES)
+        return derivatives
 
-    async def derivatives_exchanges(self, *, per_page: int = 250, page: int = 1) -> List[Dict[str, Any]]:
+    async def derivatives_exchanges(self, *, per_page: int = 250, page: int = 1) -> DerivativesExchangesPage:
         data = await self._get("/derivatives/exchanges", {"per_page": per_page, "page": page})
-        await self.cache.set(self.k_derivatives_exchanges(page), data, ttl=self.TTL_DERIVATIVES_EXCHANGES)
-        return data
+        derivatives_exchanges_page: DerivativesExchangesPage = parse_derivatives_exchanges(data, page=page)
+        await self.cache.set(self.k_derivatives_exchanges(page), derivatives_exchanges_page.to_redis_value(), ttl=self.TTL_DERIVATIVES_EXCHANGES)
+        return derivatives_exchanges_page
 
-    async def derivatives_exchange_detail(self, ex_id: str) -> Dict[str, Any]:
+    async def derivatives_exchange_detail(self, ex_id: str) -> DerivativesExchangeDetails:
         data = await self._get(f"/derivatives/exchanges/{ex_id}")
-        await self.cache.set(self.k_derivatives_exchange_detail(ex_id), data, ttl=self.TTL_DERIVATIVES_EXCHANGE_DETAIL)
-        return data
+        derivatives_exchange_details: DerivativesExchangeDetails = parse_derivatives_exchange_details(data)
+        await self.cache.set(self.k_derivatives_exchange_detail(ex_id), derivatives_exchange_details, ttl=self.TTL_DERIVATIVES_EXCHANGE_DETAIL)
+        return derivatives_exchange_details
 
-    async def derivatives_exchanges_list(self) -> List[Dict[str, Any]]:
+    async def derivatives_exchanges_list(self) -> DerivativesExchangesList:
         data = await self._get("/derivatives/exchanges/list")
-        await self.cache.set(self.k_derivatives_exchanges_list(), data, ttl=self.TTL_DERIVATIVES_EXCHANGES_LIST)
-        return data
+        derivatives_exchanges_list: DerivativesExchangesList = parse_derivatives_exchanges_list(data)
+        await self.cache.set(self.k_derivatives_exchanges_list(), derivatives_exchanges_list.to_redis_value(), ttl=self.TTL_DERIVATIVES_EXCHANGES_LIST)
+        return derivatives_exchanges_list
 
     # Exchange Rates
-    async def exchange_rates(self) -> Dict[str, Any]:
+    async def exchange_rates(self) -> ExchangeRates:
         data = await self._get("/exchange_rates")
-        await self.cache.set(self.k_exchange_rates(), data, ttl=self.TTL_EXCHANGE_RATES)
-        return data
+        exchange_rates: ExchangeRates = parse_exchange_rates(data)
+        await self.cache.set(self.k_exchange_rates(), exchange_rates.to_redis_value(), ttl=self.TTL_EXCHANGE_RATES)
+        return exchange_rates
 
     # Search & Trending
-    async def search(self, query: str) -> Dict[str, Any]:
+    async def search(self, query: str) -> SearchResult:
         data = await self._get("/search", {"query": query})
-        await self.cache.set(self.k_search(self._sig(query.strip().lower())), data, ttl=self.TTL_SEARCH)
-        return data
+        search_result: SearchResult = parse_search_result(data)
+        await self.cache.set(self.k_search(self._sig(query.strip().lower())), search_result.to_redis_value(), ttl=self.TTL_SEARCH)
+        return search_result
 
-    async def search_trending(self) -> Dict[str, Any]:
+    async def search_trending(self) -> SearchTrendingResult:
         data = await self._get("/search/trending")
-        await self.cache.set(self.k_trending(), data, ttl=self.TTL_TRENDING)
-        return data
+        search_trending_result: SearchTrendingResult = parse_search_trending(data)
+        await self.cache.set(self.k_trending(), search_trending_result.to_redis_value(), ttl=self.TTL_TRENDING)
+        return search_trending_result
 
     # Global
-    async def global_data(self) -> Dict[str, Any]:
+    async def global_data(self) -> GlobalData:
         data = await self._get("/global")
-        await self.cache.set(self.k_global(), data, ttl=self.TTL_GLOBAL)
-        return data
+        global_data: GlobalData = parse_global(data)
+        await self.cache.set(self.k_global(), global_data.to_redis_value(), ttl=self.TTL_GLOBAL)
+        return global_data
 
-    async def global_defi(self) -> Dict[str, Any]:
+    async def global_defi(self) -> GlobalDefiData:
         data = await self._get("/global/decentralized_finance_defi")
-        await self.cache.set(self.k_global_defi(), data, ttl=self.TTL_GLOBAL_DEFI)
-        return data
-
-    # Public Treasury
-    async def public_treasury(self, entity: str, coin_id: str) -> Dict[str, Any]:
-        """
-        entity: 'companies' | 'governments'
-        Пример пути: /companies/public_treasury/bitcoin
-        """
-        path = f"/{entity}/public_treasury/{coin_id}"
-        data = await self._get(path)
-        await self.cache.set(self.k_public_treasury(entity, coin_id), data, ttl=self.TTL_PUBLIC_TREASURY)
-        return data
+        global_defi_data: GlobalDefiData = parse_global_defi_data(data)
+        await self.cache.set(self.k_global_defi(), global_defi_data.to_redis_value(), ttl=self.TTL_GLOBAL_DEFI)
+        return global_defi_data

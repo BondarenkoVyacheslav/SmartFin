@@ -1,6 +1,6 @@
 import dataclasses
 import json
-from typing import List, Optional, Dict, Any
+from typing import Optional, Any
 
 import strawberry
 
