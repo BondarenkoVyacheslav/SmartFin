@@ -64,7 +64,6 @@ class HistoryMeta:
 @strawberry.type
 class CoinHistory:
     id: Optional[str] = None
-    date: datetime.date
     symbol: Optional[str] = None
     name: Optional[str] = None
 
@@ -86,6 +85,12 @@ class CoinHistory:
             ensure_ascii=False,
             separators=(",", ":"),
         )
+
+    @classmethod
+    def from_redis_value(cls, value: str) -> "CoinHistory":
+        data = json.loads(value)
+
+        return parse_coin_history(data)
 
 
 def _to_int(x: Any) -> Optional[int]:
@@ -197,14 +202,10 @@ def _parse_public_interest(raw: Any) -> Optional[PublicInterestStatsDTO]:
 
 def parse_coin_history(
     raw: Dict[str, Any],
-    *,
-    date: str,
 ) -> CoinHistory:
-    parsed_date = datetime.datetime.strptime(date, "%d-%m-%Y").date()
 
     return CoinHistory(
         id=raw.get("id"),
-        date=parsed_date,
         symbol=raw.get("symbol"),
         name=raw.get("name"),
         localization=_to_str_map(raw.get("localization")),
@@ -213,5 +214,4 @@ def parse_coin_history(
         community_data=_parse_community(raw.get("community_data")),
         developer_data=_parse_developer(raw.get("developer_data")),
         public_interest_stats=_parse_public_interest(raw.get("public_interest_stats")),
-
     )

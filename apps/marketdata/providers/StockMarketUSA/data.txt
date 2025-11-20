@@ -8,3 +8,9 @@
 
 
 
+1.Finnhub
+2.Twelve Data
+3.Financial Modeling Prep (FMP)
+4.Alpha Vantage
+5.Tiingo
+

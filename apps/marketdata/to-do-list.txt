@@ -1,22 +1,4 @@
-Что еще нужно српоектировать
--схема для GraphQL
--Логику DTO-шек для работы внутри app-а marketdata
--логику провайдеров(самое сложное)
-
-Domains: Crypto, Currency, StockMarketRussia, StockMarketUSA, Products
-
-Логика провайдеров
--Crypto
- - Bybit
- - OKX
--Currency
- -
--StockMarketRussia
- - MOEX
- - Tinkoff
--StockMarketUSA
- -
- -
--Products
- -
- -
+Реализовать для Crypto/CoinGecko
+- Защиту от слишком большого количества запросов к API
+- Реализовать модульные тесты, для проверки работы с API
+- Спроектировать единое место инициализации всех классов, для оптимизации

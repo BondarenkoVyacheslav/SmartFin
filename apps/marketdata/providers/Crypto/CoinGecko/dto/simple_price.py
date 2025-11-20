@@ -1,4 +1,6 @@
-from typing import Optional, Dict, List, Any, Iterable
+import dataclasses
+import json
+from typing import Optional, Dict, List, Any
 import strawberry
 
 @strawberry.type
@@ -6,10 +8,46 @@ class SimplePriceEntry:
     coin_id: str
     vs_currency: str
     price: float
+
     market_cap: Optional[float] = None
     vol_24h: Optional[float] = None
     change_24h: Optional[float] = None
     last_updated_at: Optional[int] = None
+
+
+
+@strawberry.type
+class ListSimplePricesEntry:
+    simple_prices: list[SimplePriceEntry] = strawberry.field(
+        default_factory=list
+    )
+
+    def to_redis_value(self) -> str:
+        return json.dumps(
+            dataclasses.asdict(self),
+            ensure_ascii=False,
+            separators=(",", ":")
+        )
+
+    @classmethod
+    def from_redis_value(cls, value: str) -> "ListSimplePricesEntry":
+        data = json.loads(value)
+        raw = data.get("simple_prices") or []
+
+        items: list[SimplePriceEntry] = []
+        for item in raw:
+            if isinstance(item, dict):
+                items.append(SimplePriceEntry(
+                    coin_id=str(item.get("coin_id", "")),
+                    vs_currency=str(item.get("vs_currency", "")),
+                    price=float(item.get("price", 0.0)),
+                    market_cap=item.get("market_cap"),
+                    vol_24h=item.get("vol_24h"),
+                    change_24h=item.get("change_24h"),
+                    last_updated_at=item.get("last_updated_at"),
+                ))
+
+        return cls(simple_prices=items)
 
 
 def _to_float(x) -> Optional[float]:
@@ -18,16 +56,16 @@ def _to_float(x) -> Optional[float]:
     except (TypeError, ValueError):
         return None
 
-async def parse_simple_price(raw: Dict[str, Dict[str, Any]]) -> List[SimplePriceEntry]:
+def parse_list_simple_price(raw: Dict[str, Dict[str, Any]]) -> ListSimplePricesEntry:
     """
-   /simple/price -> List[Simple PriceEntry]
+   /simple/price -> ListSimplePricesEntry
     - парсим все монеты и все валюты
     - ts храним ТАК КАК ПРИШЁЛ (если есть) — без конверсий
     """
     if not isinstance(raw, dict):
-        return []
+        return ListSimplePricesEntry()
 
-    rows: List[SimplePriceEntry] = []
+    rows: ListSimplePricesEntry = ListSimplePricesEntry()
     flag_suffixes = ("_market_cap", "_24h_vol", "_24h_change")
 
     for coin_id, payload in raw.items():
@@ -56,7 +94,7 @@ async def parse_simple_price(raw: Dict[str, Dict[str, Any]]) -> List[SimplePrice
             vol = _to_float(lower_map.get(f"{vs_code}_24h_vol"))
             chg = _to_float(lower_map.get(f"{vs_code}_24h_change"))
 
-            rows.append(SimplePriceEntry(
+            rows.simple_prices.append(SimplePriceEntry(
                 coin_id=coin_id,
                 vs_currency=vs_code,
                 price=price,

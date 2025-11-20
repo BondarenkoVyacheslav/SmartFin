@@ -8,7 +8,7 @@ import strawberry
 
 from apps.marketdata.providers.Crypto.CoinGecko.coingecko import CoinGeckoProvider
 from apps.marketdata.providers.Crypto.CoinGecko.cache_keys import CoinGeckoCacheKeys
-from apps.marketdata.providers.Crypto.CoinGecko.dto.simple_price import SimplePriceEntry
+from apps.marketdata.providers.Crypto.CoinGecko.dto.simpl_token_price import SimpleTokenPricesList
 from apps.marketdata.providers.Crypto.CoinGecko.dto.supported_vs_currencies import SupportedVSCurrencies
 from apps.marketdata.providers.Crypto.CoinGecko.dto.coins_list import CoinsList
 from apps.marketdata.providers.Crypto.CoinGecko.dto.coins_markets import CoinsMarket
@@ -30,25 +30,8 @@ from apps.marketdata.providers.Crypto.CoinGecko.dto.search_trending import Searc
 from apps.marketdata.providers.Crypto.CoinGecko.dto.global_data import GlobalData
 from apps.marketdata.providers.Crypto.CoinGecko.dto.global_defi import GlobalDefiData
 from apps.marketdata.providers.Crypto.CoinGecko.dto.ping import Ping
-from apps.marketdata.services.redis_cache import RedisCacheService, get_redis_cache
-
-
-# === Ленивая инициализация CoinGeckoProvider с общим RedisCacheService ===
-
-_coingecko: Optional[CoinGeckoProvider] = None
-
-
-async def get_coingecko_provider() -> CoinGeckoProvider:
-    """
-    Единая точка получения CoinGeckoProvider:
-    - берём глобальный RedisCacheService через get_redis_cache()
-    - создаём провайдера один раз и переиспользуем
-    """
-    global _coingecko
-    if _coingecko is None:
-        cache: RedisCacheService = await get_redis_cache()
-        _coingecko = CoinGeckoProvider(cache=cache)
-    return _coingecko
+from apps.marketdata.providers.Crypto.CoinGecko.dto.simple_price import ListSimplePricesEntry
+from apps.marketdata.services.redis_cache import RedisCacheService
 
 
 # === Утилиты для восстановления DTO из JSON/строки, лежащей в Redis ===
@@ -150,14 +133,17 @@ def _hydrate_from_redis(dto_cls, raw: Any):
 
 @strawberry.type
 class CoinGeckoQuery:
+    def __init__(self, coin_gecko_provider: CoinGeckoProvider, cache: RedisCacheService):
+        self.coin_gecko_provider = coin_gecko_provider
+        self.cache = cache
+
     # ---- /ping ----
     @strawberry.field
     async def ping(self) -> Optional[Ping]:
         """
         /ping — простой health-check CoinGecko.
         """
-        cg = await get_coingecko_provider()
-        return await cg.ping()
+        return await self.coin_gecko_provider.ping()
 
     # ---- /simple/price ----
     @strawberry.field
@@ -169,7 +155,7 @@ class CoinGeckoQuery:
         include_24hr_vol: bool = False,
         include_24hr_change: bool = False,
         include_last_updated_at: bool = False,
-    ) -> List[SimplePriceEntry]:
+    ) -> ListSimplePricesEntry:
         """
         Обёртка над /simple/price.
 
@@ -177,15 +163,14 @@ class CoinGeckoQuery:
         2. Если нет/ошибка — обращаемся к CoinGeckoProvider.simple_price(...)
            (он сам положит свежие данные в кэш).
         """
-        cg = await get_coingecko_provider()
 
-        ids_csv = cg._csv(ids)
-        vs_csv = cg._csv(vs_currencies)
+        ids_csv = CoinGeckoProvider.csv(ids)
+        vs_csv = CoinGeckoProvider.csv(vs_currencies)
 
         key = CoinGeckoCacheKeys.simple_price(
-            ids_sig=cg._sig(ids_csv),
-            vs_sig=cg._sig(vs_csv),
-            opts_sig=cg._sig(
+            ids_sig=CoinGeckoProvider.sig(ids_csv),
+            vs_sig=CoinGeckoProvider.sig(vs_csv),
+            opts_sig=CoinGeckoProvider.sig(
                 "mc" if include_market_cap else "nomc",
                 "vol" if include_24hr_vol else "novol",
                 "chg" if include_24hr_change else "nochg",
@@ -193,21 +178,57 @@ class CoinGeckoQuery:
             ),
         )
 
-        cached = await cg.cache.get(key)
-        if isinstance(cached, list):
-            try:
-                return [
-                    SimplePriceEntry(**row)
-                    for row in cached
-                    if isinstance(row, dict)
-                ]
-            except Exception:
-                # если формат неожиданный — тихо падаем в провайдера
-                pass
+        cached = await self.cache.get(key)
+        dto = _hydrate_from_redis(ListSimplePricesEntry, cached)
+
+        if dto is not None:
+            return dto
 
         # Кэш пустой или невалидный — берём из провайдера (он же обновит кэш).
-        return await cg.simple_price(
+        return await self.coin_gecko_provider.simple_price(
             ids=ids,
+            vs_currencies=vs_currencies,
+            include_market_cap=include_market_cap,
+            include_24hr_vol=include_24hr_vol,
+            include_24hr_change=include_24hr_change,
+            include_last_updated_at=include_last_updated_at,
+        )
+
+    @strawberry.field
+    async def simple_token_price(
+            self,
+            asset_platform_id: str,
+            contract_addresses: Sequence[str],
+            vs_currencies: Sequence[str],
+            include_market_cap: bool = False,
+            include_24hr_vol: bool = False,
+            include_24hr_change: bool = False,
+            include_last_updated_at: bool = False,
+    ) -> SimpleTokenPricesList:
+        addrs_csv = CoinGeckoProvider.csv(contract_addresses)
+        vs_csv = (CoinGeckoProvider.csv(vs_currencies))
+
+        key = CoinGeckoCacheKeys.token_price(
+            platform=asset_platform_id,
+            addrs_sig=CoinGeckoProvider.sig(addrs_csv),
+            vs_sig=CoinGeckoProvider.sig(vs_csv),
+            opts_sig=CoinGeckoProvider.sig(
+                "mc" if include_market_cap else "nomc",
+                "vol" if include_24hr_vol else "novol",
+                "chg" if include_24hr_change else "nochg",
+                "ts" if include_last_updated_at else "nots",
+            ),
+        )
+
+        cached = await self.cache.get(key)
+        dto = _hydrate_from_redis(SimpleTokenPricesList, cached)
+
+        if dto is not None:
+            return dto
+
+        return await self.coin_gecko_provider.simple_token_price(
+            asset_platform_id=asset_platform_id,
+            contract_addresses=contract_addresses,
             vs_currencies=vs_currencies,
             include_market_cap=include_market_cap,
             include_24hr_vol=include_24hr_vol,
@@ -218,28 +239,26 @@ class CoinGeckoQuery:
     # ---- /simple/supported_vs_currencies ----
     @strawberry.field
     async def supported_vs_currencies(self) -> SupportedVSCurrencies:
-        cg = await get_coingecko_provider()
         key = CoinGeckoCacheKeys.supported_vs()
-        cached = await cg.cache.get(key)
+        cached = await self.cache.get(key)
 
         dto = _hydrate_from_redis(SupportedVSCurrencies, cached)
         if dto is not None:
             return dto
 
-        return await cg.simple_supported_vs_currencies()
+        return await self.coin_gecko_provider.simple_supported_vs_currencies()
 
     # ---- /coins/list ----
     @strawberry.field
     async def coins_list(self, include_platform: bool = False) -> CoinsList:
-        cg = await get_coingecko_provider()
         key = CoinGeckoCacheKeys.coins_list(include_platform)
-        cached = await cg.cache.get(key)
+        cached = await self.cache.get(key)
 
         dto = _hydrate_from_redis(CoinsList, cached)
         if dto is not None:
             return dto
 
-        return await cg.coins_list(include_platform=include_platform)
+        return await self.coin_gecko_provider.coins_list(include_platform=include_platform)
 
     # ---- /coins/markets ----
     @strawberry.field
@@ -255,7 +274,6 @@ class CoinGeckoQuery:
         price_change_percentage: str = "1h,24h,7d",
         locale: Optional[str] = None,
     ) -> CoinsMarket:
-        cg = await get_coingecko_provider()
 
         params: dict[str, Any] = {
             "vs_currency": vs_currency.lower(),
@@ -266,7 +284,7 @@ class CoinGeckoQuery:
             "price_change_percentage": price_change_percentage,
         }
         if ids:
-            params["ids"] = cg._csv(ids)
+            params["ids"] = CoinGeckoProvider.csv(ids)
         if category:
             params["category"] = category
         if locale:
@@ -278,16 +296,16 @@ class CoinGeckoQuery:
             order=order,
             spark=sparkline,
             pcp=price_change_percentage,
-            ids_sig=cg._sig(params["ids"]) if "ids" in params else None,
+            ids_sig=CoinGeckoProvider.sig(params["ids"]) if "ids" in params else None,
             category=category,
         )
 
-        cached = await cg.cache.get(key)
+        cached = await self.cache.get(key)
         dto = _hydrate_from_redis(CoinsMarket, cached)
         if dto is not None:
             return dto
 
-        return await cg.coins_markets(
+        return await self.coin_gecko_provider.coins_markets(
             vs_currency=vs_currency,
             ids=ids,
             category=category,
@@ -311,14 +329,13 @@ class CoinGeckoQuery:
         developer_data: bool = True,
         sparkline: bool = False,
     ) -> CoinDetail:
-        cg = await get_coingecko_provider()
         key = CoinGeckoCacheKeys.coin_detail(coin_id)
-        cached = await cg.cache.get(key)
+        cached = await self.cache.get(key)
         dto = _hydrate_from_redis(CoinDetail, cached)
         if dto is not None:
             return dto
 
-        return await cg.coin_detail(
+        return await self.coin_gecko_provider.coin_detail(
             coin_id=coin_id,
             localization=localization,
             tickers=tickers,
@@ -339,17 +356,16 @@ class CoinGeckoQuery:
         order: str = "trust_score_desc",
         depth: bool = False,
     ) -> CoinTickers:
-        cg = await get_coingecko_provider()
         key = CoinGeckoCacheKeys.coin_tickers(coin_id, page)
-        cached = await cg.cache.get(key)
+        cached = await self.cache.get(key)
         dto = _hydrate_from_redis(CoinTickers, cached)
         if dto is not None:
             return dto
 
         # Используем строковый order, маппим в Enum провайдера при необходимости
-        order_enum = cg.OrderEnum(order) if isinstance(order, str) else order
+        order_enum = self.coin_gecko_provider.OrderEnum(order) if isinstance(order, str) else order
 
-        return await cg.coin_tickers(
+        return await self.coin_gecko_provider.coin_tickers(
             coin_id=coin_id,
             page=page,
             exchange_ids=exchange_ids,
@@ -366,14 +382,13 @@ class CoinGeckoQuery:
         date_ddmmyyyy: str,
         localization: bool = False,
     ) -> CoinHistory:
-        cg = await get_coingecko_provider()
         key = CoinGeckoCacheKeys.coin_history(coin_id, date_ddmmyyyy, localization)
-        cached = await cg.cache.get(key)
+        cached = await self.cache.get(key)
         dto = _hydrate_from_redis(CoinHistory, cached)
         if dto is not None:
             return dto
 
-        return await cg.coin_history(
+        return await self.coin_gecko_provider.coin_history(
             coin_id=coin_id,
             date_ddmmyyyy=date_ddmmyyyy,
             localization=localization,
@@ -386,38 +401,35 @@ class CoinGeckoQuery:
         per_page: int = 250,
         page: int = 1,
     ) -> Exchanges:
-        cg = await get_coingecko_provider()
         key = CoinGeckoCacheKeys.exchanges(page)
-        cached = await cg.cache.get(key)
+        cached = await self.cache.get(key)
         dto = _hydrate_from_redis(Exchanges, cached)
         if dto is not None:
             return dto
 
-        return await cg.exchanges(per_page=per_page, page=page)
+        return await self.coin_gecko_provider.exchanges(per_page=per_page, page=page)
 
     # ---- /exchanges/list ----
     @strawberry.field
     async def exchanges_list(self) -> ExchangesList:
-        cg = await get_coingecko_provider()
         key = CoinGeckoCacheKeys.exchanges_list()
-        cached = await cg.cache.get(key)
+        cached = await self.cache.get(key)
         dto = _hydrate_from_redis(ExchangesList, cached)
         if dto is not None:
             return dto
 
-        return await cg.exchanges_list()
+        return await self.coin_gecko_provider.exchanges_list()
 
     # ---- /exchanges/{id} ----
     @strawberry.field
     async def exchange_detail(self, ex_id: str) -> Exchange:
-        cg = await get_coingecko_provider()
         key = CoinGeckoCacheKeys.exchange_detail(ex_id)
-        cached = await cg.cache.get(key)
+        cached = await self.cache.get(key)
         dto = _hydrate_from_redis(Exchange, cached)
         if dto is not None:
             return dto
 
-        return await cg.exchange_detail(ex_id=ex_id)
+        return await self.coin_gecko_provider.exchange_detail(ex_id=ex_id)
 
     # ---- /exchanges/{id}/tickers ----
     @strawberry.field
@@ -429,16 +441,15 @@ class CoinGeckoQuery:
         depth: bool = False,
         order: str = "trust_score_desc",
     ) -> ExchangeTickers:
-        cg = await get_coingecko_provider()
         key = CoinGeckoCacheKeys.exchange_tickers(ex_id, page)
-        cached = await cg.cache.get(key)
+        cached = await self.cache.get(key)
         dto = _hydrate_from_redis(ExchangeTickers, cached)
         if dto is not None:
             return dto
 
-        order_enum = cg.ExchangeTickersOrderEnum(order) if isinstance(order, str) else order
+        order_enum = self.coin_gecko_provider.ExchangeTickersOrderEnum(order) if isinstance(order, str) else order
 
-        return await cg.exchange_tickers(
+        return await self.coin_gecko_provider.exchange_tickers(
             ex_id=ex_id,
             page=page,
             coin_ids=coin_ids,
@@ -453,26 +464,24 @@ class CoinGeckoQuery:
         ex_id: str,
         days: int = 1,
     ) -> ExchangeVolumeChart:
-        cg = await get_coingecko_provider()
         key = CoinGeckoCacheKeys.exchange_volume_chart(ex_id, days)
-        cached = await cg.cache.get(key)
+        cached = await self.cache.get(key)
         dto = _hydrate_from_redis(ExchangeVolumeChart, cached)
         if dto is not None:
             return dto
 
-        return await cg.exchange_volume_chart(ex_id=ex_id, days=days)
+        return await self.coin_gecko_provider.exchange_volume_chart(ex_id=ex_id, days=days)
 
     # ---- /derivatives ----
     @strawberry.field
     async def derivatives(self) -> Derivatives:
-        cg = await get_coingecko_provider()
         key = CoinGeckoCacheKeys.derivatives()
-        cached = await cg.cache.get(key)
+        cached = await self.cache.get(key)
         dto = _hydrate_from_redis(Derivatives, cached)
         if dto is not None:
             return dto
 
-        return await cg.derivatives()
+        return await self.coin_gecko_provider.derivatives()
 
     # ---- /derivatives/exchanges ----
     @strawberry.field
@@ -481,99 +490,88 @@ class CoinGeckoQuery:
         per_page: int = 250,
         page: int = 1,
     ) -> DerivativesExchangesPage:
-        cg = await get_coingecko_provider()
         key = CoinGeckoCacheKeys.derivatives_exchanges(page)
-        cached = await cg.cache.get(key)
+        cached = await self.cache.get(key)
         dto = _hydrate_from_redis(DerivativesExchangesPage, cached)
         if dto is not None:
             return dto
 
-        return await cg.derivatives_exchanges(per_page=per_page, page=page)
+        return await self.coin_gecko_provider.derivatives_exchanges(per_page=per_page, page=page)
 
     # ---- /derivatives/exchanges/{id} ----
     @strawberry.field
     async def derivatives_exchange_detail(self, ex_id: str) -> DerivativesExchangeDetails:
-        cg = await get_coingecko_provider()
         key = CoinGeckoCacheKeys.derivatives_exchange_detail(ex_id)
-        cached = await cg.cache.get(key)
+        cached = await self.cache.get(key)
         dto = _hydrate_from_redis(DerivativesExchangeDetails, cached)
         if dto is not None:
             return dto
 
-        return await cg.derivatives_exchange_detail(ex_id=ex_id)
+        return await self.coin_gecko_provider.derivatives_exchange_detail(ex_id=ex_id)
 
     # ---- /derivatives/exchanges/list ----
     @strawberry.field
     async def derivatives_exchanges_list(self) -> DerivativesExchangesList:
-        cg = await get_coingecko_provider()
         key = CoinGeckoCacheKeys.derivatives_exchanges_list()
-        cached = await cg.cache.get(key)
+        cached = await self.cache.get(key)
         dto = _hydrate_from_redis(DerivativesExchangesList, cached)
         if dto is not None:
             return dto
 
-        return await cg.derivatives_exchanges_list()
+        return await self.coin_gecko_provider.derivatives_exchanges_list()
 
     # ---- /exchange_rates ----
     @strawberry.field
     async def exchange_rates(self) -> ExchangeRates:
-        cg = await get_coingecko_provider()
         key = CoinGeckoCacheKeys.exchange_rates()
-        cached = await cg.cache.get(key)
+        cached = await self.cache.get(key)
         dto = _hydrate_from_redis(ExchangeRates, cached)
         if dto is not None:
             return dto
 
-        return await cg.exchange_rates()
+        return await self.coin_gecko_provider.exchange_rates()
 
     # ---- /search ----
     @strawberry.field
     async def search(self, query: str) -> SearchResult:
-        cg = await get_coingecko_provider()
-        sig = cg._sig(query.strip().lower())
+        sig = CoinGeckoProvider.sig(query.strip().lower())
         key = CoinGeckoCacheKeys.search(sig)
-        cached = await cg.cache.get(key)
+        cached = await self.cache.get(key)
         dto = _hydrate_from_redis(SearchResult, cached)
         if dto is not None:
             return dto
 
-        return await cg.search(query=query)
+        return await self.coin_gecko_provider.search(query=query)
 
     # ---- /search/trending ----
     @strawberry.field
     async def search_trending(self) -> SearchTrendingResult:
-        cg = await get_coingecko_provider()
         key = CoinGeckoCacheKeys.trending()
-        cached = await cg.cache.get(key)
+        cached = await self.cache.get(key)
         dto = _hydrate_from_redis(SearchTrendingResult, cached)
         if dto is not None:
             return dto
 
-        return await cg.search_trending()
+        return await self.coin_gecko_provider.search_trending()
 
     # ---- /global ----
     @strawberry.field(name="global")
     async def global_data(self) -> GlobalData:
-        cg = await get_coingecko_provider()
         key = CoinGeckoCacheKeys.global_data()
-        cached = await cg.cache.get(key)
+        cached = await self.cache.get(key)
         dto = _hydrate_from_redis(GlobalData, cached)
         if dto is not None:
             return dto
 
-        return await cg.global_data()
+        return await self.coin_gecko_provider.global_data()
 
     # ---- /global/decentralized_finance_defi ----
     @strawberry.field
     async def global_defi(self) -> GlobalDefiData:
-        cg = await get_coingecko_provider()
         key = CoinGeckoCacheKeys.global_defi()
-        cached = await cg.cache.get(key)
+        cached = await self.cache.get(key)
         dto = _hydrate_from_redis(GlobalDefiData, cached)
         if dto is not None:
             return dto
 
-        return await cg.global_defi()
-
-
-schema = strawberry.Schema(query=CoinGeckoQuery)
+        return await self.coin_gecko_provider.global_defi()

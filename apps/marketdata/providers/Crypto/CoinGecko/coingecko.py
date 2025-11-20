@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, Optional, Sequence
 import time
 import httpx
 import os
@@ -29,7 +29,9 @@ from apps.marketdata.providers.Crypto.CoinGecko.dto.global_defi import parse_glo
 from apps.marketdata.providers.Crypto.CoinGecko.dto.ping import parser_ping, Ping
 from apps.marketdata.providers.Crypto.CoinGecko.dto.search import SearchResult, parse_search_result
 from apps.marketdata.providers.Crypto.CoinGecko.dto.search_trending import SearchTrendingResult, parse_search_trending
-from apps.marketdata.providers.Crypto.CoinGecko.dto.simple_price import parse_simple_price, SimplePriceEntry
+from apps.marketdata.providers.Crypto.CoinGecko.dto.simpl_token_price import SimpleTokenPricesList, \
+    parse_simple_token_prices
+from apps.marketdata.providers.Crypto.CoinGecko.dto.simple_price import ListSimplePricesEntry, parse_list_simple_price
 from apps.marketdata.providers.Crypto.CoinGecko.dto.global_data import GlobalData, parse_global
 from apps.marketdata.providers.Crypto.CoinGecko.dto.supported_vs_currencies import SupportedVSCurrencies, \
     parse_supported_vs_currencies
@@ -101,11 +103,11 @@ class CoinGeckoProvider(Provider):
     # ============ helpers ============
 
     @staticmethod
-    def _csv(items: Sequence[str]) -> str:
+    def csv(items: Sequence[str]) -> str:
         return ",".join(sorted({i.strip().lower() for i in items if i}))
 
     @staticmethod
-    def _sig(*parts: str) -> str:
+    def sig(*parts: str) -> str:
         """Короткая подпись (чтобы ключи не разрастались)"""
         raw = "|".join(parts)
         return md5(raw.encode("utf-8")).hexdigest()[:10]
@@ -241,9 +243,9 @@ class CoinGeckoProvider(Provider):
             include_24hr_vol: bool = False,
             include_24hr_change: bool = False,
             include_last_updated_at: bool = False,
-    ) -> List[SimplePriceEntry]:
-        ids_csv = self._csv(ids)
-        vs_csv = self._csv(vs_currencies)
+    ) -> ListSimplePricesEntry:
+        ids_csv = self.csv(ids)
+        vs_csv = self.csv(vs_currencies)
         params = {
             "ids": ids_csv,
             "vs_currencies": vs_csv,
@@ -254,13 +256,12 @@ class CoinGeckoProvider(Provider):
         }
         data = await self._get("/simple/price", params)
 
-        rows = await parse_simple_price(data)
-        payload = [r.__dict__ for r in rows]
+        rows: ListSimplePricesEntry = parse_list_simple_price(data)
 
         key = self.k_simple_price(
-            ids_sig=self._sig(ids_csv),
-            vs_sig=self._sig(vs_csv),
-            opts_sig=self._sig(
+            ids_sig=self.sig(ids_csv),
+            vs_sig=self.sig(vs_csv),
+            opts_sig=self.sig(
                 "mc" if include_market_cap else "nomc",
                 "vol" if include_24hr_vol else "novol",
                 "chg" if include_24hr_change else "nochg",
@@ -280,9 +281,9 @@ class CoinGeckoProvider(Provider):
             include_24hr_vol: bool = False,
             include_24hr_change: bool = False,
             include_last_updated_at: bool = False,
-    ) -> Dict[str, Any]:
-        addrs_csv = self._csv(contract_addresses)
-        vs_csv = self._csv(vs_currencies)
+    ) -> SimpleTokenPricesList:
+        addrs_csv = self.csv(contract_addresses)
+        vs_csv = self.csv(vs_currencies)
         params = {
             "contract_addresses": addrs_csv,
             "vs_currencies": vs_csv,
@@ -293,11 +294,12 @@ class CoinGeckoProvider(Provider):
         }
         path = f"/simple/token_price/{asset_platform_id}"
         data = await self._get(path, params)
+        simple_token_price_list: SimpleTokenPricesList = parse_simple_token_prices(data)
         key = self.k_token_price(
             platform=asset_platform_id,
-            addrs_sig=self._sig(addrs_csv),
-            vs_sig=self._sig(vs_csv),
-            opts_sig=self._sig(
+            addrs_sig=self.sig(addrs_csv),
+            vs_sig=self.sig(vs_csv),
+            opts_sig=self.sig(
                 "mc" if include_market_cap else "nomc",
                 "vol" if include_24hr_vol else "novol",
                 "chg" if include_24hr_change else "nochg",
@@ -305,7 +307,7 @@ class CoinGeckoProvider(Provider):
             ),
         )
         await self.cache.set(key, data, ttl=self.TTL_TOKEN_PRICE)
-        return data
+        return simple_token_price_list
 
     async def simple_supported_vs_currencies(self) -> SupportedVSCurrencies:
         data = await self._get("/simple/supported_vs_currencies")
@@ -345,7 +347,7 @@ class CoinGeckoProvider(Provider):
             "price_change_percentage": price_change_percentage,
         }
         if ids:
-            params["ids"] = self._csv(ids)
+            params["ids"] = self.csv(ids)
         if category:
             params["category"] = category
         if locale:
@@ -354,7 +356,7 @@ class CoinGeckoProvider(Provider):
         data = await self._get("/coins/markets", params)
         key = self.k_coins_markets(
             vs=vs_currency, page=page, order=order, spark=sparkline,
-            pcp=price_change_percentage, ids_sig=self._sig(params["ids"]) if "ids" in params else None,
+            pcp=price_change_percentage, ids_sig=self.sig(params["ids"]) if "ids" in params else None,
             category=category
         )
         coins_market: CoinsMarket = parse_coins_markets(data, vs_currency)
@@ -419,7 +421,7 @@ class CoinGeckoProvider(Provider):
     async def coin_history(self, coin_id: str, date_ddmmyyyy: str, *, localization: bool = False) -> CoinHistory:
         params = {"date": date_ddmmyyyy, "localization": str(localization).lower()}
         data = await self._get(f"/coins/{coin_id}/history", params)
-        coin_history: CoinHistory = parse_coin_history(data, date=date_ddmmyyyy)
+        coin_history: CoinHistory = parse_coin_history(data)
         await self.cache.set(
             self.k_coin_history(coin_id, date_ddmmyyyy, localization),
             data,
@@ -518,7 +520,7 @@ class CoinGeckoProvider(Provider):
     async def search(self, query: str) -> SearchResult:
         data = await self._get("/search", {"query": query})
         search_result: SearchResult = parse_search_result(data)
-        await self.cache.set(self.k_search(self._sig(query.strip().lower())), data, ttl=self.TTL_SEARCH)
+        await self.cache.set(self.k_search(self.sig(query.strip().lower())), data, ttl=self.TTL_SEARCH)
         return search_result
 
     async def search_trending(self) -> SearchTrendingResult:
