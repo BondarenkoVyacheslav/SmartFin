@@ -7,3 +7,6 @@ repomix-output.md
 /shelf/
 
 /workspace.xml
+.idea
+.venv
+venv
