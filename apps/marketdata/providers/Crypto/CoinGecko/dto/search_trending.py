@@ -1,7 +1,7 @@
-import dataclasses
-import json
 from typing import Dict, List, Optional, Any
 import strawberry
+
+from apps.marketdata.providers.Crypto.CoinGecko.dto.redis_json import RedisJSON
 
 
 # --- Общие вложенные структуры ---
@@ -110,22 +110,10 @@ class TrendingCategory:
 
 
 @strawberry.type
-class SearchTrendingResult:
+class SearchTrendingResult(RedisJSON):
     coins: List[TrendingCoin]
     nfts: List[TrendingNft]
     categories: List[TrendingCategory]
-
-
-    def to_redis_value(self) -> str:
-        return json.dumps(
-            dataclasses.asdict(self),
-            ensure_ascii=False,
-            separators=(",", ":")
-        )
-
-
-
-# --- Парсер сырых данных из CoinGecko ---
 
 
 def _parse_float_mapping(raw_map: Any) -> Dict[str, float]:

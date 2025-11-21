@@ -1,12 +1,13 @@
-import dataclasses
-import json
 from decimal import Decimal
 from typing import Any
 
 import strawberry
 
+from apps.marketdata.providers.Crypto.CoinGecko.dto.redis_json import RedisJSON
+
+
 @strawberry.type
-class GlobalDefiData:
+class GlobalDefiData(RedisJSON):
     defi_market_cap: str
     eth_market_data: str
     defi_to_eth_ratio: str
@@ -14,13 +15,6 @@ class GlobalDefiData:
     defi_dominance: str
     top_coin_name: str
     top_coin_defi_dominance: Decimal
-
-    def to_redis_value(self) -> str:
-        return json.dumps(
-            dataclasses.asdict(self),
-            ensure_ascii=False,
-            separators=(",", ":"),
-        )
 
 
 def parse_global_defi_data(raw: dict[str, dict[str, Any]]) -> GlobalDefiData:

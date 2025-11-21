@@ -1,9 +1,9 @@
-import dataclasses
-import datetime
 import json
 from typing import Any, Dict, Optional
-
 import strawberry
+
+from apps.marketdata.providers.Crypto.CoinGecko.dto.redis_json import RedisJSON
+
 
 @strawberry.type
 class ImageDTO:
@@ -62,7 +62,7 @@ class HistoryMeta:
 
 
 @strawberry.type
-class CoinHistory:
+class CoinHistory(RedisJSON):
     id: Optional[str] = None
     symbol: Optional[str] = None
     name: Optional[str] = None
@@ -78,13 +78,6 @@ class CoinHistory:
 
     # наше поле (не от API)
     meta: Optional[HistoryMeta] = None
-
-    def to_redis_value(self) -> str:
-        return json.dumps(
-            dataclasses.asdict(self),
-            ensure_ascii=False,
-            separators=(",", ":"),
-        )
 
     @classmethod
     def from_redis_value(cls, value: str) -> "CoinHistory":
@@ -201,9 +194,8 @@ def _parse_public_interest(raw: Any) -> Optional[PublicInterestStatsDTO]:
 
 
 def parse_coin_history(
-    raw: Dict[str, Any],
+        raw: Dict[str, Any],
 ) -> CoinHistory:
-
     return CoinHistory(
         id=raw.get("id"),
         symbol=raw.get("symbol"),

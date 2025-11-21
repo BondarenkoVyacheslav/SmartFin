@@ -180,6 +180,7 @@ class CoinGeckoQuery:
 
         cached = await self.cache.get(key)
         dto = _hydrate_from_redis(ListSimplePricesEntry, cached)
+        dto = ListSimplePricesEntry.from_redis_value(cached)
 
         if dto is not None:
             return dto

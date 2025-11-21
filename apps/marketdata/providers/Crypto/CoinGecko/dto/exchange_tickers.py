@@ -1,8 +1,8 @@
-import dataclasses
-import json
 from typing import List, Optional, Dict, Any
 
 import strawberry
+
+from apps.marketdata.providers.Crypto.CoinGecko.dto.redis_json import RedisJSON
 
 
 @strawberry.type
@@ -60,24 +60,13 @@ class ExchangeTicker:
 
 
 @strawberry.type
-class ExchangeTickers:
+class ExchangeTickers(RedisJSON):
     """
     Обёртка над ответом /exchanges/{id}/tickers.
     """
     exchange_id: str          # "binance" (из URL, а не из тела ответа)
     exchange_name: str        # "Binance" (из поля name в ответе)
     tickers: List[ExchangeTicker]
-
-    def to_redis_value(self) -> str:
-        """
-        Сериализация в компактный JSON для хранения в Redis.
-        Strawberry-классы совместимы с dataclasses.asdict().
-        """
-        return json.dumps(
-            dataclasses.asdict(self),
-            ensure_ascii=False,
-            separators=(",", ":"),
-        )
 
 
 def _to_optional_float(value: Any) -> Optional[float]:

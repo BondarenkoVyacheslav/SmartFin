@@ -1,8 +1,7 @@
-import dataclasses
-import json
 from typing import Sequence
 import strawberry
 
+from apps.marketdata.providers.Crypto.CoinGecko.dto.redis_json import RedisJSON
 
 
 @strawberry.type
@@ -11,15 +10,8 @@ class Derivative:
     name: str
 
 @strawberry.type
-class DerivativesExchangesList:
+class DerivativesExchangesList(RedisJSON):
     derivatives_exchanges_list: list[Derivative] = strawberry.field(default_factory=list)
-
-    def to_redis_value(self):
-        return json.dumps(
-            dataclasses.asdict(self),
-            ensure_ascii=False,
-            separators=(",", ":"),
-        )
 
 
 def parse_derivatives_exchanges_list(raw: Sequence[dict[str, str]]) -> DerivativesExchangesList:

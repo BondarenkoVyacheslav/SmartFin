@@ -1,9 +1,10 @@
-import dataclasses
 import datetime
 import decimal
 import json
 import strawberry
 from typing import Optional, Any
+
+from apps.marketdata.providers.Crypto.CoinGecko.dto.redis_json import RedisJSON
 
 
 @strawberry.type
@@ -67,7 +68,7 @@ class Ticker:
     coin_mcap_usd: Optional[float] = None
 
 @strawberry.type
-class Exchange:
+class Exchange(RedisJSON):
     id: str
     name: str
     year_established: datetime.date
@@ -92,9 +93,6 @@ class Exchange:
     coins: int | None
     pairs: int | None
     tickers: Ticker | None
-
-    def to_redis_value(self) -> str:
-        return json.dumps(dataclasses.asdict(self), ensure_ascii=False, separators=(",", ":"))
 
     @classmethod
     def from_redis_value(cls, value: str) -> "Exchange":

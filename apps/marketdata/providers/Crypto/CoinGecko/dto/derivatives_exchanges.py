@@ -1,8 +1,8 @@
-import dataclasses
-import json
 from typing import List, Optional, Sequence, Mapping, Any
 
 import strawberry
+
+from apps.marketdata.providers.Crypto.CoinGecko.dto.redis_json import RedisJSON
 
 
 @strawberry.type
@@ -30,23 +30,13 @@ class DerivativesExchange:
 
 
 @strawberry.type
-class DerivativesExchangesPage:
+class DerivativesExchangesPage(RedisJSON):
     """
     Обёртка над списком деривативных бирж.
     Удобно, чтобы знать, какой page мы закэшировали.
     """
     page: int
     exchanges: List[DerivativesExchange]
-
-    def to_redis_value(self) -> str:
-        """
-        Сериализация в компактный JSON для хранения в Redis.
-        """
-        return json.dumps(
-            dataclasses.asdict(self),
-            ensure_ascii=False,
-            separators=(",", ":"),
-        )
 
 
 def _to_float(value: Any, default: float = 0.0) -> float:

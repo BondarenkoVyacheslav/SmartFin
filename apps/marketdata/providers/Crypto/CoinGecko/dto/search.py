@@ -1,6 +1,8 @@
 from typing import List, Optional, Dict, Any
 import strawberry
 
+from apps.marketdata.providers.Crypto.CoinGecko.dto.redis_json import RedisJSON
+
 
 @strawberry.type
 class SearchCoin:
@@ -48,7 +50,7 @@ class SearchNft:
 
 
 @strawberry.type
-class SearchResult:
+class SearchResult(RedisJSON):
     coins: List[SearchCoin]
     exchanges: List[SearchExchange]
     icos: List[SearchIco]

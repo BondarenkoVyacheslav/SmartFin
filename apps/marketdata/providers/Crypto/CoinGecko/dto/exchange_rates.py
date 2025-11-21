@@ -1,9 +1,9 @@
-import dataclasses
 import enum
-import json
 from typing import Any, Dict, List
 
 import strawberry
+
+from apps.marketdata.providers.Crypto.CoinGecko.dto.redis_json import RedisJSON
 
 
 @strawberry.enum
@@ -28,34 +28,12 @@ class ExchangeRate:
 
 
 @strawberry.type
-class ExchangeRates:
+class ExchangeRates(RedisJSON):
     """
     Нормализованный ответ /exchange_rates:
     исходный rates: {code -> {...}} превращаем в список ExchangeRate.
     """
     rates: List[ExchangeRate]
-
-    def to_redis_value(self) -> str:
-        """
-        Сериализует объект в JSON-строку для хранения в Redis.
-        Формат:
-        {
-          "rates": [
-            {"code": "...", "name": "...", "unit": "...", "value": ..., "type": "..."},
-            ...
-          ]
-        }
-        """
-        return json.dumps(
-            {
-                "rates": [
-                    dataclasses.asdict(rate)
-                    for rate in self.rates
-                ]
-            },
-            ensure_ascii=False,
-            separators=(",", ":"),
-        )
 
 
 def parse_exchange_rates(raw: Dict[str, Any]) -> ExchangeRates:

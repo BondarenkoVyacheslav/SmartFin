@@ -1,9 +1,8 @@
-import dataclasses
-import json
 from typing import Optional, List, Dict, Any
-
 import strawberry
 from strawberry.scalars import JSON
+
+from apps.marketdata.providers.Crypto.CoinGecko.dto.redis_json import RedisJSON
 
 
 # ---------- Small nested DTOs ----------
@@ -175,7 +174,7 @@ class MarketData:
 # ---------- Root DTO ----------
 
 @strawberry.type
-class CoinDetail:
+class CoinDetail(RedisJSON):
     # базовая идентификация
     id: str
     symbol: str
@@ -226,10 +225,6 @@ class CoinDetail:
 
     # тикеры
     tickers: List[Ticker] = strawberry.field(default_factory=list)
-
-    # удобство: сериализация для Redis
-    def to_redis_value(self) -> str:
-        return json.dumps(dataclasses.asdict(self), ensure_ascii=False, separators=(",", ":"))
 
 
 # ---------- Parsers (raw -> DTO) ----------

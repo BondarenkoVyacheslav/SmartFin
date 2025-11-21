@@ -1,8 +1,9 @@
-import json
-import dataclasses
 import strawberry
 from decimal import Decimal
 from datetime import datetime
+
+from apps.marketdata.providers.Crypto.CoinGecko.dto.redis_json import RedisJSON
+
 
 @strawberry.type
 class ROI:
@@ -56,12 +57,9 @@ class Coin:
 
 
 @strawberry.type
-class CoinsMarket:
+class CoinsMarket(RedisJSON):
     vs_currency: str | None
     items: list[Coin]
-
-    def to_redis_value(self) -> str:
-        return json.dumps(dataclasses.asdict(self), ensure_ascii=False, separators=(",", ":"))
 
 
 def _to_dec(x) -> Decimal | None:

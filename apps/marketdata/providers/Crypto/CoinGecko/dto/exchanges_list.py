@@ -1,7 +1,9 @@
-import dataclasses
 import json
 from typing import Sequence
 import strawberry
+
+from apps.marketdata.providers.Crypto.CoinGecko.dto.redis_json import RedisJSON
+
 
 @strawberry.type
 class Exchange:
@@ -9,11 +11,8 @@ class Exchange:
     name: str
 
 @strawberry.type
-class ExchangesList:
+class ExchangesList(RedisJSON):
     exchanges_list: list[Exchange] = strawberry.field(default_factory=list)
-
-    def to_redis_value(self) -> str:
-        return json.dumps(dataclasses.asdict(self), ensure_ascii=False, separators=(",", ":"))
 
     @classmethod
     def from_redis_value(cls, value: str) -> "ExchangesList":

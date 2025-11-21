@@ -1,7 +1,8 @@
-import dataclasses
 import json
 from typing import Optional, Dict, Any
 import strawberry
+
+from apps.marketdata.providers.Crypto.CoinGecko.dto.redis_json import RedisJSON
 
 
 @strawberry.type
@@ -23,7 +24,7 @@ class SimpleTokenPriceEntry:
 
 
 @strawberry.type
-class SimpleTokenPricesList:
+class SimpleTokenPricesList(RedisJSON):
     """
     Обёртка над списком SimpleTokenPriceEntry.
     Удобна для кеша (to_redis_value) и для GraphQL.
@@ -31,16 +32,6 @@ class SimpleTokenPricesList:
     simple_token_prices: list[SimpleTokenPriceEntry] = strawberry.field(
         default_factory=list
     )
-
-    def to_redis_value(self) -> str:
-        """
-        Сериализация в компактный JSON для хранения в Redis.
-        """
-        return json.dumps(
-            dataclasses.asdict(self),
-            ensure_ascii=False,
-            separators=(",", ":"),
-        )
 
     @classmethod
     def from_redis_value(cls, value: str) -> "SimpleTokenPricesList":

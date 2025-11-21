@@ -3,6 +3,8 @@ import json
 from typing import Optional, Sequence, Any
 import strawberry
 
+from apps.marketdata.providers.Crypto.CoinGecko.dto.redis_json import RedisJSON
+
 
 @strawberry.type
 class Coin:
@@ -17,15 +19,8 @@ class Coin:
 
 
 @strawberry.type
-class CoinsList:
+class CoinsList(RedisJSON):
     coins_list: list[Coin]
-
-    def to_redis_value(self) -> str:
-        return json.dumps(
-            dataclasses.asdict(self),
-            ensure_ascii=False,
-            separators=(",", ":"),
-        )
 
     @classmethod
     def from_redis_value(cls, value: str) -> "CoinsList":

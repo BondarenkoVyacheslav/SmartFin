@@ -1,8 +1,8 @@
-import dataclasses
-import json
 from typing import List, Sequence, Any
 
 import strawberry
+
+from apps.marketdata.providers.Crypto.CoinGecko.dto.redis_json import RedisJSON
 
 
 @strawberry.type
@@ -18,7 +18,7 @@ class ExchangeVolumePoint:
 
 
 @strawberry.type
-class ExchangeVolumeChart:
+class ExchangeVolumeChart(RedisJSON):
     """
     Нормализованный ответ /exchanges/{id}/volume_chart.
     """
@@ -26,22 +26,11 @@ class ExchangeVolumeChart:
     days: int
     points: List[ExchangeVolumePoint]
 
-    def to_redis_value(self) -> str:
-        """
-        Сериализует DTO в компактный JSON для хранения в Redis.
-        dataclasses.asdict работает, т.к. strawberry.type — это dataclass.
-        """
-        return json.dumps(
-            dataclasses.asdict(self),
-            ensure_ascii=False,
-            separators=(",", ":"),
-        )
-
 
 def parse_exchange_volume_chart(
-    exchange_id: str,
-    days: int,
-    raw: Sequence[Sequence[Any]],
+        exchange_id: str,
+        days: int,
+        raw: Sequence[Sequence[Any]],
 ) -> ExchangeVolumeChart:
     """
     Нормализует ответ CoinGecko /exchanges/{id}/volume_chart

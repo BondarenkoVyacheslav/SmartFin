@@ -1,7 +1,9 @@
-import dataclasses
 import json
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, Any
 import strawberry
+
+from apps.marketdata.providers.Crypto.CoinGecko.dto.redis_json import RedisJSON
+
 
 @strawberry.type
 class SimplePriceEntry:
@@ -17,17 +19,10 @@ class SimplePriceEntry:
 
 
 @strawberry.type
-class ListSimplePricesEntry:
+class ListSimplePricesEntry(RedisJSON):
     simple_prices: list[SimplePriceEntry] = strawberry.field(
         default_factory=list
     )
-
-    def to_redis_value(self) -> str:
-        return json.dumps(
-            dataclasses.asdict(self),
-            ensure_ascii=False,
-            separators=(",", ":")
-        )
 
     @classmethod
     def from_redis_value(cls, value: str) -> "ListSimplePricesEntry":

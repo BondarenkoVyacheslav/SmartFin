@@ -1,6 +1,8 @@
 from typing import Optional, List, Any, Dict, Sequence
 import strawberry
 
+from apps.marketdata.providers.Crypto.CoinGecko.dto.redis_json import RedisJSON
+
 
 # --- Вложенные структуры для converted_* ---
 
@@ -61,7 +63,7 @@ class DerivativeTicker:
 # --- DTO для биржи деривативов, возвращаемой эндпоинтом ---
 
 @strawberry.type
-class DerivativesExchangeDetails:
+class DerivativesExchangeDetails(RedisJSON):
     """
     Детальное описание деривативной биржи (пример: Binance (Futures))
     вместе со списком тикеров.

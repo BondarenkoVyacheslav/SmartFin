@@ -1,9 +1,9 @@
-import dataclasses
 from decimal import Decimal
-import json
 from typing import Sequence, Any
 import strawberry
 from datetime import datetime
+
+from apps.marketdata.providers.Crypto.CoinGecko.dto.redis_json import RedisJSON
 
 
 @strawberry.type
@@ -25,11 +25,8 @@ class Derivative:
 
 
 @strawberry.type
-class Derivatives:
+class Derivatives(RedisJSON):
     derivatives: list[Derivative] = strawberry.field(default_factory=list)
-
-    def to_redis_value(self) -> str:
-        return json.dumps(dataclasses.asdict(self), ensure_ascii=False, separators=(",", ":"))
 
 
 def _to_dec(x) -> Decimal | None:

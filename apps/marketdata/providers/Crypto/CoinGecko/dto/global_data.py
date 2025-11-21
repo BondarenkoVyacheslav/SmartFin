@@ -1,8 +1,8 @@
-import dataclasses
-import json
 from typing import Any, Dict, List
 
 import strawberry
+
+from apps.marketdata.providers.Crypto.CoinGecko.dto.redis_json import RedisJSON
 
 
 @strawberry.type
@@ -37,7 +37,7 @@ class GlobalMarketCapPercentageEntry:
 
 
 @strawberry.type
-class GlobalData:
+class GlobalData(RedisJSON):
     """
     Нормализованный ответ CoinGecko /global (внутреннее поле "data").
     Все map'ы (total_market_cap, total_volume, market_cap_percentage)
@@ -56,37 +56,6 @@ class GlobalData:
 
     market_cap_change_percentage_24h_usd: float
     updated_at: int  # unix timestamp (секунды)
-
-    def to_redis_value(self) -> str:
-        """
-        Сериализует объект в JSON-строку для хранения в Redis.
-
-        Структура:
-        {
-          "active_cryptocurrencies": ...,
-          "upcoming_icos": ...,
-          ...
-          "total_market_cap": [
-            {"currency": "usd", "value": ...},
-            ...
-          ],
-          "total_volume": [
-            {"currency": "usd", "value": ...},
-            ...
-          ],
-          "market_cap_percentage": [
-            {"asset": "btc", "percentage": ...},
-            ...
-          ],
-          "market_cap_change_percentage_24h_usd": ...,
-          "updated_at": 1763208398
-        }
-        """
-        return json.dumps(
-            dataclasses.asdict(self),
-            ensure_ascii=False,
-            separators=(",", ":"),
-        )
 
 
 def _parse_market_cap_map(raw_map: Any) -> List[GlobalMarketCapEntry]:

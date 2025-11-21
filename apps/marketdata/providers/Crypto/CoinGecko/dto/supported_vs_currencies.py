@@ -1,14 +1,13 @@
-import dataclasses
 import json
 from typing import Sequence, Self
 import strawberry
 
-@strawberry.type
-class SupportedVSCurrencies:
-    currencies: list[str]
+from apps.marketdata.providers.Crypto.CoinGecko.dto.redis_json import RedisJSON
 
-    def to_redis_value(self) -> str:
-        return json.dumps(dataclasses.asdict(self), ensure_ascii=False, separators=(",", ":"))
+
+@strawberry.type
+class SupportedVSCurrencies(RedisJSON):
+    currencies: list[str]
 
     @classmethod
     def from_redis_value(cls, value: str) -> Self:

@@ -312,7 +312,7 @@ class CoinGeckoProvider(Provider):
     async def simple_supported_vs_currencies(self) -> SupportedVSCurrencies:
         data = await self._get("/simple/supported_vs_currencies")
         supported_vs_currencies: SupportedVSCurrencies = parse_supported_vs_currencies(data)
-        await self.cache.set(self.k_supported_vs(), supported_vs_currencies.to_redis_value(),
+        await self.cache.set(self.k_supported_vs(), data,
                              ttl=self.TTL_SUPPORTED_VS_CURRENCIES)
 
         return supported_vs_currencies
