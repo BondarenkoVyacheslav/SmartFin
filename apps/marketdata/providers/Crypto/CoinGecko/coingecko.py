@@ -256,7 +256,7 @@ class CoinGeckoProvider(Provider):
         }
         data = await self._get("/simple/price", params)
 
-        rows: ListSimplePricesEntry = parse_list_simple_price(data)
+        list_simple_prices_entry: ListSimplePricesEntry = parse_list_simple_price(data)
 
         key = self.k_simple_price(
             ids_sig=self.sig(ids_csv),
@@ -269,8 +269,8 @@ class CoinGeckoProvider(Provider):
             ),
         )
 
-        await self.cache.set(key, data, ttl=self.TTL_SIMPLE_PRICE)
-        return rows
+        await self.cache.set(key, list_simple_prices_entry.to_redis_value(), ttl=self.TTL_SIMPLE_PRICE)
+        return list_simple_prices_entry
 
     async def simple_token_price(
             self,
@@ -306,13 +306,13 @@ class CoinGeckoProvider(Provider):
                 "ts" if include_last_updated_at else "nots",
             ),
         )
-        await self.cache.set(key, data, ttl=self.TTL_TOKEN_PRICE)
+        await self.cache.set(key, simple_token_price_list.to_redis_value(), ttl=self.TTL_TOKEN_PRICE)
         return simple_token_price_list
 
     async def simple_supported_vs_currencies(self) -> SupportedVSCurrencies:
         data = await self._get("/simple/supported_vs_currencies")
         supported_vs_currencies: SupportedVSCurrencies = parse_supported_vs_currencies(data)
-        await self.cache.set(self.k_supported_vs(), data,
+        await self.cache.set(self.k_supported_vs(), supported_vs_currencies.to_redis_value(),
                              ttl=self.TTL_SUPPORTED_VS_CURRENCIES)
 
         return supported_vs_currencies
@@ -322,7 +322,7 @@ class CoinGeckoProvider(Provider):
         params = {"include_platform": str(include_platform).lower()} if include_platform else None
         data = await self._get("/coins/list", params)
         coins_list: CoinsList = parse_coins_list(data)
-        await self.cache.set(self.k_coins_list(include_platform), data, ttl=self.TTL_COINS_LIST)
+        await self.cache.set(self.k_coins_list(include_platform), coins_list.to_redis_value(), ttl=self.TTL_COINS_LIST)
         return coins_list
 
     async def coins_markets(
@@ -360,7 +360,7 @@ class CoinGeckoProvider(Provider):
             category=category
         )
         coins_market: CoinsMarket = parse_coins_markets(data, vs_currency)
-        await self.cache.set(key, data, ttl=self.TTL_COINS_MARKETS)
+        await self.cache.set(key, coins_market.to_redis_value(), ttl=self.TTL_COINS_MARKETS)
         return coins_market
 
     async def coin_detail(
@@ -384,7 +384,7 @@ class CoinGeckoProvider(Provider):
         }
         data = await self._get(f"/coins/{coin_id}", params)
         coin_detail: CoinDetail = parse_coin_detail(data)
-        await self.cache.set(self.k_coin_detail(coin_id), data, ttl=self.TTL_COIN_DETAIL)
+        await self.cache.set(self.k_coin_detail(coin_id), coin_detail.to_redis_value(), ttl=self.TTL_COIN_DETAIL)
         return coin_detail
 
     class OrderEnum(str, Enum):
@@ -397,24 +397,30 @@ class CoinGeckoProvider(Provider):
         CONTRACT_ADDRESS = "contract_address"
         SYMBOL = "symbol"
 
-    async def coin_tickers(self, coin_id: str, *, page: int = 1, exchange_ids: Optional[str] = None,
-                           include_exchange_logo: bool = True, order: OrderEnum = OrderEnum.TRUST_SCORE_DESC,
-                           depth: bool = False) -> CoinTickers:
+    async def coin_tickers(
+            self,
+            coin_id: str,
+            *,
+            page: int = 1,
+            exchange_ids: Optional[str] = None,
+            include_exchange_logo: bool = True,
+            order: OrderEnum = OrderEnum.TRUST_SCORE_DESC,
+            depth: bool = False
+    ) -> CoinTickers:
         params: Dict[str, Any] = {
             "page": page,
             "include_exchange_logo": str(include_exchange_logo).lower(),
             "order": order, "depth": str(depth).lower()
         }
-        if exchange_ids:
-            params["exchange_ids"] = exchange_ids
+        if exchange_ids: params["exchange_ids"] = exchange_ids
         data = await self._get(f"/coins/{coin_id}/tickers", params)
 
         coin_tickers: CoinTickers = parse_coin_tickers(data)
 
         await self.cache.set(
             self.k_coin_tickers(coin_id, page),
-            data,
-             ttl=self.TTL_COIN_TICKERS
+            coin_tickers.to_redis_value(),
+            ttl=self.TTL_COIN_TICKERS
         )
         return coin_tickers
 
@@ -424,7 +430,7 @@ class CoinGeckoProvider(Provider):
         coin_history: CoinHistory = parse_coin_history(data)
         await self.cache.set(
             self.k_coin_history(coin_id, date_ddmmyyyy, localization),
-            data,
+            coin_history.to_redis_value(),
             ttl=self.TTL_COIN_HISTORY
         )
         return coin_history
@@ -435,19 +441,19 @@ class CoinGeckoProvider(Provider):
         data = await self._get("/exchanges", params)
         exchanges: Exchanges = parse_exchanges(data)
 
-        await self.cache.set(self.k_exchanges(page), data, ttl=self.TTL_EXCHANGES)
+        await self.cache.set(self.k_exchanges(page), exchanges.to_redis_value(), ttl=self.TTL_EXCHANGES)
         return exchanges
 
     async def exchanges_list(self) -> ExchangesList:
         data = await self._get("/exchanges/list")
         exchanges_list: ExchangesList = parse_exchanges_list(data)
-        await self.cache.set(self.k_exchanges_list(), data, ttl=self.TTL_EXCHANGES_LIST)
+        await self.cache.set(self.k_exchanges_list(), exchanges_list.to_redis_value(), ttl=self.TTL_EXCHANGES_LIST)
         return exchanges_list
 
     async def exchange_detail(self, ex_id: str) -> Exchange:
         data = await self._get(f"/exchanges/{ex_id}")
         exchange: Exchange = parse_exchange_for_exchange_detail(data)
-        await self.cache.set(self.k_exchange_detail(ex_id), data, ttl=self.TTL_EXCHANGE_DETAIL)
+        await self.cache.set(self.k_exchange_detail(ex_id), exchange.to_redis_value(), ttl=self.TTL_EXCHANGE_DETAIL)
         return exchange
 
     class ExchangeTickersOrderEnum(str, Enum):
@@ -467,11 +473,10 @@ class CoinGeckoProvider(Provider):
             order: ExchangeTickersOrderEnum = ExchangeTickersOrderEnum.TRUST_SCORE_DESC
     ) -> ExchangeTickers:
         params: Dict[str, Any] = {"page": page, "depth": str(depth).lower(), "order": order}
-        if coin_ids:
-            params["coin_ids"] = coin_ids
+        if coin_ids: params["coin_ids"] = coin_ids
         data = await self._get(f"/exchanges/{ex_id}/tickers", params)
         ex_tickers: ExchangeTickers = parse_exchange_tickers(ex_id, data)
-        await self.cache.set(self.k_exchange_tickers(ex_id, page), data, ttl=self.TTL_EXCHANGE_TICKERS)
+        await self.cache.set(self.k_exchange_tickers(ex_id, page), ex_tickers.to_redis_value(), ttl=self.TTL_EXCHANGE_TICKERS)
         return ex_tickers
 
     async def exchange_volume_chart(self, ex_id: str, days: int = 1) -> ExchangeVolumeChart:
@@ -479,7 +484,7 @@ class CoinGeckoProvider(Provider):
         ex_volume_chart: ExchangeVolumeChart = parse_exchange_volume_chart(ex_id, days, data)
         await self.cache.set(
             self.k_exchange_volume_chart(ex_id, days),
-            data,
+            ex_volume_chart.to_redis_value(),
             ttl=self.TTL_EXCHANGE_VOLUME_CHART
         )
         return ex_volume_chart
@@ -488,56 +493,72 @@ class CoinGeckoProvider(Provider):
     async def derivatives(self) -> Derivatives:
         data = await self._get("/derivatives")
         derivatives: Derivatives = parse_derivatives(data)
-        await self.cache.set(self.k_derivatives(), data, ttl=self.TTL_DERIVATIVES)
+        await self.cache.set(self.k_derivatives(), derivatives.to_redis_value(), ttl=self.TTL_DERIVATIVES)
         return derivatives
 
     async def derivatives_exchanges(self, *, per_page: int = 250, page: int = 1) -> DerivativesExchangesPage:
         data = await self._get("/derivatives/exchanges", {"per_page": per_page, "page": page})
         derivatives_exchanges_page: DerivativesExchangesPage = parse_derivatives_exchanges(data, page=page)
-        await self.cache.set(self.k_derivatives_exchanges(page), data, ttl=self.TTL_DERIVATIVES_EXCHANGES)
+        await self.cache.set(
+            self.k_derivatives_exchanges(page),
+            derivatives_exchanges_page.to_redis_value(),
+            ttl=self.TTL_DERIVATIVES_EXCHANGES
+        )
         return derivatives_exchanges_page
 
     async def derivatives_exchange_detail(self, ex_id: str) -> DerivativesExchangeDetails:
         data = await self._get(f"/derivatives/exchanges/{ex_id}")
         derivatives_exchange_details: DerivativesExchangeDetails = parse_derivatives_exchange_details(data)
-        await self.cache.set(self.k_derivatives_exchange_detail(ex_id), data, ttl=self.TTL_DERIVATIVES_EXCHANGE_DETAIL)
+        await self.cache.set(
+            self.k_derivatives_exchange_detail(ex_id),
+            derivatives_exchange_details.to_redis_value(),
+            ttl=self.TTL_DERIVATIVES_EXCHANGE_DETAIL
+        )
         return derivatives_exchange_details
 
     async def derivatives_exchanges_list(self) -> DerivativesExchangesList:
         data = await self._get("/derivatives/exchanges/list")
         derivatives_exchanges_list: DerivativesExchangesList = parse_derivatives_exchanges_list(data)
-        await self.cache.set(self.k_derivatives_exchanges_list(), data, ttl=self.TTL_DERIVATIVES_EXCHANGES_LIST)
+        await self.cache.set(
+            self.k_derivatives_exchanges_list(),
+            derivatives_exchanges_list.to_redis_value(),
+            ttl=self.TTL_DERIVATIVES_EXCHANGES_LIST
+        )
         return derivatives_exchanges_list
 
     # Exchange Rates
     async def exchange_rates(self) -> ExchangeRates:
         data = await self._get("/exchange_rates")
         exchange_rates: ExchangeRates = parse_exchange_rates(data)
-        await self.cache.set(self.k_exchange_rates(), data, ttl=self.TTL_EXCHANGE_RATES)
+        await self.cache.set(self.k_exchange_rates(), exchange_rates.to_redis_value(), ttl=self.TTL_EXCHANGE_RATES)
         return exchange_rates
 
     # Search & Trending
     async def search(self, query: str) -> SearchResult:
         data = await self._get("/search", {"query": query})
         search_result: SearchResult = parse_search_result(data)
-        await self.cache.set(self.k_search(self.sig(query.strip().lower())), data, ttl=self.TTL_SEARCH)
+        await self.cache.set(
+            self.k_search(self.sig(query.strip().lower())),
+            search_result.to_redis_value(),
+            ttl=self.TTL_SEARCH
+        )
         return search_result
 
     async def search_trending(self) -> SearchTrendingResult:
         data = await self._get("/search/trending")
         search_trending_result: SearchTrendingResult = parse_search_trending(data)
-        await self.cache.set(self.k_trending(), data, ttl=self.TTL_TRENDING)
+        await self.cache.set(self.k_trending(), search_trending_result.to_redis_value(), ttl=self.TTL_TRENDING)
         return search_trending_result
 
     # Global
     async def global_data(self) -> GlobalData:
         data = await self._get("/global")
         global_data: GlobalData = parse_global(data)
-        await self.cache.set(self.k_global(), data, ttl=self.TTL_GLOBAL)
+        await self.cache.set(self.k_global(), global_data.to_redis_value(), ttl=self.TTL_GLOBAL)
         return global_data
 
     async def global_defi(self) -> GlobalDefiData:
         data = await self._get("/global/decentralized_finance_defi")
         global_defi_data: GlobalDefiData = parse_global_defi_data(data)
-        await self.cache.set(self.k_global_defi(), data, ttl=self.TTL_GLOBAL_DEFI)
+        await self.cache.set(self.k_global_defi(), global_defi_data.to_redis_value(), ttl=self.TTL_GLOBAL_DEFI)
         return global_defi_data

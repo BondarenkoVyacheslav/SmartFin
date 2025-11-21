@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import json
-from dataclasses import is_dataclass, fields
-from typing import Any, List, Optional, Sequence, get_origin, get_args, Union
+from typing import Any, List, Optional, Sequence
 
 import strawberry
 
@@ -32,103 +30,6 @@ from apps.marketdata.providers.Crypto.CoinGecko.dto.global_defi import GlobalDef
 from apps.marketdata.providers.Crypto.CoinGecko.dto.ping import Ping
 from apps.marketdata.providers.Crypto.CoinGecko.dto.simple_price import ListSimplePricesEntry
 from apps.marketdata.services.redis_cache import RedisCacheService
-
-
-# === Утилиты для восстановления DTO из JSON/строки, лежащей в Redis ===
-
-def _build_dataclass(cls, data: Any):
-    """
-    Рекурсивно восстанавливает dataclass (в том числе вложенные списки dataclass-ов)
-    из словаря, полученного из JSON.
-    """
-    if data is None:
-        return None
-    if not is_dataclass(cls):
-        # Для примитивов/не dataclass-типов просто возвращаем данные как есть.
-        return data
-
-    kwargs = {}
-    for f in fields(cls):
-        name = f.name
-        value = data.get(name)
-        if value is None:
-            kwargs[name] = None
-            continue
-
-        field_type = f.type
-        origin = get_origin(field_type)
-        args = get_args(field_type)
-
-        # List[...] или Sequence[...]
-        if origin in (list, List, Sequence):
-            inner_type = args[0] if args else Any
-            if is_dataclass(inner_type):
-                kwargs[name] = [
-                    _build_dataclass(inner_type, item) if isinstance(item, dict) else item
-                    for item in value
-                ]
-            else:
-                kwargs[name] = value
-            continue
-
-        # Optional[Dataclass] / Union[Dataclass, ...]
-        if origin is Union and args:
-            dc_arg = next((a for a in args if is_dataclass(a)), None)
-            if dc_arg is not None and isinstance(value, dict):
-                kwargs[name] = _build_dataclass(dc_arg, value)
-                continue
-
-        # Вложенный dataclass
-        if is_dataclass(field_type) and isinstance(value, dict):
-            kwargs[name] = _build_dataclass(field_type, value)
-        else:
-            kwargs[name] = value
-
-    return cls(**kwargs)
-
-
-def _hydrate_from_redis(dto_cls, raw: Any):
-    """
-    Универсальная функция восстановления DTO из значения, лежащего в Redis.
-
-    Приоритет:
-    1) Если у dto_cls есть from_redis_value и raw — str, используем её.
-    2) Иначе пробуем generic-восстановление через json.loads + _build_dataclass.
-    """
-    if raw is None:
-        return None
-
-    # 1. Если у DTO есть свой from_redis_value — даём ему шанс первым.
-    from_redis = getattr(dto_cls, "from_redis_value", None)
-    if isinstance(raw, str) and callable(from_redis):
-        try:
-            # Все твои to_redis_value возвращают JSON-строку,
-            # RedisCacheService.set кладёт её как json-строку,
-            # get() возвращает её как Python-строку (результат json.loads),
-            # так что её можно напрямую отдавать from_redis_value.
-            return from_redis(raw)
-        except Exception:
-            # Если вдруг формат изменился/сломался — тихо падаем в generic-путь.
-            pass
-
-    # 2. Generic-ветка
-
-    if isinstance(raw, str):
-        try:
-            data = json.loads(raw)
-        except Exception:
-            return None
-    elif isinstance(raw, dict):
-        data = raw
-    else:
-        # Для нестандартных форматов (list, etc.) здесь ничего не делаем,
-        # такие кейсы обрабатываются отдельно (как simple_price).
-        return None
-
-    try:
-        return _build_dataclass(dto_cls, data)
-    except Exception:
-        return None
 
 
 @strawberry.type
@@ -179,7 +80,6 @@ class CoinGeckoQuery:
         )
 
         cached = await self.cache.get(key)
-        dto = _hydrate_from_redis(ListSimplePricesEntry, cached)
         dto = ListSimplePricesEntry.from_redis_value(cached)
 
         if dto is not None:
@@ -222,7 +122,7 @@ class CoinGeckoQuery:
         )
 
         cached = await self.cache.get(key)
-        dto = _hydrate_from_redis(SimpleTokenPricesList, cached)
+        dto = SimpleTokenPricesList.from_redis_value(cached)
 
         if dto is not None:
             return dto
@@ -243,7 +143,7 @@ class CoinGeckoQuery:
         key = CoinGeckoCacheKeys.supported_vs()
         cached = await self.cache.get(key)
 
-        dto = _hydrate_from_redis(SupportedVSCurrencies, cached)
+        dto = SupportedVSCurrencies.from_redis_value(cached)
         if dto is not None:
             return dto
 
@@ -255,7 +155,7 @@ class CoinGeckoQuery:
         key = CoinGeckoCacheKeys.coins_list(include_platform)
         cached = await self.cache.get(key)
 
-        dto = _hydrate_from_redis(CoinsList, cached)
+        dto = CoinsList.from_redis_value(cached)
         if dto is not None:
             return dto
 
@@ -302,7 +202,7 @@ class CoinGeckoQuery:
         )
 
         cached = await self.cache.get(key)
-        dto = _hydrate_from_redis(CoinsMarket, cached)
+        dto = CoinsMarket.from_redis_value(cached)
         if dto is not None:
             return dto
 
@@ -332,7 +232,7 @@ class CoinGeckoQuery:
     ) -> CoinDetail:
         key = CoinGeckoCacheKeys.coin_detail(coin_id)
         cached = await self.cache.get(key)
-        dto = _hydrate_from_redis(CoinDetail, cached)
+        dto = CoinDetail.from_redis_value(cached)
         if dto is not None:
             return dto
 
@@ -359,7 +259,7 @@ class CoinGeckoQuery:
     ) -> CoinTickers:
         key = CoinGeckoCacheKeys.coin_tickers(coin_id, page)
         cached = await self.cache.get(key)
-        dto = _hydrate_from_redis(CoinTickers, cached)
+        dto = CoinTickers.from_redis_value(cached)
         if dto is not None:
             return dto
 
@@ -385,7 +285,7 @@ class CoinGeckoQuery:
     ) -> CoinHistory:
         key = CoinGeckoCacheKeys.coin_history(coin_id, date_ddmmyyyy, localization)
         cached = await self.cache.get(key)
-        dto = _hydrate_from_redis(CoinHistory, cached)
+        dto = CoinHistory.from_redis_value(cached)
         if dto is not None:
             return dto
 
@@ -404,7 +304,7 @@ class CoinGeckoQuery:
     ) -> Exchanges:
         key = CoinGeckoCacheKeys.exchanges(page)
         cached = await self.cache.get(key)
-        dto = _hydrate_from_redis(Exchanges, cached)
+        dto = Exchanges.from_redis_value(cached)
         if dto is not None:
             return dto
 
@@ -415,7 +315,7 @@ class CoinGeckoQuery:
     async def exchanges_list(self) -> ExchangesList:
         key = CoinGeckoCacheKeys.exchanges_list()
         cached = await self.cache.get(key)
-        dto = _hydrate_from_redis(ExchangesList, cached)
+        dto = ExchangesList.from_redis_value(cached)
         if dto is not None:
             return dto
 
@@ -426,7 +326,7 @@ class CoinGeckoQuery:
     async def exchange_detail(self, ex_id: str) -> Exchange:
         key = CoinGeckoCacheKeys.exchange_detail(ex_id)
         cached = await self.cache.get(key)
-        dto = _hydrate_from_redis(Exchange, cached)
+        dto = Exchange.from_redis_value(cached)
         if dto is not None:
             return dto
 
@@ -444,7 +344,7 @@ class CoinGeckoQuery:
     ) -> ExchangeTickers:
         key = CoinGeckoCacheKeys.exchange_tickers(ex_id, page)
         cached = await self.cache.get(key)
-        dto = _hydrate_from_redis(ExchangeTickers, cached)
+        dto = ExchangeTickers.from_redis_value(cached)
         if dto is not None:
             return dto
 
@@ -467,7 +367,7 @@ class CoinGeckoQuery:
     ) -> ExchangeVolumeChart:
         key = CoinGeckoCacheKeys.exchange_volume_chart(ex_id, days)
         cached = await self.cache.get(key)
-        dto = _hydrate_from_redis(ExchangeVolumeChart, cached)
+        dto = ExchangeVolumeChart.from_redis_value(cached)
         if dto is not None:
             return dto
 
@@ -478,7 +378,7 @@ class CoinGeckoQuery:
     async def derivatives(self) -> Derivatives:
         key = CoinGeckoCacheKeys.derivatives()
         cached = await self.cache.get(key)
-        dto = _hydrate_from_redis(Derivatives, cached)
+        dto = Derivatives.from_redis_value(cached)
         if dto is not None:
             return dto
 
@@ -493,7 +393,7 @@ class CoinGeckoQuery:
     ) -> DerivativesExchangesPage:
         key = CoinGeckoCacheKeys.derivatives_exchanges(page)
         cached = await self.cache.get(key)
-        dto = _hydrate_from_redis(DerivativesExchangesPage, cached)
+        dto = DerivativesExchangesPage.from_redis_value(cached)
         if dto is not None:
             return dto
 
@@ -504,7 +404,7 @@ class CoinGeckoQuery:
     async def derivatives_exchange_detail(self, ex_id: str) -> DerivativesExchangeDetails:
         key = CoinGeckoCacheKeys.derivatives_exchange_detail(ex_id)
         cached = await self.cache.get(key)
-        dto = _hydrate_from_redis(DerivativesExchangeDetails, cached)
+        dto = DerivativesExchangeDetails.from_redis_value(cached)
         if dto is not None:
             return dto
 
@@ -515,7 +415,7 @@ class CoinGeckoQuery:
     async def derivatives_exchanges_list(self) -> DerivativesExchangesList:
         key = CoinGeckoCacheKeys.derivatives_exchanges_list()
         cached = await self.cache.get(key)
-        dto = _hydrate_from_redis(DerivativesExchangesList, cached)
+        dto = DerivativesExchangesList.from_redis_value(cached)
         if dto is not None:
             return dto
 
@@ -526,7 +426,7 @@ class CoinGeckoQuery:
     async def exchange_rates(self) -> ExchangeRates:
         key = CoinGeckoCacheKeys.exchange_rates()
         cached = await self.cache.get(key)
-        dto = _hydrate_from_redis(ExchangeRates, cached)
+        dto = ExchangeRates.from_redis_value(cached)
         if dto is not None:
             return dto
 
@@ -538,7 +438,7 @@ class CoinGeckoQuery:
         sig = CoinGeckoProvider.sig(query.strip().lower())
         key = CoinGeckoCacheKeys.search(sig)
         cached = await self.cache.get(key)
-        dto = _hydrate_from_redis(SearchResult, cached)
+        dto = SearchResult.from_redis_value(cached)
         if dto is not None:
             return dto
 
@@ -549,7 +449,7 @@ class CoinGeckoQuery:
     async def search_trending(self) -> SearchTrendingResult:
         key = CoinGeckoCacheKeys.trending()
         cached = await self.cache.get(key)
-        dto = _hydrate_from_redis(SearchTrendingResult, cached)
+        dto = SearchTrendingResult.from_redis_value(cached)
         if dto is not None:
             return dto
 
@@ -560,7 +460,7 @@ class CoinGeckoQuery:
     async def global_data(self) -> GlobalData:
         key = CoinGeckoCacheKeys.global_data()
         cached = await self.cache.get(key)
-        dto = _hydrate_from_redis(GlobalData, cached)
+        dto = GlobalData.from_redis_value(cached)
         if dto is not None:
             return dto
 
@@ -571,7 +471,7 @@ class CoinGeckoQuery:
     async def global_defi(self) -> GlobalDefiData:
         key = CoinGeckoCacheKeys.global_defi()
         cached = await self.cache.get(key)
-        dto = _hydrate_from_redis(GlobalDefiData, cached)
+        dto = GlobalDefiData.from_redis_value(cached)
         if dto is not None:
             return dto
 

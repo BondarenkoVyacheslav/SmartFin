@@ -4,7 +4,7 @@ import json
 import strawberry
 from typing import Optional, Any
 
-from apps.marketdata.providers.Crypto.CoinGecko.dto.redis_json import RedisJSON
+from apps.marketdata.providers.Crypto.CoinGecko.redis_json import RedisJSON
 
 
 @strawberry.type

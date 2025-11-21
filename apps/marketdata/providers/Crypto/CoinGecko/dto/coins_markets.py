@@ -2,7 +2,7 @@ import strawberry
 from decimal import Decimal
 from datetime import datetime
 
-from apps.marketdata.providers.Crypto.CoinGecko.dto.redis_json import RedisJSON
+from apps.marketdata.providers.Crypto.CoinGecko.redis_json import RedisJSON
 
 
 @strawberry.type
