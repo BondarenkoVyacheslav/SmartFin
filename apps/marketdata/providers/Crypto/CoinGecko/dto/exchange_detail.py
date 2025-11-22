@@ -6,14 +6,14 @@ from typing import Optional, Any
 from apps.marketdata.providers.Crypto.CoinGecko.redis_json import RedisJSON
 
 
-@strawberry.type
+@strawberry.type(name="ExchangeDetailConverted3")
 class Converted3:
     btc: Optional[float] = None
     eth: Optional[float] = None
     usd: Optional[float] = None
 
 
-@strawberry.type
+@strawberry.type(name="ExchangeTickersMarketRef")
 class MarketRef:
     name: str | None = None
     identifier: str | None = None
@@ -21,7 +21,7 @@ class MarketRef:
 
     logo: str | None = None
 
-@strawberry.type
+@strawberry.type(name="ExchangeDetailTicker")
 class Ticker:
     # пара
     base: Optional[str] = None
@@ -66,7 +66,7 @@ class Ticker:
     # оценка капы базовой монеты в USD (если отдают)
     coin_mcap_usd: Optional[float] = None
 
-@strawberry.type
+@strawberry.type(name="ExchangeDetailExchange")
 class Exchange(RedisJSON):
     id: str
     name: str

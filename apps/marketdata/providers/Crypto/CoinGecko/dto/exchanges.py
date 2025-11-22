@@ -6,7 +6,7 @@ import strawberry
 from apps.marketdata.providers.Crypto.CoinGecko.redis_json import RedisJSON
 
 
-@strawberry.type
+@strawberry.type(name="ExchangeExchange")
 class Exchange:
     id: str
     name: str
@@ -21,7 +21,7 @@ class Exchange:
     trade_volume_24h_btc: Decimal | None
 
 
-@strawberry.type
+@strawberry.type(name="ExchangesExchanges")
 class Exchanges(RedisJSON):
     exchanges: list[Exchange]
 

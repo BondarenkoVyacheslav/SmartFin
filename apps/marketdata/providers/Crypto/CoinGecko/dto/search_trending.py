@@ -14,13 +14,25 @@ class TrendingContent:
 
 
 @strawberry.type
+class PriceChangePercentage24hEntry:
+    """Изменение цены за 24 часа в % для конкретной валюты."""
+    vs_currency: str
+    percentage: float
+
+
+@strawberry.type
+class MarketCapChangePercentage24hEntry:
+    """Изменение market cap за 24 часа в % для конкретной валюты."""
+    vs_currency: str
+    percentage: float
+
+
+@strawberry.type
 class TrendingCoinData:
     price: Optional[float] = None
     price_btc: Optional[str] = None
     # словарь "валюта -> % изменения за 24ч"
-    price_change_percentage_24h: Dict[str, float] = strawberry.field(
-        default_factory=dict
-    )
+    price_change_percentage_24h: Optional[List[PriceChangePercentage24hEntry]] = None
     market_cap: Optional[str] = None
     market_cap_btc: Optional[str] = None
     total_volume: Optional[str] = None
@@ -89,9 +101,7 @@ class TrendingCategoryData:
     market_cap_btc: Optional[float] = None
     total_volume: Optional[float] = None
     total_volume_btc: Optional[float] = None
-    market_cap_change_percentage_24h: Dict[str, float] = strawberry.field(
-        default_factory=dict
-    )
+    market_cap_change_percentage_24h: Optional[list[MarketCapChangePercentage24hEntry]] = None
     sparkline: Optional[str] = None
 
 
@@ -132,6 +142,63 @@ def _parse_float_mapping(raw_map: Any) -> Dict[str, float]:
             continue
     return result
 
+def _parse_price_change_percentage_entries(
+    raw: Any,
+) -> Optional[List[PriceChangePercentage24hEntry]]:
+    """
+    Превращаем dict вида {"usd": -4.04, "eur": -3.9, ...}
+    в список DTO PriceChangePercentage24hEntry.
+    """
+    if not isinstance(raw, dict):
+        return None
+
+    result: List[PriceChangePercentage24hEntry] = []
+
+    for code, value in raw.items():
+        try:
+            # value может быть числом или строкой — приводим к float
+            percentage = float(value)
+        except (TypeError, ValueError):
+            continue
+
+        result.append(
+            PriceChangePercentage24hEntry(
+                vs_currency=str(code),
+                percentage=percentage,
+            )
+        )
+
+    return result or None
+
+
+def _parse_market_cap_change_percentage_entries(
+    raw: Any,
+) -> Optional[List[MarketCapChangePercentage24hEntry]]:
+    """
+    Превращаем dict вида {"usd": 14.22, "eur": 13.9, ...}
+    в список DTO MarketCapChangePercentage24hEntry.
+    """
+    if not isinstance(raw, dict):
+        return None
+
+    result: List[MarketCapChangePercentage24hEntry] = []
+
+    for code, value in raw.items():
+        try:
+            percentage = float(value)
+        except (TypeError, ValueError):
+            continue
+
+        result.append(
+            MarketCapChangePercentage24hEntry(
+                vs_currency=str(code),
+                percentage=percentage,
+            )
+        )
+
+    return result or None
+
+
 
 def parse_search_trending(raw: Dict[str, Any]) -> SearchTrendingResult:
     # --- coins ---
@@ -156,14 +223,14 @@ def parse_search_trending(raw: Dict[str, Any]) -> SearchTrendingResult:
                     description=content_raw.get("description"),
                 )
 
-            price_change_map = _parse_float_mapping(
+            price_change_entries = _parse_price_change_percentage_entries(
                 data_raw.get("price_change_percentage_24h")
             )
 
             data_obj = TrendingCoinData(
                 price=data_raw.get("price"),
                 price_btc=data_raw.get("price_btc"),
-                price_change_percentage_24h=price_change_map,
+                price_change_percentage_24h=price_change_entries,
                 market_cap=data_raw.get("market_cap"),
                 market_cap_btc=data_raw.get("market_cap_btc"),
                 total_volume=data_raw.get("total_volume"),
@@ -246,7 +313,7 @@ def parse_search_trending(raw: Dict[str, Any]) -> SearchTrendingResult:
         cat_data_raw = cat_raw.get("data")
         cat_data_obj: Optional[TrendingCategoryData] = None
         if isinstance(cat_data_raw, dict):
-            mc_change_map = _parse_float_mapping(
+            mc_change_entries = _parse_market_cap_change_percentage_entries(
                 cat_data_raw.get("market_cap_change_percentage_24h")
             )
             cat_data_obj = TrendingCategoryData(
@@ -254,7 +321,7 @@ def parse_search_trending(raw: Dict[str, Any]) -> SearchTrendingResult:
                 market_cap_btc=cat_data_raw.get("market_cap_btc"),
                 total_volume=cat_data_raw.get("total_volume"),
                 total_volume_btc=cat_data_raw.get("total_volume_btc"),
-                market_cap_change_percentage_24h=mc_change_map,
+                market_cap_change_percentage_24h=mc_change_entries,
                 sparkline=cat_data_raw.get("sparkline"),
             )
 
