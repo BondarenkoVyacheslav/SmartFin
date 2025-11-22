@@ -142,7 +142,7 @@ async def test_simple_price_builds_correct_request_and_caches(
     cache_key, cache_value = next(iter(fake_cache.data.items()))
 
     # Ключ можешь проверить как хочешь, я оставлю мягкую проверку:
-    assert "simple_price" in cache_key
+    assert "simple:price" in cache_key
 
     # --- 5) Проверяем, что значение в кеше съедобно для ListSimplePricesEntry.from_redis_value ---
     restored = ListSimplePricesEntry.from_redis_value(cache_value)

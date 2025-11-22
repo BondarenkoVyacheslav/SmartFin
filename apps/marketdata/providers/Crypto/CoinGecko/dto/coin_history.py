@@ -9,13 +9,18 @@ class ImageDTO:
     thumb: Optional[str] = None
     small: Optional[str] = None
 
+@strawberry.type
+class CurrencyValue:
+    currency: str
+    value: float
+
 
 @strawberry.type
 class MarketDataDTO:
     # словари вида {"usd": 42074.70, "eur": 38057.70, ...}
-    current_price: Optional[Dict[str, float]] = None
-    market_cap: Optional[Dict[str, float]] = None
-    total_volume: Optional[Dict[str, float]] = None
+    current_price: CurrencyValue | None = None
+    market_cap: CurrencyValue | None = None
+    total_volume: CurrencyValue | None = None
 
 
 @strawberry.type
@@ -61,13 +66,20 @@ class HistoryMeta:
 
 
 @strawberry.type
+class LocalizationEntry:
+    """Одна локализация имени, например {'ru': 'Биткоин'}."""
+    locale: str
+    value: str
+
+
+@strawberry.type
 class CoinHistory(RedisJSON):
     id: Optional[str] = None
     symbol: Optional[str] = None
     name: Optional[str] = None
 
     # если localization=true — вернётся словарь локализаций имени
-    localization: Optional[Dict[str, str]] = None
+    localization: Optional[list[LocalizationEntry]] = None
 
     image: Optional[ImageDTO] = None
     market_data: Optional[MarketDataDTO] = None
@@ -98,25 +110,42 @@ def _to_float(x: Any) -> Optional[float]:
         return None
 
 
-def _to_currency_map(raw: Any) -> Optional[Dict[str, float]]:
+def _to_currency_map(raw: Any) -> Optional[list[CurrencyValue]]:
+    """Преобразует словарь {'usd': 42074.7, ...} -> список CurrencyValueDTO."""
     if not isinstance(raw, dict):
         return None
-    out: Dict[str, float] = {}
+
+    out: list[CurrencyValue] = []
     for k, v in raw.items():
         fv = _to_float(v)
         if fv is not None:
-            out[str(k).lower()] = fv  # ключи нормализуем в lower
+            out.append(
+                CurrencyValue(
+                    currency=str(k).lower(),  # нормализуем код валюты
+                    value=fv,
+                )
+            )
+
     return out or None
 
 
-def _to_str_map(raw: Any) -> Optional[Dict[str, str]]:
+def _to_localization(raw: Any) -> Optional[list[LocalizationEntry]]:
+    """Преобразует словарь локализаций -> список LocalizationEntry."""
     if not isinstance(raw, dict):
         return None
-    out: Dict[str, str] = {}
+
+    out: list[LocalizationEntry] = []
     for k, v in raw.items():
         if isinstance(v, str):
-            out[str(k)] = v
+            out.append(
+                LocalizationEntry(
+                    locale=str(k),  # 'en', 'ru', 'zh-tw', ...
+                    value=v,
+                )
+            )
+
     return out or None
+
 
 
 def _parse_image(raw: Any) -> Optional[ImageDTO]:
@@ -193,7 +222,7 @@ def parse_coin_history(
         id=raw.get("id"),
         symbol=raw.get("symbol"),
         name=raw.get("name"),
-        localization=_to_str_map(raw.get("localization")),
+        localization=_to_localization(raw.get("localization")),
         image=_parse_image(raw.get("image")),
         market_data=_parse_market_data(raw.get("market_data")),
         community_data=_parse_community(raw.get("community_data")),

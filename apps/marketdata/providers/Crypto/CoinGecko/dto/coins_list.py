@@ -1,15 +1,15 @@
 from typing import Optional, Sequence, Any
 import strawberry
-
+from strawberry.scalars import JSON
 from apps.marketdata.providers.Crypto.CoinGecko.redis_json import RedisJSON
 
 
-@strawberry.type
+@strawberry.type(name="CoinsListCoin")
 class Coin:
     id: str
     symbol: str
     name: str
-    platforms: Optional[dict[str, str]]
+    platforms: Optional[JSON]
 
 
 @strawberry.type

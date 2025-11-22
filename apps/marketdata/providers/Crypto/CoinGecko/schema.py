@@ -140,7 +140,7 @@ class CoinGeckoQuery:
     # ---- /simple/supported_vs_currencies ----
     @strawberry.field
     async def supported_vs_currencies(self) -> SupportedVSCurrencies:
-        key = CoinGeckoCacheKeys.supported_vs()
+        key = CoinGeckoCacheKeys.supported_vs_currencies()
         cached = await self.cache.get(key)
 
         dto = SupportedVSCurrencies.from_redis_value(cached)

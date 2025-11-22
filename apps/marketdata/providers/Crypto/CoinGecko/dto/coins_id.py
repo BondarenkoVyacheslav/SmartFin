@@ -71,21 +71,21 @@ class Sparkline7d:
     price: List[float] = strawberry.field(default_factory=list)
 
 
-@strawberry.type
+@strawberry.type(name="CoinsIdConverted3")
 class Converted3:
     btc: Optional[float] = None
     eth: Optional[float] = None
     usd: Optional[float] = None
 
 
-@strawberry.type
+@strawberry.type(name="CoinsIdMarketRef")
 class MarketRef:
     name: Optional[str] = None
     identifier: Optional[str] = None
     has_trading_incentive: Optional[bool] = None
 
 
-@strawberry.type
+@strawberry.type(name="ExchangeTickersTicker")
 class Ticker:
     base: Optional[str] = None
     target: Optional[str] = None

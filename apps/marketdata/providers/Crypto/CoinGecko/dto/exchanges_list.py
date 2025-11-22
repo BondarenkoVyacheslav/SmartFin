@@ -4,7 +4,7 @@ import strawberry
 from apps.marketdata.providers.Crypto.CoinGecko.redis_json import RedisJSON
 
 
-@strawberry.type
+@strawberry.type(name="ExchangesListExchange")
 class Exchange:
     id: str
     name: str

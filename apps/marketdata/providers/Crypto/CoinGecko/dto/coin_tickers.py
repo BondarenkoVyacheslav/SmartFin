@@ -5,7 +5,7 @@ import strawberry
 from apps.marketdata.providers.Crypto.CoinGecko.redis_json import RedisJSON
 
 
-@strawberry.type
+@strawberry.type(name="CoinTickersConverted3")
 class Converted3:
     btc: Optional[float] = None
     eth: Optional[float] = None
@@ -21,7 +21,7 @@ class MarketRef:
     logo: str | None = None
 
 
-@strawberry.type
+@strawberry.type(name="CoinTickersTicker")
 class Ticker:
     # пара
     base: Optional[str] = None

@@ -1,0 +1,80 @@
+1. С чего начать прямо сейчас
+Я бы шёл так (по приоритету):
+Юнит-тесты для DTO + RedisJSON.
+Юнит/интеграционные тесты для CoinGeckoProvider (с замоканным HTTP).
+Интеграционные тесты для GraphQL-schema (CoinGeckoQuery) без контейнеров.
+И уже потом — E2E/интеграция в контейнерах (Django + Redis + реальный CoinGecko) как отдельный слой.
+
+2. Юнит-тесты: DTO + RedisJSON
+У тебя RedisJSON уже аккуратно умеет собирать dataclass из dict/str/bytes и не трогает parse_* (мы работаем с JSON от своих DTO, а не с сырой CoinGecko-ответкой).
+Что протестить:
+RedisJSON.to_redis_value / from_redis_value:
+None → None
+dict → dataclass
+JSON-строка → dataclass
+bytes → dataclass
+неправильный тип → TypeError
+Пару конкретных DTO:
+например, ListSimplePricesEntry, Exchanges, SearchTrendingResult и т.п.
+Это чистые тесты без Redis и без HTTP — максимально быстрые и надёжные.
+
+3. Тесты для CoinGeckoProvider (без контейнеров)
+Моя догадка: твой CoinGeckoProvider внутри дергает httpx и кладёт уже готовые DTO (или dict от них) в RedisCacheService.
+У тебя есть отдельный RedisCacheService с async-интерфейсом (get/set/delete, json-сериализация внутри).
+Идея
+В тестах не поднимать Redis, а сделать fake-объект, реализующий тот же интерфейс:
+class FakeRedisCache:
+    def __init__(self):
+        self.data = {}
+
+    async def get(self, key):
+        return self.data.get(key)
+
+    async def set(self, key, value, ttl=None):
+        self.data[key] = value
+
+HTTP к CoinGecko замокать через:
+httpx.MockTransport / respx, или
+просто monkeypatch метода внутри провайдера, который делает запрос.
+Что проверить:
+Провайдер корректно:
+строит URL / query-параметры;
+мапит ответ в нужный parse_* → DTO;
+кладёт в кеш то, что потом съест RedisJSON.from_redis_value.
+Это тесты «логики провайдера», вообще без GraphQL.
+
+4. Интеграция: GraphQL schema CoinGeckoQuery (без контейнеров)
+CoinGeckoQuery у тебя принимает в __init__ провайдера и кеш, а резолверы сразу пробуют взять DTO из Redis, и только при miss дергают провайдера.
+Это удобно тестируется вообще без Django-сервера:
+Собираешь strawberry.Schema(query=CoinGeckoQuery).
+В тестах создаёшь root_value = CoinGeckoQuery(coin_gecko_provider=fake_provider, cache=fake_cache).
+Вызываешь await schema.execute(query_str, root_value=root_value).
+Минимальный набор кейсов
+На примере simple_price:
+Cache hit:
+В FakeRedisCache.data[key] лежит dict/JSON, совместимый с ListSimplePricesEntry.
+Запускаешь GraphQL-запрос simple_price.
+Проверяешь:
+fake_provider.simple_price не вызывался.
+В ответе ровно те же данные, что в кеше.
+Cache miss:
+В кеше нет ключа.
+FakeProvider.simple_price возвращает val вида ListSimplePricesEntry(...).
+Запускаешь тот же GraphQL-запрос.
+Проверяешь:
+fake_provider.simple_price был вызван.
+Данные в ответе совпадают с DTO.
+По сути, это тест связи schema ↔ cache ↔ provider-интерфейс, но без реального Redis и без реального HTTP.
+
+5. Когда нужны контейнеры
+Контейнеры я бы воспринимал как следующий слой, а не альтернативу тестам:
+Когда полезно поднять контейнеры
+Хочешь прогнать smoke-тесты реального сценария:
+Django + AsyncGraphQLView,
+Redis,
+реальный CoinGecko (но аккуратно с лимитами).
+Настраиваешь CI, где:
+docker-compose поднимает Redis,
+тесты с меткой integration гоняют реальные запросы в Redis (а CoinGecko можно замокать или сильно ограничить).
+Но для того, чтобы проверить корректность CoinGeckoProvider и schema, контейнер не обязателен.
+Большую часть ошибок (ключи в кэше, сигнатуры _csv/_sig, from_redis_value, резолверы simple_price/search_trending/global_data/...) ты поймаешь модульными + лёгкими интеграционными тестами.

@@ -6,7 +6,7 @@ from datetime import datetime
 from apps.marketdata.providers.Crypto.CoinGecko.redis_json import RedisJSON
 
 
-@strawberry.type
+@strawberry.type(name="DerivativesDerivative")
 class Derivative:
     market: str | None
     symbol: str | None

@@ -11,7 +11,7 @@ class ROI:
     currency: str | None = None        # 'btc' | 'usd' | ...
     percentage: float | None = None    # напр. 4401.7396
 
-@strawberry.type
+@strawberry.type(name="MarketCoin")
 class Coin:
     # идентификация
     id: str
