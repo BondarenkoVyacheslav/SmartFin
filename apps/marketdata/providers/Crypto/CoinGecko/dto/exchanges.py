@@ -1,5 +1,4 @@
-import decimal
-import json
+from decimal import Decimal
 from typing import Sequence, Any
 
 import strawberry
@@ -19,7 +18,7 @@ class Exchange:
     has_trading_incentive: bool
     trust_score: int
     trust_score_rank: int
-    trade_volume_24h_btc: decimal
+    trade_volume_24h_btc: Decimal | None
 
 
 @strawberry.type

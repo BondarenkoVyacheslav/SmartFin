@@ -1,6 +1,5 @@
 import datetime
-import decimal
-import json
+from decimal import Decimal
 import strawberry
 from typing import Optional, Any
 
@@ -89,7 +88,7 @@ class Exchange(RedisJSON):
     alert_notice: str | None
     trust_score: int | None
     trust_score_rank: int | None
-    trade_volume_24h_btc: decimal | None
+    trade_volume_24h_btc: Decimal | None
     coins: int | None
     pairs: int | None
     tickers: Ticker | None
