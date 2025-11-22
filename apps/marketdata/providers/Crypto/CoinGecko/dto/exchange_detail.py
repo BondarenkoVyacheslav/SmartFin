@@ -94,13 +94,6 @@ class Exchange(RedisJSON):
     pairs: int | None
     tickers: Ticker | None
 
-    @classmethod
-    def from_redis_value(cls, value: str) -> "Exchange":
-        data = json.loads(value)
-
-        raw: Exchange = data.get("exchanges_list")
-        return parse_exchange(raw)
-
 
 def _to_float(x: Any) -> Optional[float]:
     if x is None:

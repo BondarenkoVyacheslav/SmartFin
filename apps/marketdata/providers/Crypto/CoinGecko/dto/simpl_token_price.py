@@ -33,33 +33,6 @@ class SimpleTokenPricesList(RedisJSON):
         default_factory=list
     )
 
-    @classmethod
-    def from_redis_value(cls, value: str) -> "SimpleTokenPricesList":
-        """
-        Обратная операция — из JSON в SimpleTokenPricesList.
-        """
-        data = json.loads(value)
-        raw_items = data.get("simple_token_prices") or []
-
-        items: list[SimpleTokenPriceEntry] = []
-        for item in raw_items:
-            if not isinstance(item, dict):
-                continue
-
-            items.append(
-                SimpleTokenPriceEntry(
-                    contract_address=str(item.get("contract_address", "")),
-                    vs_currency=str(item.get("vs_currency", "")),
-                    price=float(item.get("price", 0.0)),
-                    market_cap=item.get("market_cap"),
-                    vol_24h=item.get("vol_24h"),
-                    change_24h=item.get("change_24h"),
-                    last_updated_at=item.get("last_updated_at"),
-                )
-            )
-
-        return cls(simple_token_prices=items)
-
 
 def _to_float(x) -> Optional[float]:
     try:

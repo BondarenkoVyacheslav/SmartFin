@@ -24,26 +24,6 @@ class ListSimplePricesEntry(RedisJSON):
         default_factory=list
     )
 
-    @classmethod
-    def from_redis_value(cls, value: str) -> "ListSimplePricesEntry":
-        data = json.loads(value)
-        raw = data.get("simple_prices") or []
-
-        items: list[SimplePriceEntry] = []
-        for item in raw:
-            if isinstance(item, dict):
-                items.append(SimplePriceEntry(
-                    coin_id=str(item.get("coin_id", "")),
-                    vs_currency=str(item.get("vs_currency", "")),
-                    price=float(item.get("price", 0.0)),
-                    market_cap=item.get("market_cap"),
-                    vol_24h=item.get("vol_24h"),
-                    change_24h=item.get("change_24h"),
-                    last_updated_at=item.get("last_updated_at"),
-                ))
-
-        return cls(simple_prices=items)
-
 
 def _to_float(x) -> Optional[float]:
     try:

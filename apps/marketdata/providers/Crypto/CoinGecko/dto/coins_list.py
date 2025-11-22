@@ -22,14 +22,6 @@ class Coin:
 class CoinsList(RedisJSON):
     coins_list: list[Coin]
 
-    @classmethod
-    def from_redis_value(cls, value: str) -> "CoinsList":
-        data = json.loads(value)
-
-        raw: CoinsList = data.get("coins_list", [])
-        return parse_coins_list(raw)
-
-
 
 def parse_coins_list(raw: Sequence[dict[str, Any]]) -> CoinsList:
     coins_list: CoinsList = CoinsList(coins_list=list())

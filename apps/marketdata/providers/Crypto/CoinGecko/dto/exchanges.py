@@ -26,13 +26,6 @@ class Exchange:
 class Exchanges(RedisJSON):
     exchanges: list[Exchange]
 
-    @classmethod
-    def from_redis_value(cls, value: str) -> "Exchanges":
-        data = json.loads(value)
-
-        raw: Exchanges = data.get("exchanges", [])
-        return parse_exchanges(raw)
-
 
 def parse_exchanges(raw: Sequence[dict[str, Any]]) -> Exchanges:
     exchanges: Exchanges = Exchanges(exchanges=list())

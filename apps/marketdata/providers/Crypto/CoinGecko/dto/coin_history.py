@@ -79,12 +79,6 @@ class CoinHistory(RedisJSON):
     # наше поле (не от API)
     meta: Optional[HistoryMeta] = None
 
-    @classmethod
-    def from_redis_value(cls, value: str) -> "CoinHistory":
-        data = json.loads(value)
-
-        return parse_coin_history(data)
-
 
 def _to_int(x: Any) -> Optional[int]:
     if x is None:

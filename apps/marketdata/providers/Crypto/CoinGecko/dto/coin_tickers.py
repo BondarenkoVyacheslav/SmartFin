@@ -73,13 +73,6 @@ class CoinTickers(RedisJSON):
     name: str | None = None
     tickers: list[Ticker] = strawberry.field(default_factory=list)
 
-    @classmethod
-    def from_redis_value(cls, value: str) -> "CoinTickers":
-        data = json.loads(value)
-
-        raw: CoinTickers = data.get("coin_tickers")
-        return parse_coin_tickers(raw)
-
 
 def _to_float(x: Any) -> Optional[float]:
     if x is None:

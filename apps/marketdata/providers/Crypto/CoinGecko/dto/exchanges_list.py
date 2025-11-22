@@ -14,13 +14,6 @@ class Exchange:
 class ExchangesList(RedisJSON):
     exchanges_list: list[Exchange] = strawberry.field(default_factory=list)
 
-    @classmethod
-    def from_redis_value(cls, value: str) -> "ExchangesList":
-        data = json.loads(value)
-
-        raw: ExchangesList = data.get("exchanges_list")
-        return parse_exchanges_list(raw)
-
 
 def parse_exchanges_list(raw: Sequence[dict[str, str]]) -> ExchangesList:
     exchanges_list: ExchangesList = ExchangesList(exchanges_list=list())
