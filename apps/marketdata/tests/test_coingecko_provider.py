@@ -1,6 +1,3 @@
-# apps/marketdata/tests/test_coingecko_provider.py
-
-import asyncio
 from typing import Any, Dict, Optional
 
 import httpx
@@ -10,7 +7,6 @@ import respx
 from apps.marketdata.providers.Crypto.CoinGecko.coingecko import CoinGeckoProvider
 from apps.marketdata.providers.Crypto.CoinGecko.dto.simple_price import ListSimplePricesEntry
 from apps.marketdata.providers.Crypto.CoinGecko.dto.supported_vs_currencies import SupportedVSCurrencies
-
 
 class FakeRedisCache:
     """
@@ -56,11 +52,11 @@ def coingecko_provider(fake_cache: FakeRedisCache) -> CoinGeckoProvider:
 
     Если что – просто переименуй аргумент.
     """
-    return CoinGeckoProvider(cache_service=fake_cache)  # <--- подправь, если нужно
+    return CoinGeckoProvider(cache=fake_cache)  # <--- подправь, если нужно
 
 
 @respx.mock
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_simple_price_builds_correct_request_and_caches(
     coingecko_provider: CoinGeckoProvider,
     fake_cache: FakeRedisCache,
@@ -93,8 +89,8 @@ async def test_simple_price_builds_correct_request_and_caches(
         ids=["bitcoin", "ethereum"],
         vs_currencies=["usd"],
         include_market_cap=True,
-        include_24h_vol=True,
-        include_24h_change=True,
+        include_24hr_vol=True,
+        include_24hr_change=True,
         include_last_updated_at=True,
     )
 
@@ -118,8 +114,8 @@ async def test_simple_price_builds_correct_request_and_caches(
         return v.lower() in ("true", "1", "yes")
 
     assert _bool_str(params.get("include_market_cap", "false"))
-    assert _bool_str(params.get("include_24h_vol", "false"))
-    assert _bool_str(params.get("include_24h_change", "false"))
+    assert _bool_str(params.get("include_24hr_vol", "false"))
+    assert _bool_str(params.get("include_24hr_change", "false"))
     assert _bool_str(params.get("include_last_updated_at", "false"))
 
     # --- 3) Проверяем маппинг JSON -> DTO ---
@@ -160,7 +156,7 @@ async def test_simple_price_builds_correct_request_and_caches(
 
 
 @respx.mock
-@pytest.mark.asyncio
+@pytest.mark.anyio
 async def test_supported_vs_currencies_request_and_caching(
     coingecko_provider: CoinGeckoProvider,
     fake_cache: FakeRedisCache,

@@ -1,5 +1,3 @@
-# apps/marketdata/providers/Crypto/CoinGecko/cache_keys.py
-
 from __future__ import annotations
 
 from typing import Optional
@@ -31,8 +29,8 @@ class CoinGeckoCacheKeys:
         return f"{cls.KP}:simple:token_price:{platform.lower()}:{addrs_sig}:{vs_sig}:{opts_sig}"
 
     @classmethod
-    def supported_vs(cls) -> str:
-        return f"{cls.KP}:simple:supported_vs"
+    def supported_vs_currencies(cls) -> str:
+        return f"{cls.KP}:simple:supported_vs_currencies"
 
     # ----- coins -----
 

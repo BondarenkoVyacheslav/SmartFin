@@ -81,7 +81,7 @@ class CoinGeckoProvider(Provider):
 
     def __init__(
             self,
-            cache: RedisCacheService,
+            cache,
             *,
             api_key: str = os.getenv("COIN_GECKO_API_DEMO_KEY"),
             base_url: str = "https://api.coingecko.com/api/v3",
@@ -149,11 +149,11 @@ class CoinGeckoProvider(Provider):
     def k_token_price(self, platform: str, addrs_sig: str, vs_sig: str, opts_sig: str) -> str:
         return self.Keys.token_price(platform, addrs_sig, vs_sig, opts_sig)
 
-    def k_supported_vs(self) -> str:
-        return self.Keys.supported_vs()
+    def k_supported_vs_currencies(self) -> str:
+        return self.Keys.supported_vs_currencies()
 
     def k_coins_list(self, include_platform: bool) -> str:
-        return self.Keys.supported_vs()
+        return self.Keys.coins_list(include_platform)
 
     def k_coins_markets(
             self,
@@ -312,7 +312,7 @@ class CoinGeckoProvider(Provider):
     async def simple_supported_vs_currencies(self) -> SupportedVSCurrencies:
         data = await self._get("/simple/supported_vs_currencies")
         supported_vs_currencies: SupportedVSCurrencies = parse_supported_vs_currencies(data)
-        await self.cache.set(self.k_supported_vs(), supported_vs_currencies.to_redis_value(),
+        await self.cache.set(self.k_supported_vs_currencies(), supported_vs_currencies.to_redis_value(),
                              ttl=self.TTL_SUPPORTED_VS_CURRENCIES)
 
         return supported_vs_currencies

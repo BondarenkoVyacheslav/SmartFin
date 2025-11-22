@@ -1,8 +1,8 @@
 from __future__ import annotations
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import dataclass
-from datetime import datetime, date
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Any, Dict, Optional
 from apps.marketdata.services.redis_cache import RedisCacheService
 
 
@@ -28,13 +28,13 @@ class Candle:
 class Provider(ABC):
     code: str
     name: str
-    _cache_service: Optional[RedisCacheService] = None
+    _cache_service: Any
     _redis_url: Optional[str] = None
     _redis_options: Optional[Dict[str, Any]] = None
 
     def __init__(
             self,
-            cache_service: Optional[RedisCacheService] = None,
+            cache_service: Any,
             *,
             redis_url: Optional[str] = None,
             redis_options: Optional[Dict[str, Any]] = None,
@@ -79,11 +79,3 @@ class Provider(ABC):
         """Backward compatible alias for :attr:`cache`."""
 
         return self._get_cache()
-
-    @abstractmethod
-    def get_quotes(self, symbols: List[str]) -> List[Quote]:
-        ...
-
-    @abstractmethod
-    def get_candles(self, symbol: str, interval: str, start: date, end: Optional[date] = None) -> List[Candle]:
-        ...

@@ -13,4 +13,5 @@ dependencies = [
     "respx>=0.22.0",
     "strawberry-graphql>=0.284.1",
     "strawberry-graphql-django>=0.67.0",
+    "trio>=0.32.0",
 ]
