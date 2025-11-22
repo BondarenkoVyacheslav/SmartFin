@@ -13,10 +13,6 @@ class Coin:
     name: str
     platforms: Optional[dict[str, str]]
 
-    def to_redis_value(self) -> str:
-        return json.dumps(dataclasses.asdict(self), ensure_ascii=False, separators=(",", ":"))
-
-
 
 @strawberry.type
 class CoinsList(RedisJSON):
