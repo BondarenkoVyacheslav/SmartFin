@@ -1,5 +1,4 @@
-import json
-from typing import Sequence, Self
+from typing import Sequence
 import strawberry
 
 from apps.marketdata.providers.Crypto.CoinGecko.redis_json import RedisJSON
