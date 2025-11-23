@@ -1,0 +1,34 @@
+version: "3.9"
+
+services:
+  coingecko-graphql:
+    build:
+      context: .
+      dockerfile: Dockerfile.coingecko
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      # сюда же можно положить лимиты, base_url и т.п.
+      # - COINGECKO_BASE_URL=https://api.coingecko.com/api/v3
+    depends_on:
+      - redis
+    ports:
+      - "8080:8000"  # снаружи GraphQL будет на http://localhost:8080/graphql (по умолчанию /graphql)
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--loglevel", "notice"]
+    volumes:
+      - redis-data:/data
+
+  # Опционально — UI для просмотра ключей/TTL
+  redis-commander:
+    image: rediscommander/redis-commander
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+
+volumes:
+  redis-data:

@@ -11,7 +11,9 @@ dependencies = [
     "pytest>=9.0.1",
     "redis>=7.0.1",
     "respx>=0.22.0",
+    "starlette>=0.50.0",
     "strawberry-graphql>=0.284.1",
     "strawberry-graphql-django>=0.67.0",
     "trio>=0.32.0",
+    "uvicorn[standard]>=0.32.0",
 ]
