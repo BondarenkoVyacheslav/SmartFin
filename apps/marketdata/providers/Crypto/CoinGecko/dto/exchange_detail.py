@@ -1,4 +1,3 @@
-import datetime
 from decimal import Decimal
 import strawberry
 from typing import Optional, Any
@@ -68,10 +67,10 @@ class Ticker:
 
 @strawberry.type(name="ExchangeDetailExchange")
 class Exchange(RedisJSON):
-    id: str
-    name: str
-    year_established: datetime.date
-    country: str
+    id: str | None
+    name: str | None
+    year_established: int | None
+    country: str | None
     description: str | None
     url: str | None
     image: str | None
@@ -91,7 +90,7 @@ class Exchange(RedisJSON):
     trade_volume_24h_btc: Decimal | None
     coins: int | None
     pairs: int | None
-    tickers: Ticker | None
+    tickers: list[Ticker] | None
 
 
 def _to_float(x: Any) -> Optional[float]:
@@ -101,6 +100,35 @@ def _to_float(x: Any) -> Optional[float]:
         return float(x)
     except (TypeError, ValueError):
         return None
+
+def _to_dec(x) -> Decimal | None:
+    if x is None:
+        return None
+    # через str(x) чтобы не ловить двоичную погрешность float
+    return Decimal(str(x))
+
+def _to_year(x: Any) -> int | None:
+    """
+    Парсим year_established как год.
+    CoinGecko обычно отдаёт int (например, 2017), но подстрахуемся под строки.
+    """
+    if x is None:
+        return None
+
+    if isinstance(x, int):
+        return x
+
+    if isinstance(x, str):
+        x = x.strip()
+        if not x:
+            return None
+        try:
+            return int(x)
+        except ValueError:
+            return None
+
+    # если вдруг прилетело что-то странное — просто None
+    return None
 
 
 def _parse_converted3(raw: Any) -> Optional[Converted3]:
@@ -153,12 +181,28 @@ def _parse_ticker(t: Any) -> Ticker | None:
     )
 
 
+def _parse_tickers(raw: Any) -> list[Ticker] | None:
+    """
+    CoinGecko отдаёт tickers как список словарей.
+    Превращаем в список Ticker, либо None если ничего адекватного нет.
+    """
+    if not isinstance(raw, list):
+        return None
+
+    result: list[Ticker] = []
+    for item in raw:
+        t = _parse_ticker(item)
+        if t is not None:
+            result.append(t)
+
+    return result or None
+
+
 def parse_exchange(raw: dict[str, Any]) -> Exchange:
-    return (
-        Exchange(
+    return Exchange(
             id=raw.get("id"),
             name=raw.get("name"),
-            year_established=raw.get("established"),
+            year_established=_to_year(raw.get("year_established")),
             country=raw.get("country"),
             description=raw.get("description"),
             url=raw.get("url"),
@@ -176,9 +220,8 @@ def parse_exchange(raw: dict[str, Any]) -> Exchange:
             alert_notice=raw.get("alert_notice"),
             trust_score=raw.get("trust_score"),
             trust_score_rank=raw.get("trust_score_rank"),
-            trade_volume_24h_btc=raw.get("trade_volume_24h_btc"),
+            trade_volume_24h_btc=_to_dec(raw.get("trade_volume_24h_btc")),
             coins=raw.get("coins"),
             pairs=raw.get("pairs"),
-            tickers=_parse_ticker(raw.get("tickers")),
-        ))
-
+            tickers=_parse_tickers(raw.get("tickers")),
+        )
