@@ -39,6 +39,19 @@ from apps.marketdata.providers.provider import Provider
 from apps.marketdata.services.redis_cache import RedisCacheService
 from apps.marketdata.providers.Crypto.CoinGecko.cache_keys import CoinGeckoCacheKeys
 
+from .errors import (
+    CoinGeckoError,
+    CoinGeckoNetworkError,
+    CoinGeckoNotFoundError,
+    CoinGeckoRateLimitError,
+    CoinGeckoBadRequestError,
+    CoinGeckoAuthError,
+    CoinGeckoInvalidResponseError,
+    CoinGeckoServerError,
+    CoinGeckoAccessDeniedError,
+    CoinGeckoMissingApiKeyError,
+    CoinGeckoInvalidApiKeyError,
+)
 
 
 class CoinGeckoProvider(Provider):
@@ -119,27 +132,158 @@ class CoinGeckoProvider(Provider):
             params["x_cg_demo_api_key"] = self.api_key
         return params
 
+    def _build_error_details(self, path: str, params: Optional[Dict[str, Any]] = None,
+                             response: Optional[httpx.Response] = None) -> Dict[str, Any]:
+        """
+        Собирает полезные детали для исключения: status_code, cg_error_code, cg_error_message, preview body, path, params.
+        """
+        details: Dict[str, Any] = {"path": path}
+        if params:
+            details["params"] = params
+
+        if response is not None:
+            details["status_code"] = response.status_code
+            # Попытка разобрать JSON-ответ, если он есть
+            try:
+                payload = response.json()
+            except Exception:
+                payload = None
+
+            if isinstance(payload, dict):
+                # CoinGecko иногда использует блок "status" с error_code/error_message
+                status_block = payload.get("status") or payload.get("error") or {}
+                if isinstance(status_block, dict):
+                    if "error_code" in status_block:
+                        details["cg_error_code"] = status_block.get("error_code")
+                    if "code" in status_block:
+                        # альтернативное имя
+                        details["cg_error_code"] = status_block.get("code")
+                    if "error_message" in status_block:
+                        details["cg_error_message"] = status_block.get("error_message")
+                    if "message" in status_block:
+                        details["cg_error_message"] = details.get("cg_error_message") or status_block.get("message")
+
+            # preview текстовой части тела для дебага (ограничим длину)
+            try:
+                txt = response.text
+                if txt:
+                    details["raw_body_preview"] = txt[:1000]
+            except Exception:
+                # игнорируем любые ошибки при чтении текста
+                pass
+
+        return details
+
+    def _map_status_to_exc(self, path: str, params: Optional[Dict[str, Any]], response: httpx.Response) -> None:
+        """
+        Маппит HTTP-статус и/или CoinGecko numeric codes на специализированные исключения из errors.py.
+        Бросает одно из CoinGecko* исключений.
+        """
+        status = response.status_code
+        details = self._build_error_details(path, params, response)
+        cg_code = details.get("cg_error_code")
+
+        # --- сначала явные numeric codes из документации CoinGecko ---
+        # Missing API Key
+        if cg_code == 10002:
+            raise CoinGeckoMissingApiKeyError(details=details)
+        # Invalid API Key variants (docs упоминают 10010/10011)
+        if cg_code in (10010, 10011):
+            raise CoinGeckoInvalidApiKeyError(details=details)
+        # No access to endpoint (Pro-only)
+        if cg_code == 10005:
+            raise CoinGeckoAuthError(details=details)
+        # Access denied by CDN/firewall
+        if cg_code == 1020:
+            raise CoinGeckoAccessDeniedError(details=details)
+
+        # --- затем маппинг по HTTP статусам (таблица в доке CoinGecko) ---
+        if status == 400:
+            raise CoinGeckoBadRequestError(details=details)
+
+        if status in (401, 403):
+            # 403 может быть и firewall (1020 handled выше), иначе auth
+            raise CoinGeckoAuthError(details=details)
+
+        if status == 404:
+            # ресурс не найден
+            raise CoinGeckoNotFoundError(resource=path, details=details)
+
+        if status == 408:
+            # таймауты/сетевые проблемы
+            raise CoinGeckoNetworkError(details=details)
+
+        if status == 429:
+            # rate limit
+            raise CoinGeckoRateLimitError(details=details)
+
+        if status in (500, 503):
+            raise CoinGeckoServerError(details=details)
+
+        # фолбэк: неизвестный статус
+        raise CoinGeckoError(f"Unexpected status {status} from CoinGecko", code="UNEXPECTED_STATUS", details=details)
+
     async def _get(self, path: str, params: Optional[Dict[str, Any]] = None) -> Any:
-        """GET с простым бэкоффом и обработкой 429."""
+        """
+        GET с backoff/retry и детальным маппингом ошибок в CoinGecko-исключения.
+        Возвращает разобранный JSON или бросает одно из CoinGecko* исключений.
+        """
         backoff = [0.2, 0.5, 1.0, 2.0, 4.0]
         last_err = None
+
         for i, delay in enumerate(backoff):
             try:
+                # NOTE: сохраняем поведение — у тебя синхронный httpx.Client (self.http).
                 r = self.http.get(path, params=self._q(params))
+
+                # Специальная логика для 429: уважаем Retry-After и пробуем ретраить
                 if r.status_code == 429:
-                    # Если отдали Retry-After — уважим
                     ra = r.headers.get("Retry-After")
-                    sleep = float(ra) if ra else delay
-                    time.sleep(sleep)
-                    continue
-                r.raise_for_status()
-                return r.json()
-            except Exception as e:
+                    try:
+                        sleep = float(ra) if ra is not None else delay
+                    except Exception:
+                        sleep = delay
+                    # если ещё есть попытки — ждем и пробуем снова
+                    if i < len(backoff) - 1:
+                        time.sleep(sleep)
+                        continue
+                    # иначе — бросаем rate limit исключение
+                    details = self._build_error_details(path, params, r)
+                    raise CoinGeckoRateLimitError(details=details)
+
+                # Для прочих 4xx/5xx — маппим на наши исключения
+                if r.status_code >= 400:
+                    self._map_status_to_exc(path, params, r)
+
+                # Попытка распарсить json
+                try:
+                    return r.json()
+                except ValueError as ve:
+                    details = self._build_error_details(path, params, r)
+                    raise CoinGeckoInvalidResponseError(details=details, original=ve)
+
+            except (httpx.ConnectError, httpx.ReadTimeout, httpx.WriteTimeout, httpx.RemoteProtocolError,
+                    httpx.ReadError, httpx.RequestError) as e:
+                # Сетевые ошибки — пробуем ретрай; на последней итерации бросаем CoinGeckoNetworkError
                 last_err = e
-                if i == len(backoff) - 1:
-                    raise
-                time.sleep(delay)
-        raise last_err or RuntimeError("unreachable")
+                if i < len(backoff) - 1:
+                    time.sleep(delay)
+                    continue
+                details = self._build_error_details(path, params, None)
+                raise CoinGeckoNetworkError(details=details, original=e)
+
+            except (CoinGeckoError):
+                # если уже собранное CoinGecko исключение — пробрасываем без изменений
+                raise
+
+            except Exception as e:
+                # неожиданные ошибки — оборачиваем в общий CoinGeckoError
+                details = self._build_error_details(path, params, None)
+                raise CoinGeckoError("Unexpected error when contacting CoinGecko", details=details, original=e)
+
+        # если цикл вышел — возвращаем общий провайдер-эксепшн
+        raise CoinGeckoError("Retries exhausted while contacting CoinGecko", details={"attempts": len(backoff)},
+                             original=last_err)
 
     # ============ Ключи кеша (читаемые и стабильные) ============
 
@@ -476,7 +620,8 @@ class CoinGeckoProvider(Provider):
         if coin_ids: params["coin_ids"] = coin_ids
         data = await self._get(f"/exchanges/{ex_id}/tickers", params)
         ex_tickers: ExchangeTickers = parse_exchange_tickers(ex_id, data)
-        await self.cache.set(self.k_exchange_tickers(ex_id, page), ex_tickers.to_redis_value(), ttl=self.TTL_EXCHANGE_TICKERS)
+        await self.cache.set(self.k_exchange_tickers(ex_id, page), ex_tickers.to_redis_value(),
+                             ttl=self.TTL_EXCHANGE_TICKERS)
         return ex_tickers
 
     async def exchange_volume_chart(self, ex_id: str, days: int = 1) -> ExchangeVolumeChart:

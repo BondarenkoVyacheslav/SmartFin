@@ -31,6 +31,7 @@ from apps.marketdata.providers.Crypto.CoinGecko.dto.ping import Ping
 from apps.marketdata.providers.Crypto.CoinGecko.dto.simple_price import ListSimplePricesEntry
 from apps.marketdata.services.redis_cache import RedisCacheService
 
+from apps.marketdata.providers.Crypto.CoinGecko.errors_to_schema import coingecko_handle_errors
 
 @strawberry.type
 class CoinGeckoQuery:
@@ -40,6 +41,7 @@ class CoinGeckoQuery:
 
     # ---- /ping ----
     @strawberry.field
+    @coingecko_handle_errors()
     async def ping(self) -> Optional[Ping]:
         """
         /ping — простой health-check CoinGecko.
@@ -48,6 +50,7 @@ class CoinGeckoQuery:
 
     # ---- /simple/price ----
     @strawberry.field
+    @coingecko_handle_errors()
     async def simple_price(
         self,
         ids: List[str],
@@ -96,6 +99,7 @@ class CoinGeckoQuery:
         )
 
     @strawberry.field
+    @coingecko_handle_errors()
     async def simple_token_price(
             self,
             asset_platform_id: str,
@@ -139,6 +143,7 @@ class CoinGeckoQuery:
 
     # ---- /simple/supported_vs_currencies ----
     @strawberry.field
+    @coingecko_handle_errors()
     async def supported_vs_currencies(self) -> SupportedVSCurrencies:
         key = CoinGeckoCacheKeys.supported_vs_currencies()
         cached = await self.cache.get(key)
@@ -151,6 +156,7 @@ class CoinGeckoQuery:
 
     # ---- /coins/list ----
     @strawberry.field
+    @coingecko_handle_errors()
     async def coins_list(self, include_platform: bool = False) -> CoinsList:
         key = CoinGeckoCacheKeys.coins_list(include_platform)
         cached = await self.cache.get(key)
@@ -163,6 +169,7 @@ class CoinGeckoQuery:
 
     # ---- /coins/markets ----
     @strawberry.field
+    @coingecko_handle_errors()
     async def coins_markets(
         self,
         vs_currency: str,
@@ -220,6 +227,7 @@ class CoinGeckoQuery:
 
     # ---- /coins/{id} ----
     @strawberry.field
+    @coingecko_handle_errors(custom_not_found_message="Криптомонета не найдена на CoinGecko.")
     async def coin_detail(
         self,
         coin_id: str,
@@ -248,6 +256,7 @@ class CoinGeckoQuery:
 
     # ---- /coins/{id}/tickers ----
     @strawberry.field
+    @coingecko_handle_errors()
     async def coin_tickers(
         self,
         coin_id: str,
@@ -277,6 +286,7 @@ class CoinGeckoQuery:
 
     # ---- /coins/{id}/history ----
     @strawberry.field
+    @coingecko_handle_errors(custom_not_found_message="История по запрошенной монете не найдена.")
     async def coin_history(
         self,
         coin_id: str,
@@ -297,6 +307,7 @@ class CoinGeckoQuery:
 
     # ---- /exchanges ----
     @strawberry.field
+    @coingecko_handle_errors()
     async def exchanges(
         self,
         per_page: int = 250,
@@ -312,6 +323,7 @@ class CoinGeckoQuery:
 
     # ---- /exchanges/list ----
     @strawberry.field
+    @coingecko_handle_errors()
     async def exchanges_list(self) -> ExchangesList:
         key = CoinGeckoCacheKeys.exchanges_list()
         cached = await self.cache.get(key)
@@ -323,6 +335,7 @@ class CoinGeckoQuery:
 
     # ---- /exchanges/{id} ----
     @strawberry.field
+    @coingecko_handle_errors(custom_not_found_message="Биржа не найдена на CoinGecko.")
     async def exchange_detail(self, ex_id: str) -> Exchange:
         key = CoinGeckoCacheKeys.exchange_detail(ex_id)
         cached = await self.cache.get(key)
@@ -334,6 +347,7 @@ class CoinGeckoQuery:
 
     # ---- /exchanges/{id}/tickers ----
     @strawberry.field
+    @coingecko_handle_errors()
     async def exchange_tickers(
         self,
         ex_id: str,
@@ -360,6 +374,7 @@ class CoinGeckoQuery:
 
     # ---- /exchanges/{id}/volume_chart ----
     @strawberry.field
+    @coingecko_handle_errors()
     async def exchange_volume_chart(
         self,
         ex_id: str,
@@ -375,6 +390,7 @@ class CoinGeckoQuery:
 
     # ---- /derivatives ----
     @strawberry.field
+    @coingecko_handle_errors()
     async def derivatives(self) -> Derivatives:
         key = CoinGeckoCacheKeys.derivatives()
         cached = await self.cache.get(key)
@@ -386,6 +402,7 @@ class CoinGeckoQuery:
 
     # ---- /derivatives/exchanges ----
     @strawberry.field
+    @coingecko_handle_errors()
     async def derivatives_exchanges(
         self,
         per_page: int = 250,
@@ -401,6 +418,7 @@ class CoinGeckoQuery:
 
     # ---- /derivatives/exchanges/{id} ----
     @strawberry.field
+    @coingecko_handle_errors(custom_not_found_message="Деривативная биржа не найдена на CoinGecko.")
     async def derivatives_exchange_detail(self, ex_id: str) -> DerivativesExchangeDetails:
         key = CoinGeckoCacheKeys.derivatives_exchange_detail(ex_id)
         cached = await self.cache.get(key)
@@ -412,6 +430,7 @@ class CoinGeckoQuery:
 
     # ---- /derivatives/exchanges/list ----
     @strawberry.field
+    @coingecko_handle_errors()
     async def derivatives_exchanges_list(self) -> DerivativesExchangesList:
         key = CoinGeckoCacheKeys.derivatives_exchanges_list()
         cached = await self.cache.get(key)
@@ -423,6 +442,7 @@ class CoinGeckoQuery:
 
     # ---- /exchange_rates ----
     @strawberry.field
+    @coingecko_handle_errors()
     async def exchange_rates(self) -> ExchangeRates:
         key = CoinGeckoCacheKeys.exchange_rates()
         cached = await self.cache.get(key)
@@ -434,6 +454,7 @@ class CoinGeckoQuery:
 
     # ---- /search ----
     @strawberry.field
+    @coingecko_handle_errors()
     async def search(self, query: str) -> SearchResult:
         sig = CoinGeckoProvider.sig(query.strip().lower())
         key = CoinGeckoCacheKeys.search(sig)
@@ -446,6 +467,7 @@ class CoinGeckoQuery:
 
     # ---- /search/trending ----
     @strawberry.field
+    @coingecko_handle_errors()
     async def search_trending(self) -> SearchTrendingResult:
         key = CoinGeckoCacheKeys.trending()
         cached = await self.cache.get(key)
@@ -457,6 +479,7 @@ class CoinGeckoQuery:
 
     # ---- /global ----
     @strawberry.field(name="global")
+    @coingecko_handle_errors()
     async def global_data(self) -> GlobalData:
         key = CoinGeckoCacheKeys.global_data()
         cached = await self.cache.get(key)
@@ -468,6 +491,7 @@ class CoinGeckoQuery:
 
     # ---- /global/decentralized_finance_defi ----
     @strawberry.field
+    @coingecko_handle_errors()
     async def global_defi(self) -> GlobalDefiData:
         key = CoinGeckoCacheKeys.global_defi()
         cached = await self.cache.get(key)
