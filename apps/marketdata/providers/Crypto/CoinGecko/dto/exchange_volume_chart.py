@@ -13,7 +13,7 @@ class ExchangeVolumePoint:
     timestamp_ms — Unix-время в миллисекундах (как в ответе CoinGecko).
     volume       — объём (по доке CoinGecko — volume в BTC).
     """
-    timestamp_ms: int
+    timestamp_ms: float
     volume: float
 
 
@@ -53,7 +53,7 @@ def parse_exchange_volume_chart(
         vol_str = vol_raw if isinstance(vol_raw, str) else str(vol_raw)
 
         try:
-            timestamp_ms = int(ts_raw)
+            timestamp_ms = float(ts_raw)
             volume = float(vol_str)
         except (TypeError, ValueError):
             # Если что-то не парсится — просто пропускаем точку

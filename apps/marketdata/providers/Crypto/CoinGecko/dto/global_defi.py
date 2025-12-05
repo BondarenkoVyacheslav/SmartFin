@@ -8,14 +8,19 @@ from apps.marketdata.providers.Crypto.CoinGecko.redis_json import RedisJSON
 
 @strawberry.type
 class GlobalDefiData(RedisJSON):
-    defi_market_cap: str
-    eth_market_data: str
-    defi_to_eth_ratio: str
-    trading_volume_24h: str
-    defi_dominance: str
-    top_coin_name: str
-    top_coin_defi_dominance: Decimal
+    defi_market_cap: str | None
+    eth_market_data: str | None
+    defi_to_eth_ratio: str | None
+    trading_volume_24h: str | None
+    defi_dominance: str | None
+    top_coin_name: str | None
+    top_coin_defi_dominance: Decimal | None
 
+def _to_dec(x) -> Decimal | None:
+    if x is None:
+        return None
+    # через str(x) чтобы не ловить двоичную погрешность float
+    return Decimal(str(x))
 
 def parse_global_defi_data(raw: dict[str, dict[str, Any]]) -> GlobalDefiData:
     data = raw.get("data")
@@ -26,5 +31,5 @@ def parse_global_defi_data(raw: dict[str, dict[str, Any]]) -> GlobalDefiData:
         trading_volume_24h=data.get("trading_volume_24h"),
         defi_dominance=data.get("defi_dominance"),
         top_coin_name=data.get("top_coin_name"),
-        top_coin_defi_dominance=data.get("top_coin_defi_dominance"),
+        top_coin_defi_dominance=_to_dec(data.get("top_coin_defi_dominance")),
     )

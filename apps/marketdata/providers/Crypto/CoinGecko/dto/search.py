@@ -6,10 +6,10 @@ from apps.marketdata.providers.Crypto.CoinGecko.redis_json import RedisJSON
 
 @strawberry.type
 class SearchCoin:
-    id: str
-    name: str
-    api_symbol: str
-    symbol: str
+    id: str | None
+    name: str | None
+    api_symbol: str | None
+    symbol: str | None
     market_cap_rank: Optional[int] = None
     thumb: Optional[str] = None
     large: Optional[str] = None
@@ -17,8 +17,8 @@ class SearchCoin:
 
 @strawberry.type
 class SearchExchange:
-    id: str
-    name: str
+    id: str | None
+    name: str | None
     market_type: Optional[str] = None
     thumb: Optional[str] = None
     large: Optional[str] = None
@@ -37,15 +37,15 @@ class SearchIco:
 
 @strawberry.type
 class SearchCategory:
-    id: str
-    name: str
+    id: str | None
+    name: str | None
 
 
 @strawberry.type
 class SearchNft:
-    id: str
-    name: str
-    symbol: str
+    id: str | None
+    name: str | None
+    symbol: str | None
     thumb: Optional[str] = None
 
 
