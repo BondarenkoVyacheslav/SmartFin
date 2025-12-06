@@ -1,8 +1,84 @@
+from typing import Any
+import httpx
+
+from apps.marketdata.providers.StockMarketRussia.MOEX.dto.securities import MOEXSecurities, parse_moex_securities
 from apps.marketdata.providers.provider import Provider
 from apps.marketdata.services.redis_cache import RedisCacheService
 
 
 class MOEXProvider(Provider):
+    BASE_URL = "http://iss.moex.com"
 
-    def __init__(self, cache: RedisCacheService):
-        self.cache = cache
+    def __init__(self, cache: RedisCacheService, timeout_s: float = 10.0) -> None:
+        super().__init__(cache)
+        self.timeout_s = timeout_s
+
+    async def _get(
+        self,
+        path: str,
+        params: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Базовый GET к MOEX ISS.
+
+        При необходимости сюда можно добавить:
+        - ретраи
+        - логирование
+        - собственные исключения по аналогии с CoinGecko
+        """
+        url = f"{self.BASE_URL}{path}"
+
+        async with httpx.AsyncClient(timeout=self._timeout_s) as client:
+            resp = await client.get(url, params=params)
+            resp.raise_for_status()
+            return resp.json()
+
+
+    async def securities(
+            self,
+            q: str | None = None,
+            lang: str | None = None,
+            engine: str | None = None,
+            is_trading: int | None = None,
+            market: str | None = None,
+            group_by: str | None = None,
+            limit: int | None = None,
+            group_by_filter: str | None = None,
+            start: int | None = None,
+    ) -> MOEXSecurities:
+        """
+           Обёртка над /iss/securities.json
+           Параметры один-в-один как в ISS:
+           q               — поиск по части кода/названия/ISIN/EMITENT_ID/рег. номеру
+           lang            — 'ru' (по умолчанию) или 'en'
+           engine          — фильтр по движку (см. /iss/index.json?iss.only=trade_engines)
+           is_trading      — 1 только торгуемые, 0 только неторгуемые
+           market          — фильтр по рынку (см. /iss/index.json?iss.only=markets)
+           group_by        — 'group' или 'type'
+           limit           — 5, 10, 20, 100 (по умолчанию 100 на стороне MOEX)
+           group_by_filter — значение group/type (в зависимости от group_by)
+           start           — смещение (пагинация, отсчёт с 0)
+       """
+        params: dict[str, Any] = {}
+
+        if q:
+            params["q"] = q
+        if lang:
+            params["lang"] = lang
+        if engine:
+            params["engine"] = engine
+        if is_trading is not None:
+            params["is_trading"] = is_trading
+        if market:
+            params["market"] = market
+        if group_by:
+            params["group_by"] = group_by
+        if limit is not None:
+            params["limit"] = limit
+        if group_by_filter:
+            params["group_by_filter"] = group_by_filter
+        if start is not None:
+            params["start"] = start
+
+        raw = await self._get("/iss/securities.json", params=params)
+        return parse_moex_securities(raw)
