@@ -1,7 +1,7 @@
 from typing import Optional, List, Any, Dict, Sequence
 import strawberry
 
-from apps.marketdata.providers.Crypto.CoinGecko.redis_json import RedisJSON
+from apps.marketdata.services.redis_json import RedisJSON
 
 
 # --- Вложенные структуры для converted_* ---

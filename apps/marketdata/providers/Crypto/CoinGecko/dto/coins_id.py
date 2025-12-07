@@ -2,7 +2,7 @@ from typing import Optional, List, Dict, Any
 import strawberry
 from strawberry.scalars import JSON
 
-from apps.marketdata.providers.Crypto.CoinGecko.redis_json import RedisJSON
+from apps.marketdata.services.redis_json import RedisJSON
 
 
 # ---------- Small nested DTOs ----------

@@ -2,7 +2,7 @@ from typing import List, Optional, Sequence, Mapping, Any
 
 import strawberry
 
-from apps.marketdata.providers.Crypto.CoinGecko.redis_json import RedisJSON
+from apps.marketdata.services.redis_json import RedisJSON
 
 
 @strawberry.type

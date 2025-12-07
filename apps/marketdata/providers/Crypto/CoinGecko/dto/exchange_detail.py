@@ -2,7 +2,7 @@ from decimal import Decimal
 import strawberry
 from typing import Optional, Any
 
-from apps.marketdata.providers.Crypto.CoinGecko.redis_json import RedisJSON
+from apps.marketdata.services.redis_json import RedisJSON
 
 
 @strawberry.type(name="ExchangeDetailConverted3")
