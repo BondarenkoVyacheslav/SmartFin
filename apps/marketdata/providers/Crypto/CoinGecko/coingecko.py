@@ -1,6 +1,6 @@
 from typing import Any, Dict, Optional, Sequence
-import time
 import httpx
+import asyncio
 import os
 from hashlib import md5
 from enum import Enum
@@ -93,7 +93,7 @@ class CoinGeckoProvider(Provider):
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.pass_key_in_query = pass_key_in_query
-        self.http = httpx.Client(
+        self.http = httpx.AsyncClient(
             base_url=self.base_url,
             timeout=timeout_s,
             headers={"User-Agent": user_agent,
@@ -120,26 +120,71 @@ class CoinGeckoProvider(Provider):
         return params
 
     async def _get(self, path: str, params: Optional[Dict[str, Any]] = None) -> Any:
-        """GET с простым бэкоффом и обработкой 429."""
+        """
+        Асинхронный GET с экспоненциальным бэкоффом и отдельной обработкой 429.
+
+        - не блокирует event loop (await / asyncio.sleep)
+        - позволяет выполнять много запросов параллельно
+        - не ретраит бессмысленно 4xx (кроме 429), только сеть/5xx
+        """
         backoff = [0.2, 0.5, 1.0, 2.0, 4.0]
-        last_err = None
-        for i, delay in enumerate(backoff):
+        last_exc: Optional[BaseException] = None
+
+        for attempt, delay in enumerate(backoff, start=1):
             try:
-                r = self.http.get(path, params=self._q(params))
-                if r.status_code == 429:
-                    # Если отдали Retry-After — уважим
-                    ra = r.headers.get("Retry-After")
-                    sleep = float(ra) if ra else delay
-                    time.sleep(sleep)
+                # не блокирующий HTTP-запрос
+                resp = await self.http.get(
+                    path,
+                    params=self._q(params),
+                )
+
+                # ======== отдельная обработка rate-limit (429) ========
+                if resp.status_code == 429 and attempt < len(backoff):
+                    retry_after = resp.headers.get("Retry-After")
+                    try:
+                        sleep_for = float(retry_after) if retry_after is not None else delay
+                    except (TypeError, ValueError):
+                        sleep_for = delay
+
+                    # ждём не блокируя цикл
+                    await asyncio.sleep(sleep_for)
+                    continue  # ещё одна попытка
+
+                # выбросит HTTPStatusError для 4xx/5xx
+                resp.raise_for_status()
+
+                # если всё ок — просто возвращаем JSON
+                return resp.json()
+
+            except httpx.HTTPStatusError as exc:
+                last_exc = exc
+                status = exc.response.status_code
+
+                # Ретраим только 5xx (сервер тупит), 4xx сразу наружу
+                if status >= 500 and attempt < len(backoff):
+                    await asyncio.sleep(delay)
                     continue
-                r.raise_for_status()
-                return r.json()
-            except Exception as e:
-                last_err = e
-                if i == len(backoff) - 1:
-                    raise
-                time.sleep(delay)
-        raise last_err or RuntimeError("unreachable")
+
+                # 4xx или последняя попытка — пробрасываем
+                raise
+
+            except httpx.RequestError as exc:
+                # Любые сетевые ошибки (таймауты, DNS и т.п.) — можно попытаться повторить
+                last_exc = exc
+                if attempt < len(backoff):
+                    await asyncio.sleep(delay)
+                    continue
+                raise
+
+        # Теоретически сюда не должны дойти, но пусть будет аккуратный fallthrough
+        if last_exc is not None:
+            raise last_exc
+        raise RuntimeError("CoinGeckoProvider._get: unreachable")
+
+
+    async def aclose(self) -> None:
+        await self.http.aclose()
+
 
     # ============ Ключи кеша (читаемые и стабильные) ============
 
