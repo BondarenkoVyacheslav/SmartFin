@@ -5,7 +5,7 @@ from apps.marketdata.providers.StockMarketRussia.MOEX.dto.securities import MOEX
 from apps.marketdata.providers.provider import Provider
 from apps.marketdata.services.redis_cache import RedisCacheService
 from apps.marketdata.providers.StockMarketRussia.MOEX.cache_keys import MOEXCacheKeys
-
+from apps.marketdata.providers.StockMarketRussia.MOEX.dto.security_detail import MOEXSecurityDetails, parse_moex_security_details
 
 class MOEXProvider(Provider):
     """
@@ -19,7 +19,8 @@ class MOEXProvider(Provider):
     KP = Keys.KP
 
     # ===== TTL по типам данных (сек) =====
-    TTL_SECURITIES = 3600
+    TTL_SECURITIES = 3600 * 6
+    TTL_SECURITY_DETAIL = 3600 * 24
 
     BASE_URL = "http://iss.moex.com"
 
@@ -94,5 +95,39 @@ class MOEXProvider(Provider):
         if start is not None:
             params["start"] = start
 
-        raw = await self._get("/iss/securities.json", params=params)
-        return parse_moex_securities(raw)
+        data = await self._get("/iss/securities.json", params=params)
+
+        securities: MOEXSecurities = parse_moex_securities(data)
+
+        key = self.Keys.securities(
+            q=q,
+            lang=lang,
+            engine=engine,
+            is_trading=is_trading,
+            market=market,
+            group_by=group_by,
+            limit=limit,
+            group_by_filter=group_by_filter,
+            start=start
+        )
+        await self.cache.set(key, securities.to_redis_value(), ttl=self.TTL_SECURITIES)
+        return securities
+
+    async def security_detail(self, security: str, lang: str | None = None, primary_board: int | None = None, start: int | None = None) -> MOEXSecurityDetails:
+        """
+        Получить спецификацию инструмента.
+        Например: https://iss.moex.com/iss/securities/IMOEX.xml
+        """
+
+        params = {
+            "lang": lang,
+            "primary_board": primary_board,
+            "start": start,
+        }
+        data = await self._get(f"/iss/securities/{security}.json", params)
+
+        security_detail: MOEXSecurityDetails = parse_moex_security_details(data)
+
+        key = self.Keys.security_detail(security)
+        await self.cache.set(key, security_detail.to_redis_value(), ttl=self.TTL_SECURITY_DETAIL)
+        return security_detail

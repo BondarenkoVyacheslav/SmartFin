@@ -56,7 +56,7 @@
 
 
 # -----------------------------------------
-# 4. История цен и свечи (EOD + intraday)
+# 4. История цен и свечи (EOD + intraday) # Пропускаем пока
 # -----------------------------------------
 
 /iss/history/engines/[engine]/markets/[market]/boards/[board]/securities/[security]
