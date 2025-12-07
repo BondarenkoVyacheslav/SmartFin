@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 import strawberry
 from strawberry.scalars import JSON
 
-from apps.marketdata.providers.Crypto.CoinGecko.redis_json import RedisJSON
+from apps.marketdata.services.redis_json import RedisJSON
 
 
 # --- Вспомогательные конвертеры ---
