@@ -4,9 +4,23 @@ import httpx
 from apps.marketdata.providers.StockMarketRussia.MOEX.dto.securities import MOEXSecurities, parse_moex_securities
 from apps.marketdata.providers.provider import Provider
 from apps.marketdata.services.redis_cache import RedisCacheService
+from apps.marketdata.providers.StockMarketRussia.MOEX.cache_keys import MOEXCacheKeys
 
 
 class MOEXProvider(Provider):
+    """
+        MOEX ISS API провайдер.
+        - REST через httpx
+        - Кладёт результаты в Redis (через RedisCacheService) с разумными TTL
+    """
+    Keys = MOEXCacheKeys
+
+    # ===== Базовый префикс ключей =====
+    KP = Keys.KP
+
+    # ===== TTL по типам данных (сек) =====
+    TTL_SECURITIES = 3600
+
     BASE_URL = "http://iss.moex.com"
 
     def __init__(self, cache: RedisCacheService, timeout_s: float = 10.0) -> None:
