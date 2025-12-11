@@ -74,10 +74,10 @@
 # 5. Индексы (список, показатели, история)
 # -----------------------------------------
 
-/iss/statistics/engines/stock/markets/index/analytics
+/iss/statistics/engines/stock/markets/index/analytics -
     # Список индексов и их текущая статистика.
 
-/iss/statistics/engines/stock/markets/index/analytics/[indexid]
+/iss/statistics/engines/stock/markets/index/analytics/[indexid] -
     # Показатели по конкретному индексу за дату.
 
 /iss/statistics/engines/stock/markets/index/analytics/[indexid]/tickers
@@ -91,7 +91,7 @@
 # 6. Валюты и курсы (FX / ЦБ / фикcинги)
 # -----------------------------------------
 
-/iss/statistics/engines/currency/markets/selt/rates
+/iss/statistics/engines/currency/markets/selt/rates +
     # Курсы ЦБ / расчетные курсы на валютном рынке (RUB к основным валютам).
 
 /iss/statistics/engines/currency/markets/fixing

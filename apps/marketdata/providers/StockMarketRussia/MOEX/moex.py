@@ -1,6 +1,10 @@
 from typing import Any
 import httpx
+from enum import Enum
 
+from apps.marketdata.providers.StockMarketRussia.MOEX.dto.engine_market_boards import MOEXBoards, parse_moex_boards
+from apps.marketdata.providers.StockMarketRussia.MOEX.dto.engine_markets import MOEXEngineMarkets, parse_moex_markets
+from apps.marketdata.providers.StockMarketRussia.MOEX.dto.engines import MOEXEngines, parse_moex_engines
 from apps.marketdata.providers.StockMarketRussia.MOEX.dto.securities import MOEXSecurities, parse_moex_securities
 from apps.marketdata.providers.provider import Provider
 from apps.marketdata.services.redis_cache import RedisCacheService
@@ -21,6 +25,9 @@ class MOEXProvider(Provider):
     # ===== TTL по типам данных (сек) =====
     TTL_SECURITIES = 3600 * 6
     TTL_SECURITY_DETAIL = 3600 * 24
+    TTL_ENGINES = 3600 * 24 * 30
+    TTL_ENGINE_MARKETS = 3600 * 24 * 30
+    TTL_ENGINE_MARKET_BOARDS = 3600 * 24 * 30
 
     BASE_URL = "http://iss.moex.com"
 
@@ -48,6 +55,9 @@ class MOEXProvider(Provider):
             resp.raise_for_status()
             return resp.json()
 
+    # -----------------------------------------
+    # 1. Справочники инструментов (legacy + 2.0)
+    # -----------------------------------------
 
     async def securities(
             self,
@@ -131,3 +141,68 @@ class MOEXProvider(Provider):
         key = self.Keys.security_detail(security)
         await self.cache.set(key, security_detail.to_redis_value(), ttl=self.TTL_SECURITY_DETAIL)
         return security_detail
+
+    # -----------------------------------------
+    # 2. Структура рынка (engines / markets / boards)
+    # -----------------------------------------
+
+    async def engines(self) -> MOEXEngines:
+        data = await self._get(f"/iss/engines.json")
+
+        engines: MOEXEngines = parse_moex_engines(data)
+        key = self.Keys.engines()
+
+        await self.cache.set(key, engines.to_redis_value(), ttl=self.TTL_ENGINES)
+        return engines
+
+    async def engine_markets(self, engine: str = "stock") -> MOEXEngineMarkets:
+        data = await self._get(f"/iss/engines/{engine}/markets")
+
+        engine_markets: MOEXEngineMarkets = parse_moex_markets(data)
+        key = self.Keys.engine_markets(engine)
+
+        await self.cache.set(key, engine_markets.to_redis_value(), ttl=self.TTL_ENGINE_MARKETS)
+        return engine_markets
+
+    async def engine_market_boards(self, engine: str = "stock", market: str = "index") -> MOEXBoards:
+        data = await self._get(f"/iss/engines/{engine}/markets/{market}/boards")
+
+        boards: MOEXBoards = parse_moex_boards(data)
+        key = self.Keys.engine_market_boards(engine, market)
+
+        await self.cache.set(key, boards.to_redis_value(), ttl=self.TTL_ENGINE_MARKET_BOARDS)
+        return boards
+
+    # -----------------------------------------
+    # 3. Текущие цены (по необходимым активам)
+    # -----------------------------------------
+
+    async def stock_index_SNDX_securities(self) -> None:
+        pass
+
+
+    class StockSharesBoards(str, Enum):
+        TQBR = "TQBR"
+        TQTF = "TQTF"
+        TQTD = "TQTD"
+        TQTE = "TQTE"
+        TQIF = "TQIF"
+
+    async def stock_shares_securities(self) -> None:
+        pass
+
+    class StockBondsBoards(str, Enum):
+        TQCB = "TQCB"
+        TQOB = "TQOB"
+
+    async def stock_bonds_securities(self) -> None:
+        pass
+
+    async def currency_selt_CETS(self) -> None:
+        pass
+
+
+
+
+
+

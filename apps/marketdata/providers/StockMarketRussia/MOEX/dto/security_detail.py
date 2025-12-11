@@ -1,4 +1,3 @@
-# apps/marketdata/providers/StockMarketRussia/MOEX/dto/security_details.py
 from __future__ import annotations
 
 from datetime import date

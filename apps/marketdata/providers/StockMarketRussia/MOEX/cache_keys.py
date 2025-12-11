@@ -72,5 +72,38 @@ class MOEXCacheKeys:
 
         return (
             f"{cls.KP}:securities:"
-            f"security={security}:"
+            f"security={security}"
+        )
+
+    @classmethod
+    def engines(cls) -> str:
+        """
+            Ключ для /iss/engines.json
+        """
+
+        return (
+            f"{cls.KP}:engines"
+        )
+
+    @classmethod
+    def engine_markets(cls, engine: str) -> str:
+        """
+            Ключ для /iss/engines/[engine]/markets
+        """
+
+        return (
+            f"{cls.KP}:engine:"
+            f"{engine}:markets"
+        )
+
+    @classmethod
+    def engine_market_boards(cls, engine: str, market: str) -> str:
+        """
+            Ключ для /iss/engines/[engine]/markets/[market]/boards
+        """
+
+        return (
+            f"{cls.KP}:engine:"
+            f"{engine}:market:"
+            f"{market}:boards"
         )
