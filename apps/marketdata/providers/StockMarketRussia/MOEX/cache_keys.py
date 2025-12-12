@@ -107,3 +107,16 @@ class MOEXCacheKeys:
             f"{engine}:market:"
             f"{market}:boards"
         )
+
+    @classmethod
+    def stock_index_SNDX_securities(cls) -> str:
+        """
+            Ключ для /iss/engines/[engine]/markets/[market]/boards/[board]/securities
+        """
+
+        return (
+            f"{cls.KP}:engine:stock:"
+            "market:index:"
+            "board:SNDX:"
+            "securities"
+        )

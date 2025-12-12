@@ -6,10 +6,14 @@ from apps.marketdata.providers.StockMarketRussia.MOEX.dto.engine_market_boards i
 from apps.marketdata.providers.StockMarketRussia.MOEX.dto.engine_markets import MOEXEngineMarkets, parse_moex_markets
 from apps.marketdata.providers.StockMarketRussia.MOEX.dto.engines import MOEXEngines, parse_moex_engines
 from apps.marketdata.providers.StockMarketRussia.MOEX.dto.securities import MOEXSecurities, parse_moex_securities
+from apps.marketdata.providers.StockMarketRussia.MOEX.dto.stock_index_SNDX_securities import \
+    MOEXStockIndexSndxSecurities, parse_moex_sndx_securities_response
 from apps.marketdata.providers.provider import Provider
 from apps.marketdata.services.redis_cache import RedisCacheService
 from apps.marketdata.providers.StockMarketRussia.MOEX.cache_keys import MOEXCacheKeys
-from apps.marketdata.providers.StockMarketRussia.MOEX.dto.security_detail import MOEXSecurityDetails, parse_moex_security_details
+from apps.marketdata.providers.StockMarketRussia.MOEX.dto.security_detail import MOEXSecurityDetails, \
+    parse_moex_security_details
+
 
 class MOEXProvider(Provider):
     """
@@ -28,17 +32,18 @@ class MOEXProvider(Provider):
     TTL_ENGINES = 3600 * 24 * 30
     TTL_ENGINE_MARKETS = 3600 * 24 * 30
     TTL_ENGINE_MARKET_BOARDS = 3600 * 24 * 30
+    TTL_STOCK_INDEX_SNDX_SECURITIES = 60 * 2 # рекомендация 30
 
     BASE_URL = "http://iss.moex.com"
 
     def __init__(self, cache: RedisCacheService, timeout_s: float = 10.0) -> None:
         super().__init__(cache)
-        self.timeout_s = timeout_s
+        self._timeout_s = timeout_s
 
     async def _get(
-        self,
-        path: str,
-        params: dict[str, Any] | None = None,
+            self,
+            path: str,
+            params: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """
         Базовый GET к MOEX ISS.
@@ -123,7 +128,8 @@ class MOEXProvider(Provider):
         await self.cache.set(key, securities.to_redis_value(), ttl=self.TTL_SECURITIES)
         return securities
 
-    async def security_detail(self, security: str, lang: str | None = None, primary_board: int | None = None, start: int | None = None) -> MOEXSecurityDetails:
+    async def security_detail(self, security: str, lang: str | None = None, primary_board: int | None = None,
+                              start: int | None = None) -> MOEXSecurityDetails:
         """
         Получить спецификацию инструмента.
         Например: https://iss.moex.com/iss/securities/IMOEX.xml
@@ -177,9 +183,24 @@ class MOEXProvider(Provider):
     # 3. Текущие цены (по необходимым активам)
     # -----------------------------------------
 
-    async def stock_index_SNDX_securities(self) -> None:
-        pass
+    async def stock_index_SNDX_securities(self,
+        securities: str = "IMOEX,MOEXBMI,MOEX10,MOEXOG,MOEXFN,MOEXMM,MOEXCN,RGBI,RUCBITR,MOEXREPO"
+        ) -> MOEXStockIndexSndxSecurities:
+        params = {
+            "iss.meta": "off",
+            "iss.only": "securities,marketdata,dataversion",
+            "securities.columns": "SECID,SHORTNAME,NAME,DECIMALS,CURRENCYID,CALCMODE",
+            "marketdata.columns": "SECID,BOARDID,TRADEDATE,TIME,SYSTIME,CURRENTVALUE,LASTVALUE,OPENVALUE,LASTCHANGE,LASTCHANGEPRC,HIGH,LOW,MONTHCHANGEPRC,YEARCHANGEPRC,SEQNUM,TRADINGSESSION",
+            "securities": securities
+        }
 
+        data = await self._get(f"/iss/engines/stock/markets/index/boards/SNDX/securities", params)
+        stock_index_sndx_securities: MOEXStockIndexSndxSecurities = parse_moex_sndx_securities_response(data)
+
+        key = self.Keys.stock_index_SNDX_securities()
+        await self.cache.set(key, stock_index_sndx_securities.to_redis_value(), ttl=self.TTL_STOCK_INDEX_SNDX_SECURITIES)
+
+        return stock_index_sndx_securities
 
     class StockSharesBoards(str, Enum):
         TQBR = "TQBR"
@@ -200,9 +221,3 @@ class MOEXProvider(Provider):
 
     async def currency_selt_CETS(self) -> None:
         pass
-
-
-
-
-
-
