@@ -1,14 +1,26 @@
-FROM python:3.12-alpine3.22
+FROM python:3.12-slim
 
-RUN adduser --disabled-password appuser
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app
 
-COPY requirements.txt /temp/requirements.txt
-COPY SmartFin /SmartFin
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends build-essential libpq-dev \
+  && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /SmartFin
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+WORKDIR /app
+
+COPY pyproject.toml uv.lock ./
+
+RUN uv sync --frozen --no-install-project
+
+ENV PATH="/app/.venv/bin:$PATH"
+
+COPY backend ./backend
+
+WORKDIR /app/backend
 EXPOSE 8000
 
-RUN apk add postgresql-client build-base postgresql-dev
-RUN pip install -r /temp/requirements.txt
-
-USER appuser
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

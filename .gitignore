@@ -10,6 +10,3 @@ repomix-output.md
 .idea
 .venv
 venv
-
-pyproject.toml
-uv.lock
