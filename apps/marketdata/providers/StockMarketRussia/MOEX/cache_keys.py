@@ -120,3 +120,55 @@ class MOEXCacheKeys:
             "board:SNDX:"
             "securities"
         )
+
+    @classmethod
+    def stock_shares_TQBR_securities(cls, securities: str = None) -> str:
+        """
+            Ключ для /iss/engines/stock/markets/shares/boards/[board]/securities
+        """
+
+        return (
+            f"{cls.KP}:engine:stock:"
+            "market:shares:"
+            "board:TQBR:"
+            f"securities{":" + securities if securities else ""}"
+        )
+
+    @classmethod
+    def stock_shares_TQTF_securities(cls, securities: str = None) -> str:
+        """
+            Ключ для https://iss.moex.com/iss/engines/stock/markets/shares/boards/TQTF/securities.json
+        """
+
+        return (
+            f"{cls.KP}:engine:stock:"
+            f"market:shares:"
+            f"board:TQTF:"
+            f"securities{":" + securities if securities else ""}"
+        )
+
+    @classmethod
+    def stock_bonds_TQCB_securities(cls, securities: str = None) -> str:
+        """
+            Ключ для https://iss.moex.com/iss/engines/stock/markets/bonds/boards/TQCB/securities.json
+        """
+
+        return (
+            f"{cls.KP}:engine:stock:"
+            f"market:bonds:"
+            f"board:TQCB:"
+            f"securities{":" + securities if securities else ""}"
+        )
+
+    @classmethod
+    def stock_bound_TQOB_securities(cls, securities: str = None) -> str:
+        """
+            Ключ для https://iss.moex.com/iss/engines/stock/markets/bonds/boards/TQOB/securities.json
+        """
+
+        return (
+            f"{cls.KP}:engine:stock:"
+            f"market:bonds:"
+            f"board:TQOB:"
+            f"securities{":" + securities if securities else ""}"
+        )

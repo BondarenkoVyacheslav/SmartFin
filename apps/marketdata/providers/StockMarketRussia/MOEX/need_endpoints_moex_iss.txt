@@ -51,7 +51,7 @@
     # Таблица инструментов по борду:
     # справочные поля + текущие цены (LAST, BID, OFFER, VOLUME, VALTODAY, ...).
 
-/iss/engines/[engine]/markets/[market]/boards/[board]/securities/[security]
+/iss/engines/[engine]/markets/[market]/boards/[board]/securities/[security] -
     # Данные по конкретному инструменту на конкретном борде (fallback/детализация).
 
 
@@ -71,11 +71,11 @@
 
 
 # -----------------------------------------
-# 5. Индексы (список, показатели, история)
+# 5. Индексы (список, показатели, история) # отсюдова может что то понадобиться
 # -----------------------------------------
 
 /iss/statistics/engines/stock/markets/index/analytics -
-    # Список индексов и их текущая статистика.
+    # Список индексов и их текущая статистика. Просто все индексы с Title и датой создания и уничтожения
 
 /iss/statistics/engines/stock/markets/index/analytics/[indexid] -
     # Показатели по конкретному индексу за дату.

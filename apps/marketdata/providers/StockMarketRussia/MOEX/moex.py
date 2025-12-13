@@ -1,3 +1,4 @@
+from html.parser import attrfind_tolerant
 from typing import Any
 import httpx
 from enum import Enum
@@ -6,8 +7,16 @@ from apps.marketdata.providers.StockMarketRussia.MOEX.dto.engine_market_boards i
 from apps.marketdata.providers.StockMarketRussia.MOEX.dto.engine_markets import MOEXEngineMarkets, parse_moex_markets
 from apps.marketdata.providers.StockMarketRussia.MOEX.dto.engines import MOEXEngines, parse_moex_engines
 from apps.marketdata.providers.StockMarketRussia.MOEX.dto.securities import MOEXSecurities, parse_moex_securities
+from apps.marketdata.providers.StockMarketRussia.MOEX.dto.stock_bonds_TQCB_securities import \
+    MOEXStockBondsTQCBSecurities, parse_moex_bonds_tqcb_securities_response
+from apps.marketdata.providers.StockMarketRussia.MOEX.dto.stock_bonds_TQOB_securities import \
+    MOEXStockBondsTQOBSecuritiesResponse
 from apps.marketdata.providers.StockMarketRussia.MOEX.dto.stock_index_SNDX_securities import \
     MOEXStockIndexSndxSecurities, parse_moex_sndx_securities_response
+from apps.marketdata.providers.StockMarketRussia.MOEX.dto.stock_shares_TQBR_securities import MOEXSharesTQBRSecurities, \
+    parse_moex_shares_tqbr_securities_response
+from apps.marketdata.providers.StockMarketRussia.MOEX.dto.stock_shares_TQTF_securities import \
+    MOEXStockSharesTQTFSecurities, parse_moex_security_detail_response
 from apps.marketdata.providers.provider import Provider
 from apps.marketdata.services.redis_cache import RedisCacheService
 from apps.marketdata.providers.StockMarketRussia.MOEX.cache_keys import MOEXCacheKeys
@@ -32,7 +41,10 @@ class MOEXProvider(Provider):
     TTL_ENGINES = 3600 * 24 * 30
     TTL_ENGINE_MARKETS = 3600 * 24 * 30
     TTL_ENGINE_MARKET_BOARDS = 3600 * 24 * 30
-    TTL_STOCK_INDEX_SNDX_SECURITIES = 60 * 2 # рекомендация 30
+    TTL_STOCK_INDEX_SNDX_SECURITIES = 60 * 2  # рекомендация 30
+    TTL_STOCK_SHARES_TQBR_SECURITIES = 30  # рекомендация разбить по таблицам. Securities 24 часа, marketdata 5 - 10 секунд, dataversion 5 - 10 секунд.
+    TTL_STOCK_SHARES_TQTF_SECURITIES = 30
+    TTL_STOCK_BONDS_TQCB_SECURITIES = 30
 
     BASE_URL = "http://iss.moex.com"
 
@@ -184,8 +196,9 @@ class MOEXProvider(Provider):
     # -----------------------------------------
 
     async def stock_index_SNDX_securities(self,
-        securities: str = "IMOEX,MOEXBMI,MOEX10,MOEXOG,MOEXFN,MOEXMM,MOEXCN,RGBI,RUCBITR,MOEXREPO"
-        ) -> MOEXStockIndexSndxSecurities:
+                                          securities: str = "IMOEX,MOEXBMI,MOEX10,MOEXOG,MOEXFN,MOEXMM,MOEXCN,RGBI,RUCBITR,MOEXREPO"
+                                          # не более 10 аргументов
+                                          ) -> MOEXStockIndexSndxSecurities:
         params = {
             "iss.meta": "off",
             "iss.only": "securities,marketdata,dataversion",
@@ -198,26 +211,83 @@ class MOEXProvider(Provider):
         stock_index_sndx_securities: MOEXStockIndexSndxSecurities = parse_moex_sndx_securities_response(data)
 
         key = self.Keys.stock_index_SNDX_securities()
-        await self.cache.set(key, stock_index_sndx_securities.to_redis_value(), ttl=self.TTL_STOCK_INDEX_SNDX_SECURITIES)
+        await self.cache.set(key, stock_index_sndx_securities.to_redis_value(),
+                             ttl=self.TTL_STOCK_INDEX_SNDX_SECURITIES)
 
         return stock_index_sndx_securities
 
-    class StockSharesBoards(str, Enum):
-        TQBR = "TQBR"
-        TQTF = "TQTF"
-        TQTD = "TQTD"
-        TQTE = "TQTE"
-        TQIF = "TQIF"
+    async def stock_shares_TQBR_securities(self, securities: str = None) -> MOEXSharesTQBRSecurities:
+        """
+            TQBR = T+ акции и депозитарные расписки
+        """
+        params = {
+            "iss.meta": "off",
+            "iss.only": "securities,marketdata,dataversion",
+            "securities": securities,
+        }
 
-    async def stock_shares_securities(self) -> None:
-        pass
+        data = await self._get(f"/iss/engines/stock/markets/shares/boards/TQBR/securities.json", params)
 
-    class StockBondsBoards(str, Enum):
-        TQCB = "TQCB"
-        TQOB = "TQOB"
+        stock_shares_tqbr_securities: MOEXSharesTQBRSecurities = parse_moex_shares_tqbr_securities_response(data)
+        key = self.Keys.stock_shares_TQBR_securities(securities)
 
-    async def stock_bonds_securities(self) -> None:
-        pass
+        await self.cache.set(key, stock_shares_tqbr_securities.to_redis_value(), ttl=self.TTL_STOCK_SHARES_TQBR_SECURITIES)
+        return stock_shares_tqbr_securities
 
-    async def currency_selt_CETS(self) -> None:
+
+    async def stock_shares_TQTF_securities(self, securities: str = None) -> MOEXStockSharesTQTFSecurities:
+        """
+            TQTF / TQTD / TQTE
+            Это борды для ETF в режиме T+2 Order Book, различаются валютой расчётов:
+            - TQTF — расчёты в RUB
+            - TQTD — расчёты в USD
+            - TQTE — расчёты в EUR
+        """
+        params = {
+            "iss.meta": "off",
+            "iss.only": "securities,marketdata,dataversion",
+            securities: securities if securities else None,
+        }
+
+        data = await self._get("/iss/engines/stock/markets/shares/boards/TQTF/securities.json", params)
+
+        stock_shares_tqtf_securities: MOEXStockSharesTQTFSecurities= parse_moex_security_detail_response(data)
+        key = self.Keys.stock_shares_TQTF_securities(securities)
+
+        await self.cache.set(key, stock_shares_tqtf_securities.to_redis_value(), ttl=self.TTL_STOCK_SHARES_TQTF_SECURITIES)
+        return stock_shares_tqtf_securities
+
+
+    async def stock_bonds_TQCB_securities(self, securities: str = None) -> MOEXStockBondsTQCBSecurities:
+        """
+            TQCB — T+ Облигации (bonds)
+        """
+        params = {
+            "iss.meta": "off",
+            securities: securities if securities else None,
+        }
+
+        data = await self._get("/iss/engines/stock/markets/bonds/boards/TQCB/securities.json", params)
+        stock_bonds_tqcb_securities: MOEXStockBondsTQCBSecurities = parse_moex_bonds_tqcb_securities_response(data)
+
+        key = self.Keys.stock_bonds_TQCB_securities(securities)
+
+        await self.cache.set(key, stock_bonds_tqcb_securities.to_redis_value(), ttl=self.TTL_STOCK_BONDS_TQCB_SECURITIES)
+        return stock_bonds_tqcb_securities
+
+    async def stock_bonds_TQOB_securities(self, securities: str = None) -> None:
+        """
+            TQOB — T+ Гособлигации (state bonds / ОФЗ и т.п.)
+        """
+        params = {
+            "iss.meta" : "off"
+        }
+        data = await self._get("/iss/engines/stock/markets/bonds/boards/TQOB/securities.json", params)
+
+        key = self.Keys.stock_bound_TQOB_securities(securities)
+        stock_bonds_TQOB_securities: MOEXStockBondsTQOBSecuritiesResponse = MOEXStockBondsTQOBSecuritiesResponse.from_payload(data)
+
+        await self.cache.set(key, )
+
+    async def currency_selt_CETS_securities(self) -> None:
         pass
