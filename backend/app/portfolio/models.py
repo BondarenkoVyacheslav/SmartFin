@@ -14,6 +14,7 @@ class Portfolio(models.Model):
     transactions = models.ManyToManyField(Asset, through="transaction.Transaction",
                                           related_name="portfolio_transactions")
     created_at = models.DateTimeField(auto_now_add=True)
+    base_currency = models.CharField(max_length=3)
 
 
 class PortfolioAsset(models.Model):
