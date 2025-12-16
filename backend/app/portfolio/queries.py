@@ -44,7 +44,7 @@ class PortfolioAssetsSummary:
     portfolio_asset_summary_types: List[PortfolioAssetSummaryType]
     total_quantity: float
     total_value: float
-    currency: str
+    currency: auto
 
 
 @strawberry.type

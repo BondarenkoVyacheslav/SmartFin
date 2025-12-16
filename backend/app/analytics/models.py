@@ -1,3 +1,33 @@
 from django.db import models
 
-# Create your models here.
+from app.portfolio.models import Portfolio
+
+
+class PortfolioDailySnapshot(models.Model):
+    """
+    Daily aggregated metrics for a portfolio to derive day P&L and capital history.
+    """
+
+    portfolio = models.ForeignKey(
+        Portfolio,
+        on_delete=models.CASCADE,
+        related_name="daily_snapshots",
+    )
+    snapshot_date = models.DateField()
+    capital_start = models.DecimalField(max_digits=20, decimal_places=8)
+    capital_end = models.DecimalField(max_digits=20, decimal_places=8)
+    net_flow = models.DecimalField(max_digits=20, decimal_places=8, default=0)
+    pnl_day = models.DecimalField(max_digits=20, decimal_places=8)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["portfolio", "snapshot_date"],
+                name="unique_daily_snapshot_per_portfolio",
+            )
+        ]
+        ordering = ["-snapshot_date", "-id"]
+
+    def __str__(self) -> str:
+        return f"{self.portfolio_id} {self.snapshot_date}"

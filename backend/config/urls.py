@@ -19,7 +19,7 @@ from django.urls import path, include
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from strawberry.django.views import GraphQLView
 from django.views.decorators.csrf import csrf_exempt
-from backend.config.shcema import schema
+from config.shcema import schema
 
 urlpatterns = [
     path('admin/', admin.site.urls),

@@ -8,7 +8,9 @@ repomix-output.md
 
 /workspace.xml
 .idea
+.vscode/settings.json
 .venv
 venv
+__pycache__/
 
 frontend/
