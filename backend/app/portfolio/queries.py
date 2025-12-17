@@ -6,10 +6,8 @@ from strawberry import auto
 from app.assets.models import AssetType
 from app.assets.queries import AssetTypeGQL, AssetTypeType
 from .models import Portfolio, PortfolioAsset
-from app.assets.queries import AssetTypeGQL
 
 from decimal import Decimal
-from typing import List
 
 
 @strawberry.django.type(Portfolio)
@@ -44,7 +42,7 @@ class PortfolioAssetsSummary:
     portfolio_asset_summary_types: List[PortfolioAssetSummaryType]
     total_quantity: float
     total_value: float
-    currency: auto
+    currency: str
 
 
 @strawberry.type
@@ -80,12 +78,11 @@ class PortfolioQueries:
         asset_types = AssetType.objects.in_bulk([row["asset__asset_type_id"] for row in aggregates])
         currency = Portfolio.objects.get(id=portfolio_id).base_currency
 
-        return [
-            PortfolioAssetsSummary(
+        return PortfolioAssetsSummary(
                 portfolio_asset_summary_types=[
                     PortfolioAssetSummaryType(
                         asset_type=asset_types.get(row["asset__asset_type_id"]),
-                        total_quanity=float(row["total_quantity"]),
+                        total_quantity=float(row["total_quantity"]),
                         total_value=float(row["total_value"]),
                         percentage=float((row["total_value"] / portfolio_total * Decimal("100")) if portfolio_total else Decimal("0")),
                     )
@@ -95,4 +92,3 @@ class PortfolioQueries:
                 total_value=float(portfolio_total),
                 currency=currency,
             )
-        ]
