@@ -14,10 +14,7 @@ class PortfolioDailySnapshot(models.Model):
         related_name="daily_snapshots",
     )
     snapshot_date = models.DateField()
-    capital_start = models.DecimalField(max_digits=20, decimal_places=8)
-    capital_end = models.DecimalField(max_digits=20, decimal_places=8)
-    net_flow = models.DecimalField(max_digits=20, decimal_places=8, default=0)
-    pnl_day = models.DecimalField(max_digits=20, decimal_places=8)
+    capital = models.DecimalField(max_digits=20, decimal_places=8)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
