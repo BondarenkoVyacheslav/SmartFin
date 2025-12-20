@@ -11,6 +11,10 @@ class Transaction(models.Model):
         ("buy", "Покупка"),
         ("sell", "Продажа"),
     ]
+    SOURCE_TYPES = [
+        ("MANUAL", "Вручную"),
+        ("INTEGRATION", "Интеграция"),
+    ]
 
     portfolio = models.ForeignKey(Portfolio, on_delete=models.CASCADE)
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="transactions")
@@ -18,6 +22,11 @@ class Transaction(models.Model):
     amount = models.DecimalField(max_digits=20, decimal_places=8)
     price = models.DecimalField(max_digits=20, decimal_places=8, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    source = models.CharField(
+        max_length=20,
+        choices=SOURCE_TYPES,
+        default="MANUAL",
+    )
 
     class Meta:
         verbose_name = "Транзакция"

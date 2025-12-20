@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0" version="29.2.7">
   <diagram name="Страница-1" id="D15AEVA52A7AB_YKzXTv">
-    <mxGraphModel dx="4004" dy="2309" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="7326" dy="4497" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -92,10 +92,10 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-6" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Ttransaction" vertex="1">
-          <mxGeometry height="80" width="80" x="-510" y="460" as="geometry" />
+          <mxGeometry height="80" width="80" x="-508.5" y="460" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-9" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="PorfolioAsset" vertex="1">
-          <mxGeometry height="90" width="81.5" x="-511.5" y="630" as="geometry" />
+          <mxGeometry height="90" width="81.5" x="-510" y="630" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-13" edge="1" parent="1" source="4N0qPg2ioRnMCo1rBhBg-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;" target="HgqDryGF5ymLQBQY48wH-10">
           <mxGeometry relative="1" as="geometry" />
@@ -301,6 +301,82 @@
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-79" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="snapshot_data" vertex="1">
           <mxGeometry height="90" width="90" x="1550" y="-150" as="geometry" />
+        </mxCell>
+        <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-6" edge="1" parent="1" source="Oi53HTZ3Y3IYB_c6CSoE-2" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=12;startSize=8;endSize=8;edgeStyle=orthogonalEdgeStyle;" target="Oi53HTZ3Y3IYB_c6CSoE-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-2" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Transaction" vertex="1">
+          <mxGeometry height="80" width="80" x="2740" y="-320" as="geometry" />
+        </mxCell>
+        <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="PorfolioAsset" vertex="1">
+          <mxGeometry height="90" width="81.5" x="2738.5" y="-120" as="geometry" />
+        </mxCell>
+        <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-4" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="БД" vertex="1">
+          <mxGeometry height="80" width="60" x="2750" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-5" edge="1" parent="1" source="Oi53HTZ3Y3IYB_c6CSoE-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" target="Oi53HTZ3Y3IYB_c6CSoE-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-9" edge="1" parent="1" source="Oi53HTZ3Y3IYB_c6CSoE-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;fontSize=12;startSize=8;endSize=8;" target="Oi53HTZ3Y3IYB_c6CSoE-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-11" connectable="0" parent="Oi53HTZ3Y3IYB_c6CSoE-9" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontFamily=Helvetica;fontColor=default;labelBackgroundColor=default;" value="Мы точно знаем что&lt;div&gt;нужно реализовать новую транзакцию&lt;/div&gt;" vertex="1">
+          <mxGeometry relative="1" x="-0.1556" y="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-7" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Пользователь ввел активы вручную" vertex="1">
+          <mxGeometry height="120" width="120" x="2320" y="-560" as="geometry" />
+        </mxCell>
+        <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-10" edge="1" parent="1" source="Oi53HTZ3Y3IYB_c6CSoE-8" style="edgeStyle=orthogonalEdgeStyle;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;strokeColor=default;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=default;labelBackgroundColor=default;startSize=8;endArrow=classic;endSize=8;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" target="Oi53HTZ3Y3IYB_c6CSoE-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-15" connectable="0" parent="Oi53HTZ3Y3IYB_c6CSoE-10" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontFamily=Helvetica;fontColor=default;labelBackgroundColor=default;" value="Мы делам транзакцию с флагом (sell или buy)&lt;div&gt;и сохраняем эти изменения&lt;/div&gt;" vertex="1">
+          <mxGeometry relative="1" x="-0.1115" y="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-8" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Мы задетектили изменения на внешних интеграциях" vertex="1">
+          <mxGeometry height="120" width="120" x="3130" y="-570" as="geometry" />
+        </mxCell>
+        <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-13" edge="1" parent="1" source="Oi53HTZ3Y3IYB_c6CSoE-12" style="edgeStyle=orthogonalEdgeStyle;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=default;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=default;labelBackgroundColor=default;startSize=8;endArrow=classic;endSize=8;" target="Oi53HTZ3Y3IYB_c6CSoE-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-14" connectable="0" parent="Oi53HTZ3Y3IYB_c6CSoE-13" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontFamily=Helvetica;fontColor=default;labelBackgroundColor=default;" value="Мы снова делаем запись в бд&lt;div&gt;через транзакции&lt;/div&gt;" vertex="1">
+          <mxGeometry relative="1" x="-0.6471" y="-1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-12" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Пользователь вручную поменял&lt;div&gt;активы которые у него есть (не с интеграций)&lt;/div&gt;" vertex="1">
+          <mxGeometry height="120" width="120" x="2720" y="-644" as="geometry" />
+        </mxCell>
+        <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-16" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Мы задетектили изменения на внешних интеграциях" vertex="1">
+          <mxGeometry height="120" width="120" x="3700" y="-750" as="geometry" />
+        </mxCell>
+        <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-17" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=12;fontFamily=Helvetica;fontColor=default;labelBackgroundColor=default;" value="Как это вообще делать?!?" vertex="1">
+          <mxGeometry height="30" width="60" x="3730" y="-810" as="geometry" />
+        </mxCell>
+        <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-19" edge="1" parent="1" source="Oi53HTZ3Y3IYB_c6CSoE-18" style="edgeStyle=orthogonalEdgeStyle;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;strokeColor=default;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=default;labelBackgroundColor=default;startSize=8;endArrow=classic;endSize=8;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="Oi53HTZ3Y3IYB_c6CSoE-20">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="3762.4285714285716" y="-390" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-21" connectable="0" parent="Oi53HTZ3Y3IYB_c6CSoE-19" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontFamily=Helvetica;fontColor=default;labelBackgroundColor=default;" value="Нам приходит ответ&lt;div&gt;по каждой бирже, состояние портфеля пользователя&lt;/div&gt;&lt;div&gt;(и возможно транзакции им совершенные)&lt;/div&gt;" vertex="1">
+          <mxGeometry relative="1" x="-0.0906" y="-3" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-18" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;fontFamily=Helvetica;fontSize=12;fontColor=default;labelBackgroundColor=default;" value="API Integrations" vertex="1">
+          <mxGeometry height="80" width="80" x="3722" y="-584" as="geometry" />
+        </mxCell>
+        <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-20" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;fontFamily=Helvetica;fontSize=12;fontColor=default;labelBackgroundColor=default;" value="API" vertex="1">
+          <mxGeometry height="80" width="80" x="3722" y="-300" as="geometry" />
+        </mxCell>
+        <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-22" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=12;fontFamily=Helvetica;fontColor=default;labelBackgroundColor=default;" value="Тут могут быть следующий действия:&lt;div&gt;- Открыл позицию&lt;/div&gt;&lt;div&gt;- Закрыл позицию&lt;/div&gt;&lt;div&gt;- Докупил&lt;/div&gt;&lt;div&gt;- Продал часть&lt;/div&gt;" vertex="1">
+          <mxGeometry height="30" width="240" x="-970" y="215" as="geometry" />
+        </mxCell>
+        <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-24" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=12;fontFamily=Helvetica;fontColor=default;labelBackgroundColor=default;" value="&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: light-dark(#ffffff, var(--ge-dark-color, #121212)); color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Если открыл позицию, то чекаем открыта ли данныая позиция&amp;nbsp; в portfolio_asset, иначе выкидываем ошибку. Записываем новую транзакцию. Добавляем новый Asset в portfolio_asset, со средней ценой покупки и количеством актива.&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- Если закрыл позицию, то записываем транзакцию sell, и удаляем из portfolio_asset.&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- Если докупил, то смотрим сколько данного актива в portfolio_asset, и далее добавляем, и высчитываем взвешенно среднию цену закупки актива&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- Если продал часть актива, то смотрим сколько данного актива у пользователя вообще есть, выкидываем исключение если он ввел больше чем у него на самом деле есть,&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;сново записываем транзакцию, и высчитываем количество проданного актива из portfolio_asset.&lt;/div&gt;" vertex="1">
+          <mxGeometry height="79" width="219" x="-970" y="460" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
