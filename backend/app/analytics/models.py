@@ -23,7 +23,7 @@ class PortfolioDailySnapshot(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=["portfolio", "snapshot_date"],
-                name="unique_daily_snapshot_per_portfolio",
+                name="portfolio_day_snapshot",
             )
         ]
         ordering = ["-snapshot_date", "-id"]
@@ -52,7 +52,7 @@ class PortfolioAssetDailySnapshot(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=["portfolio", "asset_type", "snapshot_date"],
-                name="uniq_portfolio_asset_type_day",
+                name="portfolio_asset_type_day_snapshot",
             )
         ]
         ordering = ["-snapshot_date", "-id"]

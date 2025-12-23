@@ -14,6 +14,7 @@ class TransactionType:
     transaction_type: auto
     amount: auto
     price: auto
+    price_currency: auto
     created_at: auto
 
 

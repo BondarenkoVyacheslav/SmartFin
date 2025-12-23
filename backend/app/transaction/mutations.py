@@ -26,7 +26,7 @@ def _to_decimal(value: str, field_name: str) -> Decimal:
 class TransactionMutations:
     @strawberry.mutation
     def create_transaction(self, portfolio_id: int, asset_id: int, transaction_type: str, amount: float,
-                           price: float = None) -> TransactionType:
+                           price: float = None, price_currency: str = "USD") -> TransactionType:
         portfolio = Portfolio.objects.get(id=portfolio_id)
         asset = Asset.objects.get(id=asset_id)
         return Transaction.objects.create(
@@ -34,7 +34,8 @@ class TransactionMutations:
             asset=asset,
             transaction_type=transaction_type,
             amount=amount,
-            price=price
+            price=price,
+            price_currency=price_currency,
         )
 
 
@@ -46,6 +47,7 @@ class TransactionMutations:
             transaction_type: str, # "buy"/"sell"
             amount: str,
             price: str,
+            price_currency: str = "USD",
             source: str | None = "MANUAL",
     ) -> ApplyTransactionPayload:
         # 1) Валидация входа
@@ -79,7 +81,8 @@ class TransactionMutations:
                 transaction_type=transaction_type,
                 amount=amount_d,
                 price=price_d,
-                source=source
+                price_currency=price_currency,
+                source=source,
             )
 
             # Применяем к позиции

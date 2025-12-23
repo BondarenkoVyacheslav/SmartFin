@@ -14,7 +14,7 @@ class Portfolio(models.Model):
     transactions = models.ManyToManyField(Asset, through="transaction.Transaction",
                                           related_name="portfolio_transactions")
     created_at = models.DateTimeField(auto_now_add=True)
-    base_currency = models.CharField(max_length=3)
+    base_currency = models.CharField(max_length=10, default="USD")
 
 
 class PortfolioAsset(models.Model):
@@ -22,4 +22,5 @@ class PortfolioAsset(models.Model):
     portfolio = models.ForeignKey(Portfolio, on_delete=models.CASCADE)
     quantity = models.DecimalField(max_digits=20, decimal_places=8)
     avg_price = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True)
+    avg_price_currency = models.CharField(max_length=10) # валюта в которой храниться avg_price
     updated_at = models.DateTimeField(auto_now=True)

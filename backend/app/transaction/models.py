@@ -21,6 +21,7 @@ class Transaction(models.Model):
     transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
     amount = models.DecimalField(max_digits=20, decimal_places=8)
     price = models.DecimalField(max_digits=20, decimal_places=8, blank=True, null=True)
+    price_currency = models.CharField(max_length=10)
     created_at = models.DateTimeField(auto_now_add=True)
     source = models.CharField(
         max_length=20,

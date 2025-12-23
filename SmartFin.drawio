@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0" version="29.2.7">
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0" version="29.2.9">
   <diagram name="Страница-1" id="D15AEVA52A7AB_YKzXTv">
-    <mxGraphModel dx="4102" dy="2162" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="5116" dy="2911" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -233,7 +233,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-66" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Высчитываем P&amp;amp;L за сутки для портфеля" vertex="1">
-          <mxGeometry height="150" width="550" x="1510" y="-320" as="geometry" />
+          <mxGeometry height="150" width="550" x="1210" y="-310" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-69" edge="1" parent="1" source="4N0qPg2ioRnMCo1rBhBg-67" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="4N0qPg2ioRnMCo1rBhBg-68">
           <mxGeometry relative="1" as="geometry" />
@@ -244,11 +244,11 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-67" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Frontend" vertex="1">
-          <mxGeometry height="120" width="120" x="2020" y="-190" as="geometry" />
+          <mxGeometry height="120" width="120" x="1720" y="-180" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-78" edge="1" parent="1" source="4N0qPg2ioRnMCo1rBhBg-68" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;" target="4N0qPg2ioRnMCo1rBhBg-79">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="1600" y="-50" as="targetPoint" />
+            <mxPoint x="1300" y="-40" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-81" connectable="0" parent="4N0qPg2ioRnMCo1rBhBg-78" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Запрашиваем данные за вчерашний день" vertex="1">
@@ -265,7 +265,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-68" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="API" vertex="1">
-          <mxGeometry height="80" width="80" x="1745" y="190" as="geometry" />
+          <mxGeometry height="80" width="80" x="1445" y="200" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-73" edge="1" parent="1" source="4N0qPg2ioRnMCo1rBhBg-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" target="4N0qPg2ioRnMCo1rBhBg-18">
           <mxGeometry relative="1" as="geometry" />
@@ -289,8 +289,8 @@
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-80" edge="1" parent="1" source="4N0qPg2ioRnMCo1rBhBg-79" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" target="4N0qPg2ioRnMCo1rBhBg-68">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="1573" y="110" />
-              <mxPoint x="1765" y="110" />
+              <mxPoint x="1273" y="120" />
+              <mxPoint x="1465" y="120" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -300,7 +300,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-79" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="snapshot_data" vertex="1">
-          <mxGeometry height="90" width="90" x="1550" y="-150" as="geometry" />
+          <mxGeometry height="90" width="90" x="1250" y="-140" as="geometry" />
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-6" edge="1" parent="1" source="Oi53HTZ3Y3IYB_c6CSoE-2" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=12;startSize=8;endSize=8;edgeStyle=orthogonalEdgeStyle;" target="Oi53HTZ3Y3IYB_c6CSoE-3">
           <mxGeometry relative="1" as="geometry" />
@@ -309,10 +309,10 @@
           <mxGeometry height="80" width="80" x="2740" y="-320" as="geometry" />
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="PorfolioAsset" vertex="1">
-          <mxGeometry height="90" width="81.5" x="2738.5" y="-120" as="geometry" />
+          <mxGeometry height="90" width="81.5" x="2739.25" y="-210" as="geometry" />
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-4" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="БД" vertex="1">
-          <mxGeometry height="80" width="60" x="2750" y="90" as="geometry" />
+          <mxGeometry height="80" width="60" x="2750" y="-90" as="geometry" />
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-5" edge="1" parent="1" source="Oi53HTZ3Y3IYB_c6CSoE-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" target="Oi53HTZ3Y3IYB_c6CSoE-4">
           <mxGeometry relative="1" as="geometry" />
@@ -337,7 +337,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-8" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Мы задетектили изменения на внешних интеграциях" vertex="1">
-          <mxGeometry height="120" width="120" x="3130" y="-570" as="geometry" />
+          <mxGeometry height="120" width="120" x="3140" y="-560" as="geometry" />
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-13" edge="1" parent="1" source="Oi53HTZ3Y3IYB_c6CSoE-12" style="edgeStyle=orthogonalEdgeStyle;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=default;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=default;labelBackgroundColor=default;startSize=8;endArrow=classic;endSize=8;" target="Oi53HTZ3Y3IYB_c6CSoE-2">
           <mxGeometry relative="1" as="geometry" />
@@ -348,7 +348,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-12" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Пользователь вручную поменял&lt;div&gt;активы которые у него есть (не с интеграций)&lt;/div&gt;" vertex="1">
-          <mxGeometry height="120" width="120" x="2720" y="-644" as="geometry" />
+          <mxGeometry height="120" width="120" x="2720" y="-630" as="geometry" />
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-16" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Мы задетектили изменения на внешних интеграциях" vertex="1">
           <mxGeometry height="120" width="120" x="3700" y="-750" as="geometry" />

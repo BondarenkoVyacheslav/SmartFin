@@ -21,6 +21,7 @@ class PortfolioAssetType:
     portfolio: PortfolioType
     quantity: auto
     avg_price: auto
+    avg_price_currency: auto
     updated_at: auto
 
 @strawberry.type
