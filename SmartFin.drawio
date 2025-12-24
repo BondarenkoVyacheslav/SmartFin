@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0" version="29.2.9">
   <diagram name="Страница-1" id="D15AEVA52A7AB_YKzXTv">
-    <mxGraphModel dx="5116" dy="2911" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="3680" dy="2292" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -377,6 +377,66 @@
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-24" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=12;fontFamily=Helvetica;fontColor=default;labelBackgroundColor=default;" value="&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: light-dark(#ffffff, var(--ge-dark-color, #121212)); color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Если открыл позицию, то чекаем открыта ли данныая позиция&amp;nbsp; в portfolio_asset, иначе выкидываем ошибку. Записываем новую транзакцию. Добавляем новый Asset в portfolio_asset, со средней ценой покупки и количеством актива.&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- Если закрыл позицию, то записываем транзакцию sell, и удаляем из portfolio_asset.&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- Если докупил, то смотрим сколько данного актива в portfolio_asset, и далее добавляем, и высчитываем взвешенно среднию цену закупки актива&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- Если продал часть актива, то смотрим сколько данного актива у пользователя вообще есть, выкидываем исключение если он ввел больше чем у него на самом деле есть,&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;сново записываем транзакцию, и высчитываем количество проданного актива из portfolio_asset.&lt;/div&gt;" vertex="1">
           <mxGeometry height="79" width="219" x="-970" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="VGHYTBGmQW1pnR9ub4HT-15" edge="1" parent="1" source="VGHYTBGmQW1pnR9ub4HT-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" target="VGHYTBGmQW1pnR9ub4HT-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="VGHYTBGmQW1pnR9ub4HT-16" connectable="0" parent="VGHYTBGmQW1pnR9ub4HT-15" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Получаем ответ" vertex="1">
+          <mxGeometry relative="1" x="-0.1793" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="VGHYTBGmQW1pnR9ub4HT-1" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="API Exchanges" vertex="1">
+          <mxGeometry height="110" width="110" x="2600" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="VGHYTBGmQW1pnR9ub4HT-3" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="БД" vertex="1">
+          <mxGeometry height="80" width="60" x="3170" y="545" as="geometry" />
+        </mxCell>
+        <mxCell id="VGHYTBGmQW1pnR9ub4HT-7" edge="1" parent="1" source="VGHYTBGmQW1pnR9ub4HT-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" target="VGHYTBGmQW1pnR9ub4HT-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="VGHYTBGmQW1pnR9ub4HT-8" connectable="0" parent="VGHYTBGmQW1pnR9ub4HT-7" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Нужно получить данные по&lt;div&gt;всем интеграциям&lt;/div&gt;" vertex="1">
+          <mxGeometry relative="1" x="-0.0573" y="-1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="VGHYTBGmQW1pnR9ub4HT-4" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Frontend" vertex="1">
+          <mxGeometry height="120" width="120" x="2920" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="VGHYTBGmQW1pnR9ub4HT-13" edge="1" parent="1" source="VGHYTBGmQW1pnR9ub4HT-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;" target="VGHYTBGmQW1pnR9ub4HT-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="VGHYTBGmQW1pnR9ub4HT-14" connectable="0" parent="VGHYTBGmQW1pnR9ub4HT-13" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Делаем параллельный&lt;div&gt;запрос на API-шки&lt;/div&gt;" vertex="1">
+          <mxGeometry relative="1" x="0.0208" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="VGHYTBGmQW1pnR9ub4HT-17" edge="1" parent="1" source="VGHYTBGmQW1pnR9ub4HT-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;" target="VGHYTBGmQW1pnR9ub4HT-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="VGHYTBGmQW1pnR9ub4HT-18" connectable="0" parent="VGHYTBGmQW1pnR9ub4HT-17" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="ответ" vertex="1">
+          <mxGeometry relative="1" x="0.6354" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="VGHYTBGmQW1pnR9ub4HT-6" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="API" vertex="1">
+          <mxGeometry height="80" width="80" x="2780" y="550" as="geometry" />
+        </mxCell>
+        <mxCell id="VGHYTBGmQW1pnR9ub4HT-9" edge="1" parent="1" source="VGHYTBGmQW1pnR9ub4HT-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" target="VGHYTBGmQW1pnR9ub4HT-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="VGHYTBGmQW1pnR9ub4HT-10" connectable="0" parent="VGHYTBGmQW1pnR9ub4HT-9" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Получить все интеграции которые есть&amp;nbsp;&lt;div&gt;у пользователя&lt;/div&gt;" vertex="1">
+          <mxGeometry relative="1" x="-0.0656" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="VGHYTBGmQW1pnR9ub4HT-11" edge="1" parent="1" source="VGHYTBGmQW1pnR9ub4HT-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1;entryY=0.75;entryDx=0;entryDy=0;" target="VGHYTBGmQW1pnR9ub4HT-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="VGHYTBGmQW1pnR9ub4HT-12" connectable="0" parent="VGHYTBGmQW1pnR9ub4HT-11" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Ответ" vertex="1">
+          <mxGeometry relative="1" x="-0.0029" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
         </mxCell>
       </root>
     </mxGraphModel>
