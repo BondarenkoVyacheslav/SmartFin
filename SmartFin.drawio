@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0" version="29.2.9">
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36" version="29.3.0">
   <diagram name="Страница-1" id="D15AEVA52A7AB_YKzXTv">
-    <mxGraphModel dx="6291" dy="3447" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="15661" dy="3071" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -13,7 +13,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="HgqDryGF5ymLQBQY48wH-1" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="API Итеграции" vertex="1">
-          <mxGeometry height="100" width="100" x="200" y="10" as="geometry" />
+          <mxGeometry height="100" width="100" x="1340" y="-689" as="geometry" />
         </mxCell>
         <mxCell id="HgqDryGF5ymLQBQY48wH-12" edge="1" parent="1" source="HgqDryGF5ymLQBQY48wH-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=0;exitDx=0;exitDy=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;" target="HgqDryGF5ymLQBQY48wH-1">
           <mxGeometry relative="1" as="geometry" />
@@ -33,7 +33,7 @@
         </mxCell>
         <mxCell id="HgqDryGF5ymLQBQY48wH-22" edge="1" parent="1" source="HgqDryGF5ymLQBQY48wH-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="HgqDryGF5ymLQBQY48wH-23">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="369.70370370370347" y="450" as="targetPoint" />
+            <mxPoint x="1509.7037037037035" y="-249" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="HgqDryGF5ymLQBQY48wH-24" connectable="0" parent="HgqDryGF5ymLQBQY48wH-22" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Сохраняем данные в кеш&lt;div&gt;на 10-15 минут&lt;/div&gt;" vertex="1">
@@ -42,21 +42,21 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="HgqDryGF5ymLQBQY48wH-10" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="API" vertex="1">
-          <mxGeometry height="80" width="80" x="210" y="320" as="geometry" />
+          <mxGeometry height="80" width="80" x="1350" y="-379" as="geometry" />
         </mxCell>
         <mxCell id="HgqDryGF5ymLQBQY48wH-11" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Пользователь зашел на сайт" vertex="1">
-          <mxGeometry height="70" width="160" x="334" y="-220" as="geometry" />
+          <mxGeometry height="70" width="160" x="1474" y="-919" as="geometry" />
         </mxCell>
         <mxCell id="HgqDryGF5ymLQBQY48wH-20" edge="1" parent="1" source="HgqDryGF5ymLQBQY48wH-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="4N0qPg2ioRnMCo1rBhBg-16">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="880" y="360.4000000000001" as="targetPoint" />
+            <mxPoint x="2020" y="-338.5999999999999" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="HgqDryGF5ymLQBQY48wH-17" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Transaction" vertex="1">
-          <mxGeometry height="80" width="80" x="760" y="320" as="geometry" />
+          <mxGeometry height="80" width="80" x="1900" y="-379" as="geometry" />
         </mxCell>
         <mxCell id="HgqDryGF5ymLQBQY48wH-23" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Redis" vertex="1">
-          <mxGeometry height="60" width="60" x="-70" y="330" as="geometry" />
+          <mxGeometry height="60" width="60" x="1070" y="-369" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-3" edge="1" parent="1" source="4N0qPg2ioRnMCo1rBhBg-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="4N0qPg2ioRnMCo1rBhBg-2">
           <mxGeometry relative="1" as="geometry" />
@@ -67,12 +67,12 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-1" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Frontend" vertex="1">
-          <mxGeometry height="120" width="120" x="-530" y="60" as="geometry" />
+          <mxGeometry height="120" width="120" x="-3520" y="-575" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-5" edge="1" parent="1" source="4N0qPg2ioRnMCo1rBhBg-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="4N0qPg2ioRnMCo1rBhBg-6">
           <mxGeometry relative="1" as="geometry">
             <Array as="points" />
-            <mxPoint x="-470" y="440" as="targetPoint" />
+            <mxPoint x="-3460" y="-195" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-8" connectable="0" parent="4N0qPg2ioRnMCo1rBhBg-5" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Записываеам новую транзакцию, которая отображает изменениен в портфеле пользователя" vertex="1">
@@ -81,7 +81,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-2" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="API" vertex="1">
-          <mxGeometry height="80" width="80" x="-510" y="290" as="geometry" />
+          <mxGeometry height="80" width="80" x="-3500" y="-345" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-10" edge="1" parent="1" source="4N0qPg2ioRnMCo1rBhBg-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="4N0qPg2ioRnMCo1rBhBg-9">
           <mxGeometry relative="1" as="geometry" />
@@ -92,10 +92,10 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-6" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Ttransaction" vertex="1">
-          <mxGeometry height="80" width="80" x="-508.5" y="460" as="geometry" />
+          <mxGeometry height="80" width="80" x="-3498.5" y="-175" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-9" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="PorfolioAsset" vertex="1">
-          <mxGeometry height="90" width="81.5" x="-510" y="630" as="geometry" />
+          <mxGeometry height="90" width="81.5" x="-3500" y="-5" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-13" edge="1" parent="1" source="4N0qPg2ioRnMCo1rBhBg-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;" target="HgqDryGF5ymLQBQY48wH-10">
           <mxGeometry relative="1" as="geometry" />
@@ -106,67 +106,67 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-12" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Frontend" vertex="1">
-          <mxGeometry height="120" width="120" x="550" y="-210" as="geometry" />
+          <mxGeometry height="120" width="120" x="1690" y="-909" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-16" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="PorfolioAsset" vertex="1">
-          <mxGeometry height="90" width="81.5" x="900" y="315" as="geometry" />
+          <mxGeometry height="90" width="81.5" x="2040" y="-384" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-18" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="БД" vertex="1">
-          <mxGeometry height="80" width="60" x="580" y="600" as="geometry" />
+          <mxGeometry height="80" width="60" x="1720" y="-99" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-28" edge="1" parent="1" source="4N0qPg2ioRnMCo1rBhBg-40" style="endArrow=none;html=1;rounded=0;" value="">
           <mxGeometry height="50" relative="1" width="50" as="geometry">
-            <mxPoint x="-620" y="-680" as="sourcePoint" />
-            <mxPoint x="460" y="-680" as="targetPoint" />
+            <mxPoint x="-7120" y="-485" as="sourcePoint" />
+            <mxPoint x="-6040" y="-485" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-31" parent="1" style="shape=crossbar;whiteSpace=wrap;html=1;rounded=1;direction=south;" value="" vertex="1">
-          <mxGeometry height="120" width="20" x="-520" y="-740" as="geometry" />
+          <mxGeometry height="120" width="20" x="-7020" y="-545" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-33" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;" target="4N0qPg2ioRnMCo1rBhBg-32" value="">
           <mxGeometry height="50" relative="1" width="50" as="geometry">
-            <mxPoint x="-620" y="-680" as="sourcePoint" />
-            <mxPoint x="460" y="-680" as="targetPoint" />
+            <mxPoint x="-7120" y="-485" as="sourcePoint" />
+            <mxPoint x="-6040" y="-485" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-32" parent="1" style="shape=waypoint;sketch=0;fillStyle=solid;size=6;pointerEvents=1;points=[];fillColor=none;resizable=0;rotatable=0;perimeter=centerPerimeter;snapToPoint=1;" value="" vertex="1">
-          <mxGeometry height="20" width="20" x="-531.5" y="-690" as="geometry" />
+          <mxGeometry height="20" width="20" x="-7031.5" y="-495" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-34" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="new day" vertex="1">
-          <mxGeometry height="30" width="60" x="-540" y="-780" as="geometry" />
+          <mxGeometry height="30" width="60" x="-7040" y="-585" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-35" parent="1" style="shape=crossbar;whiteSpace=wrap;html=1;rounded=1;direction=south;" value="" vertex="1">
-          <mxGeometry height="120" width="20" x="-290" y="-740" as="geometry" />
+          <mxGeometry height="120" width="20" x="-6790" y="-545" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-36" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="new day" vertex="1">
-          <mxGeometry height="30" width="60" x="-310" y="-780" as="geometry" />
+          <mxGeometry height="30" width="60" x="-6810" y="-585" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-37" parent="1" style="shape=crossbar;whiteSpace=wrap;html=1;rounded=1;direction=south;" value="" vertex="1">
-          <mxGeometry height="120" width="20" x="-90" y="-740" as="geometry" />
+          <mxGeometry height="120" width="20" x="-6590" y="-545" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-38" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="new day" vertex="1">
-          <mxGeometry height="30" width="60" x="-110" y="-780" as="geometry" />
+          <mxGeometry height="30" width="60" x="-6610" y="-585" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-39" parent="1" style="shape=waypoint;sketch=0;fillStyle=solid;size=6;pointerEvents=1;points=[];fillColor=none;resizable=0;rotatable=0;perimeter=centerPerimeter;snapToPoint=1;" value="" vertex="1">
-          <mxGeometry height="20" width="20" x="-310" y="-690" as="geometry" />
+          <mxGeometry height="20" width="20" x="-6810" y="-495" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-41" edge="1" parent="1" source="4N0qPg2ioRnMCo1rBhBg-32" style="endArrow=none;html=1;rounded=0;" target="4N0qPg2ioRnMCo1rBhBg-40" value="">
           <mxGeometry height="50" relative="1" width="50" as="geometry">
-            <mxPoint x="-521" y="-680" as="sourcePoint" />
-            <mxPoint x="460" y="-680" as="targetPoint" />
+            <mxPoint x="-7021" y="-485" as="sourcePoint" />
+            <mxPoint x="-6040" y="-485" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-40" parent="1" style="shape=waypoint;sketch=0;fillStyle=solid;size=6;pointerEvents=1;points=[];fillColor=none;resizable=0;rotatable=0;perimeter=centerPerimeter;snapToPoint=1;" value="" vertex="1">
-          <mxGeometry height="20" width="20" x="-110" y="-690" as="geometry" />
+          <mxGeometry height="20" width="20" x="-6610" y="-495" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-42" parent="1" style="shape=crossbar;whiteSpace=wrap;html=1;rounded=1;direction=south;" value="" vertex="1">
-          <mxGeometry height="120" width="20" x="80" y="-740" as="geometry" />
+          <mxGeometry height="120" width="20" x="-6420" y="-545" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-43" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="new day" vertex="1">
-          <mxGeometry height="30" width="60" x="50" y="-780" as="geometry" />
+          <mxGeometry height="30" width="60" x="-6450" y="-585" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-50" parent="1" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;fixedRows=1;rowLines=0;fontStyle=0;strokeColor=default;fontSize=16;" value="snapshot_data" vertex="1">
-          <mxGeometry height="220" width="210" x="-370" y="-1100" as="geometry" />
+          <mxGeometry height="220" width="210" x="-6870" y="-905" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-51" parent="4N0qPg2ioRnMCo1rBhBg-50" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;strokeColor=inherit;fontSize=16;" value="" vertex="1">
           <mxGeometry height="30" width="210" y="30" as="geometry" />
@@ -208,32 +208,32 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-61" parent="1" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;overflow=hidden;strokeColor=inherit;fontSize=16;" value="4" vertex="1">
-          <mxGeometry height="30" width="40" x="-370" y="-980" as="geometry">
+          <mxGeometry height="30" width="40" x="-6870" y="-785" as="geometry">
             <mxRectangle height="30" width="40" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-62" parent="1" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;overflow=hidden;strokeColor=inherit;fontSize=16;" value="5" vertex="1">
-          <mxGeometry height="30" width="40" x="-370" y="-950" as="geometry">
+          <mxGeometry height="30" width="40" x="-6870" y="-755" as="geometry">
             <mxRectangle height="30" width="40" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-63" parent="1" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;overflow=hidden;strokeColor=inherit;fontSize=16;" value="6" vertex="1">
-          <mxGeometry height="30" width="40" x="-370" y="-920" as="geometry">
+          <mxGeometry height="30" width="40" x="-6870" y="-725" as="geometry">
             <mxRectangle height="30" width="40" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-64" parent="1" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;align=left;spacingLeft=6;overflow=hidden;strokeColor=inherit;fontSize=16;" value="snapshot_bonds" vertex="1">
-          <mxGeometry height="30" width="160" x="-320" y="-980" as="geometry">
+          <mxGeometry height="30" width="160" x="-6820" y="-785" as="geometry">
             <mxRectangle height="30" width="140" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-65" parent="1" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=0;align=left;spacingLeft=6;overflow=hidden;strokeColor=inherit;fontSize=16;" value="snapshot_currency" vertex="1">
-          <mxGeometry height="30" width="160" x="-320" y="-950" as="geometry">
+          <mxGeometry height="30" width="160" x="-6820" y="-755" as="geometry">
             <mxRectangle height="30" width="140" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="4N0qPg2ioRnMCo1rBhBg-66" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Высчитываем P&amp;amp;L за сутки для портфеля" vertex="1">
-          <mxGeometry height="150" width="550" x="1210" y="-310" as="geometry" />
+        <mxCell id="4N0qPg2ioRnMCo1rBhBg-66" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 25px;&quot;&gt;Высчитываем P&amp;amp;L за сутки для портфеля&lt;/font&gt;" vertex="1">
+          <mxGeometry height="150" width="550" x="-8880" y="1120" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-69" edge="1" parent="1" source="4N0qPg2ioRnMCo1rBhBg-67" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="4N0qPg2ioRnMCo1rBhBg-68">
           <mxGeometry relative="1" as="geometry" />
@@ -244,11 +244,11 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-67" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Frontend" vertex="1">
-          <mxGeometry height="120" width="120" x="1720" y="-180" as="geometry" />
+          <mxGeometry height="120" width="120" x="-8370" y="1250" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-78" edge="1" parent="1" source="4N0qPg2ioRnMCo1rBhBg-68" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;" target="4N0qPg2ioRnMCo1rBhBg-79">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="1300" y="-40" as="targetPoint" />
+            <mxPoint x="-8790" y="1390" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-81" connectable="0" parent="4N0qPg2ioRnMCo1rBhBg-78" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Запрашиваем данные за вчерашний день" vertex="1">
@@ -265,7 +265,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-68" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="API" vertex="1">
-          <mxGeometry height="80" width="80" x="1445" y="200" as="geometry" />
+          <mxGeometry height="80" width="80" x="-8645" y="1630" as="geometry" />
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-73" edge="1" parent="1" source="4N0qPg2ioRnMCo1rBhBg-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" target="4N0qPg2ioRnMCo1rBhBg-18">
           <mxGeometry relative="1" as="geometry" />
@@ -289,8 +289,8 @@
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-80" edge="1" parent="1" source="4N0qPg2ioRnMCo1rBhBg-79" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" target="4N0qPg2ioRnMCo1rBhBg-68">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="1273" y="120" />
-              <mxPoint x="1465" y="120" />
+              <mxPoint x="-8817" y="1550" />
+              <mxPoint x="-8625" y="1550" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -300,19 +300,19 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="4N0qPg2ioRnMCo1rBhBg-79" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="snapshot_data" vertex="1">
-          <mxGeometry height="90" width="90" x="1250" y="-140" as="geometry" />
+          <mxGeometry height="90" width="90" x="-8840" y="1290" as="geometry" />
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-6" edge="1" parent="1" source="Oi53HTZ3Y3IYB_c6CSoE-2" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=12;startSize=8;endSize=8;edgeStyle=orthogonalEdgeStyle;" target="Oi53HTZ3Y3IYB_c6CSoE-3">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-2" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Transaction" vertex="1">
-          <mxGeometry height="80" width="80" x="2740" y="-320" as="geometry" />
+          <mxGeometry height="80" width="80" x="-3505" y="540" as="geometry" />
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="PorfolioAsset" vertex="1">
-          <mxGeometry height="90" width="81.5" x="2739.25" y="-210" as="geometry" />
+          <mxGeometry height="90" width="81.5" x="-3505.75" y="650" as="geometry" />
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-4" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="БД" vertex="1">
-          <mxGeometry height="80" width="60" x="2750" y="-90" as="geometry" />
+          <mxGeometry height="80" width="60" x="-3495" y="770" as="geometry" />
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-5" edge="1" parent="1" source="Oi53HTZ3Y3IYB_c6CSoE-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" target="Oi53HTZ3Y3IYB_c6CSoE-4">
           <mxGeometry relative="1" as="geometry" />
@@ -326,7 +326,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-7" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Пользователь ввел активы вручную" vertex="1">
-          <mxGeometry height="120" width="120" x="2320" y="-560" as="geometry" />
+          <mxGeometry height="115" width="115" x="-3920" y="300" as="geometry" />
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-10" edge="1" parent="1" source="Oi53HTZ3Y3IYB_c6CSoE-8" style="edgeStyle=orthogonalEdgeStyle;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;strokeColor=default;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=default;labelBackgroundColor=default;startSize=8;endArrow=classic;endSize=8;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" target="Oi53HTZ3Y3IYB_c6CSoE-2">
           <mxGeometry relative="1" as="geometry" />
@@ -337,7 +337,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-8" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Мы задетектили изменения на внешних интеграциях" vertex="1">
-          <mxGeometry height="120" width="120" x="3140" y="-560" as="geometry" />
+          <mxGeometry height="120" width="120" x="-3105" y="300" as="geometry" />
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-13" edge="1" parent="1" source="Oi53HTZ3Y3IYB_c6CSoE-12" style="edgeStyle=orthogonalEdgeStyle;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=default;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=default;labelBackgroundColor=default;startSize=8;endArrow=classic;endSize=8;" target="Oi53HTZ3Y3IYB_c6CSoE-2">
           <mxGeometry relative="1" as="geometry" />
@@ -348,17 +348,17 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-12" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Пользователь вручную поменял&lt;div&gt;активы которые у него есть (не с интеграций)&lt;/div&gt;" vertex="1">
-          <mxGeometry height="120" width="120" x="2720" y="-630" as="geometry" />
+          <mxGeometry height="120" width="120" x="-3525" y="230" as="geometry" />
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-16" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Мы задетектили изменения на внешних интеграциях" vertex="1">
-          <mxGeometry height="120" width="120" x="3700" y="-750" as="geometry" />
+          <mxGeometry height="120" width="120" x="-10420" y="1170" as="geometry" />
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-17" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=12;fontFamily=Helvetica;fontColor=default;labelBackgroundColor=default;" value="Как это вообще делать?!?" vertex="1">
-          <mxGeometry height="30" width="60" x="3730" y="-810" as="geometry" />
+          <mxGeometry height="30" width="60" x="-10390" y="1110" as="geometry" />
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-19" edge="1" parent="1" source="Oi53HTZ3Y3IYB_c6CSoE-18" style="edgeStyle=orthogonalEdgeStyle;shape=connector;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;strokeColor=default;align=center;verticalAlign=middle;fontFamily=Helvetica;fontSize=12;fontColor=default;labelBackgroundColor=default;startSize=8;endArrow=classic;endSize=8;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="Oi53HTZ3Y3IYB_c6CSoE-20">
           <mxGeometry relative="1" as="geometry">
-            <mxPoint x="3762.4285714285716" y="-390" as="targetPoint" />
+            <mxPoint x="-10357.571428571428" y="1530" as="targetPoint" />
           </mxGeometry>
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-21" connectable="0" parent="Oi53HTZ3Y3IYB_c6CSoE-19" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontFamily=Helvetica;fontColor=default;labelBackgroundColor=default;" value="Нам приходит ответ&lt;div&gt;по каждой бирже, состояние портфеля пользователя&lt;/div&gt;&lt;div&gt;(и возможно транзакции им совершенные)&lt;/div&gt;" vertex="1">
@@ -367,16 +367,16 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-18" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;fontFamily=Helvetica;fontSize=12;fontColor=default;labelBackgroundColor=default;" value="API Integrations" vertex="1">
-          <mxGeometry height="80" width="80" x="3722" y="-584" as="geometry" />
+          <mxGeometry height="80" width="80" x="-10398" y="1336" as="geometry" />
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-20" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;fontFamily=Helvetica;fontSize=12;fontColor=default;labelBackgroundColor=default;" value="API" vertex="1">
-          <mxGeometry height="80" width="80" x="3722" y="-300" as="geometry" />
+          <mxGeometry height="80" width="80" x="-10398" y="1620" as="geometry" />
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-22" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=12;fontFamily=Helvetica;fontColor=default;labelBackgroundColor=default;" value="Тут могут быть следующий действия:&lt;div&gt;- Открыл позицию&lt;/div&gt;&lt;div&gt;- Закрыл позицию&lt;/div&gt;&lt;div&gt;- Докупил&lt;/div&gt;&lt;div&gt;- Продал часть&lt;/div&gt;" vertex="1">
-          <mxGeometry height="30" width="240" x="-960" y="100" as="geometry" />
+          <mxGeometry height="30" width="240" x="-3950" y="-535" as="geometry" />
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-24" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=12;fontFamily=Helvetica;fontColor=default;labelBackgroundColor=default;" value="&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: light-dark(#ffffff, var(--ge-dark-color, #121212)); color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Если открыл позицию, то чекаем открыта ли данныая позиция&amp;nbsp; в portfolio_asset, иначе выкидываем ошибку. Записываем новую транзакцию. Добавляем новый Asset в portfolio_asset, со средней ценой покупки и количеством актива.&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- Если закрыл позицию, то записываем транзакцию sell, и удаляем из portfolio_asset.&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- Если докупил, то смотрим сколько данного актива в portfolio_asset, и далее добавляем, и высчитываем взвешенно среднию цену закупки актива&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- Если продал часть актива, то смотрим сколько данного актива у пользователя вообще есть, выкидываем исключение если он ввел больше чем у него на самом деле есть,&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;сново записываем транзакцию, и высчитываем количество проданного актива из portfolio_asset.&lt;/div&gt;" vertex="1">
-          <mxGeometry height="79" width="219" x="-960" y="345" as="geometry" />
+          <mxGeometry height="79" width="219" x="-3950" y="-290" as="geometry" />
         </mxCell>
         <mxCell id="VGHYTBGmQW1pnR9ub4HT-15" edge="1" parent="1" source="VGHYTBGmQW1pnR9ub4HT-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" target="VGHYTBGmQW1pnR9ub4HT-6">
           <mxGeometry relative="1" as="geometry" />
@@ -387,10 +387,10 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="VGHYTBGmQW1pnR9ub4HT-1" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="API Exchanges" vertex="1">
-          <mxGeometry height="110" width="110" x="2600" y="220" as="geometry" />
+          <mxGeometry height="110" width="110" x="-10580" y="560" as="geometry" />
         </mxCell>
         <mxCell id="VGHYTBGmQW1pnR9ub4HT-3" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="БД" vertex="1">
-          <mxGeometry height="80" width="60" x="3170" y="545" as="geometry" />
+          <mxGeometry height="80" width="60" x="-10010" y="885" as="geometry" />
         </mxCell>
         <mxCell id="VGHYTBGmQW1pnR9ub4HT-7" edge="1" parent="1" source="VGHYTBGmQW1pnR9ub4HT-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" target="VGHYTBGmQW1pnR9ub4HT-6">
           <mxGeometry relative="1" as="geometry" />
@@ -401,7 +401,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="VGHYTBGmQW1pnR9ub4HT-4" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Frontend" vertex="1">
-          <mxGeometry height="120" width="120" x="2920" y="210" as="geometry" />
+          <mxGeometry height="120" width="120" x="-10260" y="550" as="geometry" />
         </mxCell>
         <mxCell id="VGHYTBGmQW1pnR9ub4HT-13" edge="1" parent="1" source="VGHYTBGmQW1pnR9ub4HT-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;" target="VGHYTBGmQW1pnR9ub4HT-1">
           <mxGeometry relative="1" as="geometry" />
@@ -420,7 +420,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="VGHYTBGmQW1pnR9ub4HT-6" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="API" vertex="1">
-          <mxGeometry height="80" width="80" x="2780" y="550" as="geometry" />
+          <mxGeometry height="80" width="80" x="-10400" y="890" as="geometry" />
         </mxCell>
         <mxCell id="VGHYTBGmQW1pnR9ub4HT-9" edge="1" parent="1" source="VGHYTBGmQW1pnR9ub4HT-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" target="VGHYTBGmQW1pnR9ub4HT-3">
           <mxGeometry relative="1" as="geometry" />
@@ -447,13 +447,13 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-1" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Frontend" vertex="1">
-          <mxGeometry height="120" width="120" x="-1241" y="60" as="geometry" />
+          <mxGeometry height="120" width="120" x="-8566" y="405" as="geometry" />
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-2" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="API" vertex="1">
-          <mxGeometry height="80" width="80" x="-1221" y="290" as="geometry" />
+          <mxGeometry height="80" width="80" x="-8546" y="635" as="geometry" />
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-5" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="БД" vertex="1">
-          <mxGeometry height="80" width="60" x="-1211" y="480" as="geometry" />
+          <mxGeometry height="80" width="60" x="-8536" y="825" as="geometry" />
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-6" edge="1" parent="1" source="h9VEndLPJWqaIsVCmOrJ-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" target="h9VEndLPJWqaIsVCmOrJ-5">
           <mxGeometry relative="1" as="geometry" />
@@ -464,10 +464,10 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-8" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Проблемы которые могут возникнуть&lt;div style=&quot;text-align: justify;&quot;&gt;- PortfolioAsset храниться не в базовой валюте&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- Нужно сделать select к бд ко всем portfolioAsset со всеми portfolio_id&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- Складывать portfolioAsset-ы в разных валютах, складывать, а потом переводить в базовую&lt;/div&gt;" vertex="1">
-          <mxGeometry height="140" width="200" x="-1540" y="70" as="geometry" />
+          <mxGeometry height="140" width="200" x="-8865" y="415" as="geometry" />
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-10" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- делаем обращение в базу данных, получить все позиции портфеля.&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Переводим все позиции в базовую валюту.&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Складываем все и отдаем фронту.&lt;/span&gt;&lt;/div&gt;" vertex="1">
-          <mxGeometry height="260" width="185" x="-1532.5" y="260" as="geometry" />
+          <mxGeometry height="260" width="185" x="-8857.5" y="605" as="geometry" />
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-13" edge="1" parent="1" source="h9VEndLPJWqaIsVCmOrJ-11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="h9VEndLPJWqaIsVCmOrJ-12">
           <mxGeometry relative="1" as="geometry" />
@@ -478,13 +478,13 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-11" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Frontend" vertex="1">
-          <mxGeometry height="120" width="120" x="-1940" y="60" as="geometry" />
+          <mxGeometry height="120" width="120" x="-7697" y="-800" as="geometry" />
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-20" edge="1" parent="1" source="h9VEndLPJWqaIsVCmOrJ-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="h9VEndLPJWqaIsVCmOrJ-11">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="-2060" y="340" />
-              <mxPoint x="-2060" y="120" />
+              <mxPoint x="-7817" y="-520" />
+              <mxPoint x="-7817" y="-740" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -494,13 +494,13 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-12" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="API" vertex="1">
-          <mxGeometry height="80" width="80" x="-1920" y="300" as="geometry" />
+          <mxGeometry height="80" width="80" x="-7677" y="-560" as="geometry" />
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-18" edge="1" parent="1" source="h9VEndLPJWqaIsVCmOrJ-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="h9VEndLPJWqaIsVCmOrJ-12">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="-1730" y="530" />
-              <mxPoint x="-1730" y="340" />
+              <mxPoint x="-7487" y="-330" />
+              <mxPoint x="-7487" y="-520" />
             </Array>
           </mxGeometry>
         </mxCell>
@@ -510,7 +510,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-15" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="БД" vertex="1">
-          <mxGeometry height="80" width="60" x="-1910" y="490" as="geometry" />
+          <mxGeometry height="80" width="60" x="-7667" y="-370" as="geometry" />
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-16" edge="1" parent="1" source="h9VEndLPJWqaIsVCmOrJ-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" target="h9VEndLPJWqaIsVCmOrJ-15">
           <mxGeometry relative="1" as="geometry" />
@@ -521,7 +521,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-22" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Нужно сделать select в базу данные получить все позиции пользователя&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Перевести все позиции в базовую валюту&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Разбить все позиции по AssetType-ам и вычислить общую сумму по каждому AssetType-ам&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Вычислить в процентном&amp;nbsp; соотношении все и суммарный баланс выдать, с балансами по каждому активу.&lt;/span&gt;&lt;/div&gt;" vertex="1">
-          <mxGeometry height="225" width="280" x="-2470" y="95" as="geometry" />
+          <mxGeometry height="225" width="280" x="-8227" y="-765" as="geometry" />
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-25" edge="1" parent="1" source="h9VEndLPJWqaIsVCmOrJ-23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="h9VEndLPJWqaIsVCmOrJ-24">
           <mxGeometry relative="1" as="geometry" />
@@ -532,13 +532,13 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-23" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Frontend" vertex="1">
-          <mxGeometry height="120" width="120" x="-2820" y="60" as="geometry" />
+          <mxGeometry height="120" width="120" x="-8600" y="-804" as="geometry" />
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-24" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="API" vertex="1">
-          <mxGeometry height="80" width="80" x="-2800" y="290" as="geometry" />
+          <mxGeometry height="80" width="80" x="-8580" y="-574" as="geometry" />
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-27" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="БД" vertex="1">
-          <mxGeometry height="80" width="60" x="-2790" y="540" as="geometry" />
+          <mxGeometry height="80" width="60" x="-8570" y="-324" as="geometry" />
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-28" edge="1" parent="1" source="h9VEndLPJWqaIsVCmOrJ-24" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" target="h9VEndLPJWqaIsVCmOrJ-27">
           <mxGeometry relative="1" as="geometry" />
@@ -549,13 +549,13 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-31" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Делаем select запрос в базу данных для получения всех позиций пользователя с определенным asset_type.&amp;nbsp;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Переводим все позиции в базовую валюту портфеля&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Выводим суммарный баланс по этому типу актива, список всех позиций, с балансом, средней ценой закупки, и долей каждой позиции в процентах от всех позиций данного AssetType.&lt;/span&gt;&lt;/div&gt;" vertex="1">
-          <mxGeometry height="300" width="210" x="-3110" y="80" as="geometry" />
+          <mxGeometry height="300" width="210" x="-8890" y="-784" as="geometry" />
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-32" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 20px;&quot;&gt;&lt;b&gt;Как нам делать переводы самых различный валют между собой?&lt;/b&gt;&lt;/font&gt;&lt;div&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/span&gt;- Из доллара в рубль?&lt;div&gt;- Биткоины в юани?&lt;/div&gt;&lt;div&gt;- Рублевые облигации в евро?&lt;/div&gt;&lt;div&gt;- Акции фондовова рынка США в рубли?&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;/div&gt;" vertex="1">
-          <mxGeometry height="180" width="770" x="-2840" y="-1060" as="geometry" />
+          <mxGeometry height="180" width="770" x="-5350" y="-980" as="geometry" />
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-34" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;Я предлагаю сделать по каждому типу актива AssetType, собственный провайдер, который будет подтягивать курс с определенных сервисов и API.&amp;nbsp;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;Все это обвернуть в один общий метод в который ты закидываешь актив и он переводится в RUB, USD, EURO,&amp;nbsp; CYN.&amp;nbsp;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;Этот общий метод очень удобно будет везде использовать, возможно навесить кеширование на каждый из модулей, и еще на сам Marketdata в целом. Вообще здорово получилось бы.&lt;br&gt;&lt;/div&gt;" vertex="1">
-          <mxGeometry height="260" width="445" x="-2677.5" y="-880" as="geometry" />
+          <mxGeometry height="260" width="445" x="-5187.5" y="-850" as="geometry" />
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-42" edge="1" parent="1" source="h9VEndLPJWqaIsVCmOrJ-35" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="h9VEndLPJWqaIsVCmOrJ-36">
           <mxGeometry relative="1" as="geometry" />
@@ -570,34 +570,70 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-35" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="MARKETDATA&lt;div&gt;(TARGET, TICKER)&lt;/div&gt;" vertex="1">
-          <mxGeometry height="200" width="200" x="-2555" y="-630" as="geometry" />
+          <mxGeometry height="200" width="200" x="-5057.5" y="-584" as="geometry" />
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-36" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Crypto" vertex="1">
-          <mxGeometry height="80" width="80" x="-2677.5" y="-370" as="geometry" />
+          <mxGeometry height="80" width="80" x="-5180" y="-324" as="geometry" />
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-37" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="RUSSIA STOCK" vertex="1">
-          <mxGeometry height="80" width="80" x="-2552.5" y="-370" as="geometry" />
+          <mxGeometry height="80" width="80" x="-5055" y="-324" as="geometry" />
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-38" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="FIAT&lt;div&gt;/CURRENCY&lt;/div&gt;" vertex="1">
-          <mxGeometry height="80" width="80" x="-2432.5" y="-370" as="geometry" />
+          <mxGeometry height="80" width="80" x="-4935" y="-324" as="geometry" />
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-39" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="USA&lt;div&gt;STOCK&lt;/div&gt;" vertex="1">
-          <mxGeometry height="80" width="80" x="-2312.5" y="-370" as="geometry" />
+          <mxGeometry height="80" width="80" x="-4815" y="-324" as="geometry" />
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-41" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="" vertex="1">
-          <mxGeometry height="80" width="80" x="-2180" y="-370" as="geometry" />
+          <mxGeometry height="80" width="80" x="-4682.5" y="-324" as="geometry" />
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-47" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 21px;&quot;&gt;&lt;b&gt;Как мы будем работать с интеграциями?&amp;nbsp;&lt;/b&gt;&lt;/font&gt;" vertex="1">
-          <mxGeometry height="50" width="520" x="-1480" y="-1050" as="geometry" />
+          <mxGeometry height="50" width="520" x="-10550" y="-890" as="geometry" />
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-48" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;div style=&quot;text-align: justify;&quot;&gt;- Я предполагаю мы будем так же как и с marketdata. Реализуется один общий метод в который мы отправляем data object, который будет нести ключ значение:&amp;nbsp;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&amp;nbsp;БИРЖА - НЕОБХОДИМЫЕ КЛЮЧИ&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- Все это нужно реализовать таким образом чтобы запросы отправлялись параллельно, и время было ограничено запросом к бирже с самым долгим ответом.&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- Нужно реализовать кеширование обращения к биржам. Чтобы не переполнить разрешаемое количество запросов и все было оптимизированно.&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
-          <mxGeometry height="310" width="405" x="-1443" y="-980" as="geometry" />
+          <mxGeometry height="310" width="405" x="-10513" y="-820" as="geometry" />
         </mxCell>
-        <mxCell id="h9VEndLPJWqaIsVCmOrJ-49" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 22px;&quot;&gt;&lt;b&gt;Как мы будет и каком образом мы будем хранить все активы, чтобы максимально эффективно работал бекенд?&lt;/b&gt;&lt;/font&gt;" vertex="1">
-          <mxGeometry height="220" width="790" x="-3780" y="-1120" as="geometry" />
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-49" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 22px;&quot;&gt;&lt;b&gt;Как и каким образом мы будем хранить все активы, чтобы максимально эффективно работал бекенд?&lt;/b&gt;&lt;/font&gt;" vertex="1">
+          <mxGeometry height="220" width="790" x="-2040" y="-940" as="geometry" />
         </mxCell>
         <mxCell id="h9VEndLPJWqaIsVCmOrJ-50" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Нужно ли хранить PortfolioAsset в базовой валюте? Или вообще не нужно хранить цену?&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Нужно ли хранить валюту в которой происходили транзакции?&amp;nbsp;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Я предлагаю сфокусироваться на том сколько у тебя активов, а не на том как и когда ты их купил. Т.е. у нас будет только количество активов. Может в дальнейшем и стоит более детально отслеживать все изменения, но не для MVP.&amp;nbsp;&amp;nbsp;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Так мы вообще где-нибудь используем среднюю цену закупки? По-моему&amp;nbsp;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Что если вообще не хранить среднюю цену и цену за которую&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- Как идея, делать ввод цены покупки (т.е. транзакции опциональным, иначе подгружать цену покупки в момент транзакции), и вот таким образом высчитывать среднюю цену. А цену позиции пользователя, хранить в базовой валюте сразу. Т.е. транзакции происходят в выставляемой валюте, или мы свою вычисляем сразу в базовой валюте. А вот уже вычисляем позиции в формате базовой.&amp;nbsp;&lt;/div&gt;" vertex="1">
-          <mxGeometry height="220" width="480" x="-3625" y="-920" as="geometry" />
+          <mxGeometry height="280" width="480" x="-1885" y="-735" as="geometry" />
+        </mxCell>
+        <mxCell id="gbK6vA-CFW9FegIVE4d3-2" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;autosize=1;resizable=0;" value="&lt;font dir=&quot;auto&quot; style=&quot;vertical-align: inherit;&quot;&gt;&lt;font dir=&quot;auto&quot; style=&quot;vertical-align: inherit; font-size: 100px;&quot;&gt;Мarketdata&lt;/font&gt;&lt;/font&gt;" vertex="1">
+          <mxGeometry height="130" width="520" x="-5225" y="-1135" as="geometry" />
+        </mxCell>
+        <mxCell id="i3E0DSYFWA57sM-LPWXR-2" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;autosize=1;resizable=0;" value="&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;ДА! Зачем хранить цену транзакции и среднюю цену!!?!??!??!&amp;nbsp;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Мы же не сможем точно понять где и когда пользователь купил тот или иной актив,&amp;nbsp;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;мы можем скачать только сколько он стоит на данный момент, и каждый день отслеживать состояние портфеля и все.&amp;nbsp;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;Бро я думаю не стоит сильно усложнять это все и вообще вырезать цену везде,&amp;nbsp;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;нахуй это не нужно, только количество хранить и все, и делать снимки для аналитики подробные.&amp;nbsp;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;Т.е. например ты купил золота, и серебро, у тебя обновилась главная странчка,&amp;nbsp;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;на следующий день ты снова купил золота, добавилось к твоему портфелю.&amp;nbsp;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;Произошел перерасчет, сколько и по какая примерна этому цена на данный момент, и все.&amp;nbsp;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;Нам не стоит отслеживать каждую транзакцию, т.к. мы&amp;nbsp; не знаем когда и за сколько она была совершена, бро.&amp;nbsp;&lt;/div&gt;&lt;div style=&quot;&quot;&gt;Давай вообще вырежем все с ценами. Это не нужно My opinion. Нахуй это все это сразу упрощает приложение очень сильно. Вот.&amp;nbsp;&lt;/div&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="160" width="760" x="-2025" y="-439" as="geometry" />
+        </mxCell>
+        <mxCell id="i3E0DSYFWA57sM-LPWXR-4" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;autosize=1;resizable=0;" value="&lt;font style=&quot;font-size: 22px;&quot;&gt;Как мы будем детектить транзакции пользователя?&lt;/font&gt;" vertex="1">
+          <mxGeometry height="40" width="550" x="-3925" y="-980" as="geometry" />
+        </mxCell>
+        <mxCell id="i3E0DSYFWA57sM-LPWXR-5" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;autosize=1;resizable=0;" value="&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Ручные транзакции&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- Транзакции на внешних биржах&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;Ручные транзакции очень легко детектить, они даже реализованы!&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;Транзакции на биржах это более сложная проблема, потому что их нужно будет детектить,&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&amp;nbsp;а каждая биржа по разному это делает(&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;Цену и валюту в которой была совершена транзакция можно хранить, но только как просто данные.&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;Хранить будем тогда в валюте в которой пользователь купил актив для простоты.&lt;/div&gt;" vertex="1">
+          <mxGeometry height="160" width="580" x="-3940" y="-940" as="geometry" />
+        </mxCell>
+        <mxCell id="i3E0DSYFWA57sM-LPWXR-6" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;autosize=1;resizable=0;" value="&lt;font style=&quot;font-size: 100px;&quot;&gt;Transaction&lt;/font&gt;" vertex="1">
+          <mxGeometry height="130" width="540" x="-3580" y="-1135" as="geometry" />
+        </mxCell>
+        <mxCell id="i3E0DSYFWA57sM-LPWXR-7" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;autosize=1;resizable=0;" value="&lt;font style=&quot;font-size: 100px;&quot;&gt;Analytics&lt;/font&gt;" vertex="1">
+          <mxGeometry height="130" width="420" x="-7650" y="-1120" as="geometry" />
+        </mxCell>
+        <mxCell id="i3E0DSYFWA57sM-LPWXR-8" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;autosize=1;resizable=0;" value="&lt;font style=&quot;font-size: 100px;&quot;&gt;General&lt;/font&gt;" vertex="1">
+          <mxGeometry height="130" width="380" x="1475" y="-1120" as="geometry" />
+        </mxCell>
+        <mxCell id="i3E0DSYFWA57sM-LPWXR-9" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;autosize=1;resizable=0;" value="&lt;font style=&quot;font-size: 100px;&quot;&gt;Integrations&lt;/font&gt;" vertex="1">
+          <mxGeometry height="130" width="550" x="-10200" y="-1135" as="geometry" />
+        </mxCell>
+        <mxCell id="i3E0DSYFWA57sM-LPWXR-11" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;autosize=1;resizable=0;" value="&lt;font style=&quot;font-size: 100px;&quot;&gt;Database&lt;/font&gt;" vertex="1">
+          <mxGeometry height="130" width="450" x="-1870" y="-1120" as="geometry" />
+        </mxCell>
+        <mxCell id="i3E0DSYFWA57sM-LPWXR-12" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;autosize=1;resizable=0;" value="&lt;font style=&quot;font-size: 25px;&quot;&gt;Получить баланс пользователя&lt;/font&gt;" vertex="1">
+          <mxGeometry height="40" width="390" x="-8870" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="i3E0DSYFWA57sM-LPWXR-13" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;autosize=1;resizable=0;" value="&lt;span style=&quot;text-wrap-mode: nowrap; background-color: light-dark(#ffffff, var(--ge-dark-color, #121212));&quot;&gt;&lt;font style=&quot;font-size: 25px;&quot;&gt;Получить баланс пользователя по типам активов&lt;/font&gt;&lt;/span&gt;&lt;div style=&quot;text-wrap-mode: nowrap;&quot;&gt;&lt;font style=&quot;font-size: 25px; background-color: light-dark(#ffffff, var(--ge-dark-color, #121212));&quot;&gt;в базовой валюте,&lt;/font&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="70" width="600" x="-8050" y="-940" as="geometry" />
+        </mxCell>
+        <mxCell id="i3E0DSYFWA57sM-LPWXR-14" parent="1" style="text;whiteSpace=wrap;html=1;fontSize=25;align=center;fontColor=default;labelBackgroundColor=none;" value="&lt;span style=&quot;font-family: Helvetica; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: nowrap; text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; float: none; display: inline !important;&quot;&gt;Получить все позиции пользователя&lt;/span&gt;&lt;br style=&quot;forced-color-adjust: none; font-family: Helvetica; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: nowrap; text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; box-shadow: none !important;&quot;&gt;&lt;span style=&quot;font-family: Helvetica; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: nowrap; text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; float: none; display: inline !important;&quot;&gt;по AssetType-ам&lt;/span&gt;" vertex="1">
+          <mxGeometry height="50" width="526" x="-8920" y="-930" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
