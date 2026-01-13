@@ -1,3 +1,4 @@
+import decimal
 import strawberry
 from typing import List
 from strawberry import auto

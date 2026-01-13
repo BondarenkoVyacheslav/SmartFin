@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0" version="29.2.9">
   <diagram name="Страница-1" id="D15AEVA52A7AB_YKzXTv">
-    <mxGraphModel dx="3680" dy="2292" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="6291" dy="3447" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -373,10 +373,10 @@
           <mxGeometry height="80" width="80" x="3722" y="-300" as="geometry" />
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-22" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=12;fontFamily=Helvetica;fontColor=default;labelBackgroundColor=default;" value="Тут могут быть следующий действия:&lt;div&gt;- Открыл позицию&lt;/div&gt;&lt;div&gt;- Закрыл позицию&lt;/div&gt;&lt;div&gt;- Докупил&lt;/div&gt;&lt;div&gt;- Продал часть&lt;/div&gt;" vertex="1">
-          <mxGeometry height="30" width="240" x="-970" y="215" as="geometry" />
+          <mxGeometry height="30" width="240" x="-960" y="100" as="geometry" />
         </mxCell>
         <mxCell id="Oi53HTZ3Y3IYB_c6CSoE-24" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=12;fontFamily=Helvetica;fontColor=default;labelBackgroundColor=default;" value="&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: light-dark(#ffffff, var(--ge-dark-color, #121212)); color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Если открыл позицию, то чекаем открыта ли данныая позиция&amp;nbsp; в portfolio_asset, иначе выкидываем ошибку. Записываем новую транзакцию. Добавляем новый Asset в portfolio_asset, со средней ценой покупки и количеством актива.&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- Если закрыл позицию, то записываем транзакцию sell, и удаляем из portfolio_asset.&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- Если докупил, то смотрим сколько данного актива в portfolio_asset, и далее добавляем, и высчитываем взвешенно среднию цену закупки актива&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- Если продал часть актива, то смотрим сколько данного актива у пользователя вообще есть, выкидываем исключение если он ввел больше чем у него на самом деле есть,&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;сново записываем транзакцию, и высчитываем количество проданного актива из portfolio_asset.&lt;/div&gt;" vertex="1">
-          <mxGeometry height="79" width="219" x="-970" y="460" as="geometry" />
+          <mxGeometry height="79" width="219" x="-960" y="345" as="geometry" />
         </mxCell>
         <mxCell id="VGHYTBGmQW1pnR9ub4HT-15" edge="1" parent="1" source="VGHYTBGmQW1pnR9ub4HT-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" target="VGHYTBGmQW1pnR9ub4HT-6">
           <mxGeometry relative="1" as="geometry" />
@@ -437,6 +437,167 @@
           <mxGeometry relative="1" x="-0.0029" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-3" edge="1" parent="1" source="h9VEndLPJWqaIsVCmOrJ-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="h9VEndLPJWqaIsVCmOrJ-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-4" connectable="0" parent="h9VEndLPJWqaIsVCmOrJ-3" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Получить баланс пользователя" vertex="1">
+          <mxGeometry relative="1" x="-0.0727" y="-2" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-1" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Frontend" vertex="1">
+          <mxGeometry height="120" width="120" x="-1241" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-2" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="API" vertex="1">
+          <mxGeometry height="80" width="80" x="-1221" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-5" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="БД" vertex="1">
+          <mxGeometry height="80" width="60" x="-1211" y="480" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-6" edge="1" parent="1" source="h9VEndLPJWqaIsVCmOrJ-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" target="h9VEndLPJWqaIsVCmOrJ-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-7" connectable="0" parent="h9VEndLPJWqaIsVCmOrJ-6" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Обращаемся к базе данных, чтобы получить&lt;div&gt;капу пользователя&lt;/div&gt;" vertex="1">
+          <mxGeometry relative="1" x="-0.0193" y="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-8" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Проблемы которые могут возникнуть&lt;div style=&quot;text-align: justify;&quot;&gt;- PortfolioAsset храниться не в базовой валюте&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- Нужно сделать select к бд ко всем portfolioAsset со всеми portfolio_id&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- Складывать portfolioAsset-ы в разных валютах, складывать, а потом переводить в базовую&lt;/div&gt;" vertex="1">
+          <mxGeometry height="140" width="200" x="-1540" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-10" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- делаем обращение в базу данных, получить все позиции портфеля.&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Переводим все позиции в базовую валюту.&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Складываем все и отдаем фронту.&lt;/span&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="260" width="185" x="-1532.5" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-13" edge="1" parent="1" source="h9VEndLPJWqaIsVCmOrJ-11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="h9VEndLPJWqaIsVCmOrJ-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-14" connectable="0" parent="h9VEndLPJWqaIsVCmOrJ-13" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Получить баланс пользователя по типам активов&lt;div&gt;в базовой валюте, для отрисовки.&lt;/div&gt;" vertex="1">
+          <mxGeometry relative="1" x="0.0215" y="-1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-11" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Frontend" vertex="1">
+          <mxGeometry height="120" width="120" x="-1940" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-20" edge="1" parent="1" source="h9VEndLPJWqaIsVCmOrJ-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="h9VEndLPJWqaIsVCmOrJ-11">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-2060" y="340" />
+              <mxPoint x="-2060" y="120" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-21" connectable="0" parent="h9VEndLPJWqaIsVCmOrJ-20" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Отдаем все в базовой валюте портфеля&lt;br&gt;И отдаём еще в процентном соотношении" vertex="1">
+          <mxGeometry relative="1" x="0.27" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-12" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="API" vertex="1">
+          <mxGeometry height="80" width="80" x="-1920" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-18" edge="1" parent="1" source="h9VEndLPJWqaIsVCmOrJ-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="h9VEndLPJWqaIsVCmOrJ-12">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-1730" y="530" />
+              <mxPoint x="-1730" y="340" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-19" connectable="0" parent="h9VEndLPJWqaIsVCmOrJ-18" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Ответ" vertex="1">
+          <mxGeometry relative="1" x="-0.1219" y="-1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-15" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="БД" vertex="1">
+          <mxGeometry height="80" width="60" x="-1910" y="490" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-16" edge="1" parent="1" source="h9VEndLPJWqaIsVCmOrJ-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" target="h9VEndLPJWqaIsVCmOrJ-15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-17" connectable="0" parent="h9VEndLPJWqaIsVCmOrJ-16" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Получить все&amp;nbsp; portfolio_asset пользователя&lt;div&gt;&amp;nbsp;отсортированную по asset_type.&lt;/div&gt;" vertex="1">
+          <mxGeometry relative="1" x="-0.1" y="-1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-22" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Нужно сделать select в базу данные получить все позиции пользователя&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Перевести все позиции в базовую валюту&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Разбить все позиции по AssetType-ам и вычислить общую сумму по каждому AssetType-ам&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Вычислить в процентном&amp;nbsp; соотношении все и суммарный баланс выдать, с балансами по каждому активу.&lt;/span&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="225" width="280" x="-2470" y="95" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-25" edge="1" parent="1" source="h9VEndLPJWqaIsVCmOrJ-23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="h9VEndLPJWqaIsVCmOrJ-24">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-26" connectable="0" parent="h9VEndLPJWqaIsVCmOrJ-25" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Получить все позиции пользователя&lt;br&gt;по AssetType-ам" vertex="1">
+          <mxGeometry relative="1" x="-0.0338" y="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-23" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Frontend" vertex="1">
+          <mxGeometry height="120" width="120" x="-2820" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-24" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="API" vertex="1">
+          <mxGeometry height="80" width="80" x="-2800" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-27" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="БД" vertex="1">
+          <mxGeometry height="80" width="60" x="-2790" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-28" edge="1" parent="1" source="h9VEndLPJWqaIsVCmOrJ-24" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;entryPerimeter=0;" target="h9VEndLPJWqaIsVCmOrJ-27">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-29" connectable="0" parent="h9VEndLPJWqaIsVCmOrJ-28" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Делаем select в базу данных, к таблице portfolio_assets&lt;div&gt;&amp;nbsp;по portfolio_id и asset_type_id&lt;/div&gt;" vertex="1">
+          <mxGeometry relative="1" x="-0.1152" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-31" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Делаем select запрос в базу данных для получения всех позиций пользователя с определенным asset_type.&amp;nbsp;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Переводим все позиции в базовую валюту портфеля&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Выводим суммарный баланс по этому типу актива, список всех позиций, с балансом, средней ценой закупки, и долей каждой позиции в процентах от всех позиций данного AssetType.&lt;/span&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="300" width="210" x="-3110" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-32" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 20px;&quot;&gt;&lt;b&gt;Как нам делать переводы самых различный валют между собой?&lt;/b&gt;&lt;/font&gt;&lt;div&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/span&gt;- Из доллара в рубль?&lt;div&gt;- Биткоины в юани?&lt;/div&gt;&lt;div&gt;- Рублевые облигации в евро?&lt;/div&gt;&lt;div&gt;- Акции фондовова рынка США в рубли?&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="180" width="770" x="-2840" y="-1060" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-34" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;Я предлагаю сделать по каждому типу актива AssetType, собственный провайдер, который будет подтягивать курс с определенных сервисов и API.&amp;nbsp;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;Все это обвернуть в один общий метод в который ты закидываешь актив и он переводится в RUB, USD, EURO,&amp;nbsp; CYN.&amp;nbsp;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;Этот общий метод очень удобно будет везде использовать, возможно навесить кеширование на каждый из модулей, и еще на сам Marketdata в целом. Вообще здорово получилось бы.&lt;br&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="260" width="445" x="-2677.5" y="-880" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-42" edge="1" parent="1" source="h9VEndLPJWqaIsVCmOrJ-35" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="h9VEndLPJWqaIsVCmOrJ-36">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-43" edge="1" parent="1" source="h9VEndLPJWqaIsVCmOrJ-35" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="h9VEndLPJWqaIsVCmOrJ-37">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-44" edge="1" parent="1" source="h9VEndLPJWqaIsVCmOrJ-35" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="h9VEndLPJWqaIsVCmOrJ-38">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-45" edge="1" parent="1" source="h9VEndLPJWqaIsVCmOrJ-35" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="h9VEndLPJWqaIsVCmOrJ-39">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-35" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="MARKETDATA&lt;div&gt;(TARGET, TICKER)&lt;/div&gt;" vertex="1">
+          <mxGeometry height="200" width="200" x="-2555" y="-630" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-36" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="Crypto" vertex="1">
+          <mxGeometry height="80" width="80" x="-2677.5" y="-370" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-37" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="RUSSIA STOCK" vertex="1">
+          <mxGeometry height="80" width="80" x="-2552.5" y="-370" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-38" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="FIAT&lt;div&gt;/CURRENCY&lt;/div&gt;" vertex="1">
+          <mxGeometry height="80" width="80" x="-2432.5" y="-370" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-39" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="USA&lt;div&gt;STOCK&lt;/div&gt;" vertex="1">
+          <mxGeometry height="80" width="80" x="-2312.5" y="-370" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-41" parent="1" style="whiteSpace=wrap;html=1;aspect=fixed;" value="" vertex="1">
+          <mxGeometry height="80" width="80" x="-2180" y="-370" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-47" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 21px;&quot;&gt;&lt;b&gt;Как мы будем работать с интеграциями?&amp;nbsp;&lt;/b&gt;&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="520" x="-1480" y="-1050" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-48" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;div style=&quot;text-align: justify;&quot;&gt;- Я предполагаю мы будем так же как и с marketdata. Реализуется один общий метод в который мы отправляем data object, который будет нести ключ значение:&amp;nbsp;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&amp;nbsp;БИРЖА - НЕОБХОДИМЫЕ КЛЮЧИ&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- Все это нужно реализовать таким образом чтобы запросы отправлялись параллельно, и время было ограничено запросом к бирже с самым долгим ответом.&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- Нужно реализовать кеширование обращения к биржам. Чтобы не переполнить разрешаемое количество запросов и все было оптимизированно.&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="310" width="405" x="-1443" y="-980" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-49" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 22px;&quot;&gt;&lt;b&gt;Как мы будет и каком образом мы будем хранить все активы, чтобы максимально эффективно работал бекенд?&lt;/b&gt;&lt;/font&gt;" vertex="1">
+          <mxGeometry height="220" width="790" x="-3780" y="-1120" as="geometry" />
+        </mxCell>
+        <mxCell id="h9VEndLPJWqaIsVCmOrJ-50" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Нужно ли хранить PortfolioAsset в базовой валюте? Или вообще не нужно хранить цену?&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Нужно ли хранить валюту в которой происходили транзакции?&amp;nbsp;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Я предлагаю сфокусироваться на том сколько у тебя активов, а не на том как и когда ты их купил. Т.е. у нас будет только количество активов. Может в дальнейшем и стоит более детально отслеживать все изменения, но не для MVP.&amp;nbsp;&amp;nbsp;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Так мы вообще где-нибудь используем среднюю цену закупки? По-моему&amp;nbsp;&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Что если вообще не хранить среднюю цену и цену за которую&lt;/span&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify;&quot;&gt;- Как идея, делать ввод цены покупки (т.е. транзакции опциональным, иначе подгружать цену покупки в момент транзакции), и вот таким образом высчитывать среднюю цену. А цену позиции пользователя, хранить в базовой валюте сразу. Т.е. транзакции происходят в выставляемой валюте, или мы свою вычисляем сразу в базовой валюте. А вот уже вычисляем позиции в формате базовой.&amp;nbsp;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="220" width="480" x="-3625" y="-920" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

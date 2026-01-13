@@ -10,7 +10,7 @@ from app.assets.queries import AssetTypeGQL
 class PortfolioDailySnapshotGQL:
     id: auto
     portfolio: Portfolio
-    snapshot_data: auto
+    snapshot_date: auto
     capital: auto
     created_at: auto
     margin: auto
@@ -26,5 +26,5 @@ class PortfolioAssetDailySnapshotGQL:
 
 @strawberry.type
 class PortfolioSnapshotsQueries:
-    portfolio_daily_snapshot: List[PortfolioDailySnapshotGQL] = strawberry.djnago.field()
+    portfolio_daily_snapshot: List[PortfolioDailySnapshotGQL] = strawberry.django.field()
     portfolio_asset_daily_snapshot: List[PortfolioAssetDailySnapshotGQL] = strawberry.django.field()
