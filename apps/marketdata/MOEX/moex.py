@@ -19,7 +19,7 @@ from apps.marketdata.providers.StockMarketRussia.MOEX.dto.stock_shares_TQTF_secu
     MOEXStockSharesTQTFSecurities, parse_moex_security_detail_response
 from apps.marketdata.providers.provider import Provider
 from apps.marketdata.services.redis_cache import RedisCacheService
-from apps.marketdata.providers.StockMarketRussia.MOEX.cache_keys import MOEXCacheKeys
+from apps.marketdata.MOEX.cache_keys import MOEXCacheKeys
 from apps.marketdata.providers.StockMarketRussia.MOEX.dto.security_detail import MOEXSecurityDetails, \
     parse_moex_security_details
 
