@@ -5,7 +5,7 @@ import json
 import threading
 import time
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
-from apps.marketdata.providers.provider import Provider
+from apps.marketdata.provider import Provider
 from apps.marketdata.services.redis_cache import RedisCacheService
 
 import httpx

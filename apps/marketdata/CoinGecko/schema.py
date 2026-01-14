@@ -4,31 +4,31 @@ from typing import Any, List, Optional, Sequence
 
 import strawberry
 
-from apps.marketdata.providers.Crypto.CoinGecko.coingecko import CoinGeckoProvider
-from apps.marketdata.providers.Crypto.CoinGecko.cache_keys import CoinGeckoCacheKeys
-from apps.marketdata.providers.Crypto.CoinGecko.dto.simpl_token_price import SimpleTokenPricesList
-from apps.marketdata.providers.Crypto.CoinGecko.dto.supported_vs_currencies import SupportedVSCurrencies
-from apps.marketdata.providers.Crypto.CoinGecko.dto.coins_list import CoinsList
-from apps.marketdata.providers.Crypto.CoinGecko.dto.coins_markets import CoinsMarket
-from apps.marketdata.providers.Crypto.CoinGecko.dto.coins_id import CoinDetail
-from apps.marketdata.providers.Crypto.CoinGecko.dto.coin_tickers import CoinTickers
-from apps.marketdata.providers.Crypto.CoinGecko.dto.coin_history import CoinHistory
-from apps.marketdata.providers.Crypto.CoinGecko.dto.exchanges import Exchanges
-from apps.marketdata.providers.Crypto.CoinGecko.dto.exchanges_list import ExchangesList
-from apps.marketdata.providers.Crypto.CoinGecko.dto.exchange_detail import Exchange
-from apps.marketdata.providers.Crypto.CoinGecko.dto.exchange_tickers import ExchangeTickers
-from apps.marketdata.providers.Crypto.CoinGecko.dto.exchange_volume_chart import ExchangeVolumeChart
-from apps.marketdata.providers.Crypto.CoinGecko.dto.derivatives import Derivatives
-from apps.marketdata.providers.Crypto.CoinGecko.dto.derivatives_exchanges import DerivativesExchangesPage
-from apps.marketdata.providers.Crypto.CoinGecko.dto.derivatives_exchanges_list import DerivativesExchangesList
-from apps.marketdata.providers.Crypto.CoinGecko.dto.derivatives_exchange_detail import DerivativesExchangeDetails
-from apps.marketdata.providers.Crypto.CoinGecko.dto.exchange_rates import ExchangeRates
-from apps.marketdata.providers.Crypto.CoinGecko.dto.search import SearchResult
-from apps.marketdata.providers.Crypto.CoinGecko.dto.search_trending import SearchTrendingResult
-from apps.marketdata.providers.Crypto.CoinGecko.dto.global_data import GlobalData
-from apps.marketdata.providers.Crypto.CoinGecko.dto.global_defi import GlobalDefiData
-from apps.marketdata.providers.Crypto.CoinGecko.dto.ping import Ping
-from apps.marketdata.providers.Crypto.CoinGecko.dto.simple_price import ListSimplePricesEntry
+from apps.marketdata.CoinGecko.coingecko import CoinGeckoProvider
+from apps.marketdata.CoinGecko.cache_keys import CoinGeckoCacheKeys
+from apps.marketdata.CoinGecko.dto.simpl_token_price import SimpleTokenPricesList
+from apps.marketdata.CoinGecko.dto.supported_vs_currencies import SupportedVSCurrencies
+from apps.marketdata.CoinGecko.dto.coins_list import CoinsList
+from apps.marketdata.CoinGecko.dto.coins_markets import CoinsMarket
+from apps.marketdata.CoinGecko.dto.coins_id import CoinDetail
+from apps.marketdata.CoinGecko.dto.coin_tickers import CoinTickers
+from apps.marketdata.CoinGecko.dto.coin_history import CoinHistory
+from apps.marketdata.CoinGecko.dto.exchanges import Exchanges
+from apps.marketdata.CoinGecko.dto.exchanges_list import ExchangesList
+from apps.marketdata.CoinGecko.dto.exchange_detail import Exchange
+from apps.marketdata.CoinGecko.dto.exchange_tickers import ExchangeTickers
+from apps.marketdata.CoinGecko.dto.exchange_volume_chart import ExchangeVolumeChart
+from apps.marketdata.CoinGecko.dto.derivatives import Derivatives
+from apps.marketdata.CoinGecko.dto.derivatives_exchanges import DerivativesExchangesPage
+from apps.marketdata.CoinGecko.dto.derivatives_exchanges_list import DerivativesExchangesList
+from apps.marketdata.CoinGecko.dto.derivatives_exchange_detail import DerivativesExchangeDetails
+from apps.marketdata.CoinGecko.dto.exchange_rates import ExchangeRates
+from apps.marketdata.CoinGecko.dto.search import SearchResult
+from apps.marketdata.CoinGecko.dto.search_trending import SearchTrendingResult
+from apps.marketdata.CoinGecko.dto.global_data import GlobalData
+from apps.marketdata.CoinGecko.dto.global_defi import GlobalDefiData
+from apps.marketdata.CoinGecko.dto.ping import Ping
+from apps.marketdata.CoinGecko.dto.simple_price import ListSimplePricesEntry
 from apps.marketdata.services.redis_cache import RedisCacheService
 
 

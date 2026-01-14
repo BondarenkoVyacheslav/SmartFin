@@ -3,24 +3,24 @@ from typing import Any
 import httpx
 from enum import Enum
 
-from apps.marketdata.providers.StockMarketRussia.MOEX.dto.engine_market_boards import MOEXBoards, parse_moex_boards
-from apps.marketdata.providers.StockMarketRussia.MOEX.dto.engine_markets import MOEXEngineMarkets, parse_moex_markets
-from apps.marketdata.providers.StockMarketRussia.MOEX.dto.engines import MOEXEngines, parse_moex_engines
-from apps.marketdata.providers.StockMarketRussia.MOEX.dto.securities import MOEXSecurities, parse_moex_securities
-from apps.marketdata.providers.StockMarketRussia.MOEX.dto.stock_bonds_TQCB_securities import \
+from apps.marketdata.MOEX.dto.engine_market_boards import MOEXBoards, parse_moex_boards
+from apps.marketdata.MOEX.dto.engine_markets import MOEXEngineMarkets, parse_moex_markets
+from apps.marketdata.MOEX.dto.engines import MOEXEngines, parse_moex_engines
+from apps.marketdata.MOEX.dto.securities import MOEXSecurities, parse_moex_securities
+from apps.marketdata.MOEX.dto.stock_bonds_TQCB_securities import \
     MOEXStockBondsTQCBSecurities, parse_moex_bonds_tqcb_securities_response
-from apps.marketdata.providers.StockMarketRussia.MOEX.dto.stock_bonds_TQOB_securities import \
+from apps.marketdata.MOEX.dto.stock_bonds_TQOB_securities import \
     MOEXStockBondsTQOBSecuritiesResponse
-from apps.marketdata.providers.StockMarketRussia.MOEX.dto.stock_index_SNDX_securities import \
+from apps.marketdata.MOEX.dto.stock_index_SNDX_securities import \
     MOEXStockIndexSndxSecurities, parse_moex_sndx_securities_response
-from apps.marketdata.providers.StockMarketRussia.MOEX.dto.stock_shares_TQBR_securities import MOEXSharesTQBRSecurities, \
+from apps.marketdata.MOEX.dto.stock_shares_TQBR_securities import MOEXSharesTQBRSecurities, \
     parse_moex_shares_tqbr_securities_response
-from apps.marketdata.providers.StockMarketRussia.MOEX.dto.stock_shares_TQTF_securities import \
+from apps.marketdata.MOEX.dto.stock_shares_TQTF_securities import \
     MOEXStockSharesTQTFSecurities, parse_moex_security_detail_response
-from apps.marketdata.providers.provider import Provider
+from apps.marketdata.provider import Provider
 from apps.marketdata.services.redis_cache import RedisCacheService
 from apps.marketdata.MOEX.cache_keys import MOEXCacheKeys
-from apps.marketdata.providers.StockMarketRussia.MOEX.dto.security_detail import MOEXSecurityDetails, \
+from apps.marketdata.MOEX.dto.security_detail import MOEXSecurityDetails, \
     parse_moex_security_details
 
 

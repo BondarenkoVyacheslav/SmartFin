@@ -5,39 +5,39 @@ import os
 from hashlib import md5
 from enum import Enum
 
-from apps.marketdata.providers.Crypto.CoinGecko.dto.coin_history import CoinHistory, parse_coin_history
-from apps.marketdata.providers.Crypto.CoinGecko.dto.coin_tickers import CoinTickers, parse_coin_tickers
-from apps.marketdata.providers.Crypto.CoinGecko.dto.coins_list import parse_coins_list, CoinsList
-from apps.marketdata.providers.Crypto.CoinGecko.dto.coins_markets import CoinsMarket, parse_coins_markets
-from apps.marketdata.providers.Crypto.CoinGecko.dto.coins_id import CoinDetail, parse_coin_detail
-from apps.marketdata.providers.Crypto.CoinGecko.dto.derivatives import parse_derivatives, Derivatives
-from apps.marketdata.providers.Crypto.CoinGecko.dto.derivatives_exchange_detail import DerivativesExchangeDetails, \
+from apps.marketdata.CoinGecko.dto.coin_history import CoinHistory, parse_coin_history
+from apps.marketdata.CoinGecko.dto.coin_tickers import CoinTickers, parse_coin_tickers
+from apps.marketdata.CoinGecko.dto.coins_list import parse_coins_list, CoinsList
+from apps.marketdata.CoinGecko.dto.coins_markets import CoinsMarket, parse_coins_markets
+from apps.marketdata.CoinGecko.dto.coins_id import CoinDetail, parse_coin_detail
+from apps.marketdata.CoinGecko.dto.derivatives import parse_derivatives, Derivatives
+from apps.marketdata.CoinGecko.dto.derivatives_exchange_detail import DerivativesExchangeDetails, \
     parse_derivatives_exchange_details
-from apps.marketdata.providers.Crypto.CoinGecko.dto.derivatives_exchanges import DerivativesExchangesPage, \
+from apps.marketdata.CoinGecko.dto.derivatives_exchanges import DerivativesExchangesPage, \
     parse_derivatives_exchanges
-from apps.marketdata.providers.Crypto.CoinGecko.dto.derivatives_exchanges_list import DerivativesExchangesList, \
+from apps.marketdata.CoinGecko.dto.derivatives_exchanges_list import DerivativesExchangesList, \
     parse_derivatives_exchanges_list
-from apps.marketdata.providers.Crypto.CoinGecko.dto.exchange_rates import ExchangeRates, parse_exchange_rates
-from apps.marketdata.providers.Crypto.CoinGecko.dto.exchange_tickers import parse_exchange_tickers, ExchangeTickers
-from apps.marketdata.providers.Crypto.CoinGecko.dto.exchange_volume_chart import parse_exchange_volume_chart, \
+from apps.marketdata.CoinGecko.dto.exchange_rates import ExchangeRates, parse_exchange_rates
+from apps.marketdata.CoinGecko.dto.exchange_tickers import parse_exchange_tickers, ExchangeTickers
+from apps.marketdata.CoinGecko.dto.exchange_volume_chart import parse_exchange_volume_chart, \
     ExchangeVolumeChart
-from apps.marketdata.providers.Crypto.CoinGecko.dto.exchanges import Exchanges, parse_exchanges
-from apps.marketdata.providers.Crypto.CoinGecko.dto.exchanges_list import ExchangesList, parse_exchanges_list
-from apps.marketdata.providers.Crypto.CoinGecko.dto.exchange_detail import Exchange, \
+from apps.marketdata.CoinGecko.dto.exchanges import Exchanges, parse_exchanges
+from apps.marketdata.CoinGecko.dto.exchanges_list import ExchangesList, parse_exchanges_list
+from apps.marketdata.CoinGecko.dto.exchange_detail import Exchange, \
     parse_exchange as parse_exchange_for_exchange_detail
-from apps.marketdata.providers.Crypto.CoinGecko.dto.global_defi import parse_global_defi_data, GlobalDefiData
-from apps.marketdata.providers.Crypto.CoinGecko.dto.ping import parser_ping, Ping
-from apps.marketdata.providers.Crypto.CoinGecko.dto.search import SearchResult, parse_search_result
-from apps.marketdata.providers.Crypto.CoinGecko.dto.search_trending import SearchTrendingResult, parse_search_trending
-from apps.marketdata.providers.Crypto.CoinGecko.dto.simpl_token_price import SimpleTokenPricesList, \
+from apps.marketdata.CoinGecko.dto.global_defi import parse_global_defi_data, GlobalDefiData
+from apps.marketdata.CoinGecko.dto.ping import parser_ping, Ping
+from apps.marketdata.CoinGecko.dto.search import SearchResult, parse_search_result
+from apps.marketdata.CoinGecko.dto.search_trending import SearchTrendingResult, parse_search_trending
+from apps.marketdata.CoinGecko.dto.simpl_token_price import SimpleTokenPricesList, \
     parse_simple_token_prices
-from apps.marketdata.providers.Crypto.CoinGecko.dto.simple_price import ListSimplePricesEntry, parse_list_simple_price
-from apps.marketdata.providers.Crypto.CoinGecko.dto.global_data import GlobalData, parse_global
-from apps.marketdata.providers.Crypto.CoinGecko.dto.supported_vs_currencies import SupportedVSCurrencies, \
+from apps.marketdata.CoinGecko.dto.simple_price import ListSimplePricesEntry, parse_list_simple_price
+from apps.marketdata.CoinGecko.dto.global_data import GlobalData, parse_global
+from apps.marketdata.CoinGecko.dto.supported_vs_currencies import SupportedVSCurrencies, \
     parse_supported_vs_currencies
-from apps.marketdata.providers.provider import Provider
+from apps.marketdata.provider import Provider
 from apps.marketdata.services.redis_cache import RedisCacheService
-from apps.marketdata.providers.Crypto.CoinGecko.cache_keys import CoinGeckoCacheKeys
+from apps.marketdata.CoinGecko.cache_keys import CoinGeckoCacheKeys
 
 
 
