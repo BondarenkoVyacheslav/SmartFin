@@ -27,13 +27,17 @@ class USAStockProvider(Provider):
 
     def __init__(
         self,
-        cache: RedisCacheService,
+        cache: Optional[RedisCacheService] = None,
         *,
+        redis_url: Optional[str] = None,
         base_url: str = BASE_URL,
         timeout_s: float = 10.0,
         user_agent: str = "SmartFin/USAStockProvider/1.0",
     ) -> None:
-        super().__init__(cache)
+        super().__init__(
+            cache_service=cache,
+            redis_url=redis_url,
+        )
         self.base_url = base_url.rstrip("/")
         self.http = httpx.AsyncClient(
             base_url=self.base_url,

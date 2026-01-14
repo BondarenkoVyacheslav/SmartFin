@@ -12,9 +12,9 @@ from app.marketdata.services.redis_cache import RedisCacheService
 
 @strawberry.type
 class USAStockQuery:
-    def __init__(self, usa_provider: USAStockProvider, cache: RedisCacheService):
+    def __init__(self, usa_provider: USAStockProvider, cache: Optional[RedisCacheService] = None):
         self.usa_provider = usa_provider
-        self.cache = cache
+        self.cache = cache or usa_provider.cache
 
     @staticmethod
     def _normalize_symbols(symbols: Sequence[str]) -> List[str]:

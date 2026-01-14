@@ -1,5 +1,5 @@
 from html.parser import attrfind_tolerant
-from typing import Any
+from typing import Any, Dict, Optional
 import httpx
 from enum import Enum
 
@@ -54,8 +54,17 @@ class MOEXProvider(Provider):
 
     BASE_URL = "http://iss.moex.com"
 
-    def __init__(self, cache: RedisCacheService, timeout_s: float = 10.0) -> None:
-        super().__init__(cache)
+    def __init__(
+        self,
+        cache: Optional[RedisCacheService] = None,
+        *,
+        redis_url: Optional[str] = None,
+        timeout_s: float = 10.0,
+    ) -> None:
+        super().__init__(
+            cache_service=cache,
+            redis_url=redis_url,
+        )
         self._timeout_s = timeout_s
 
     async def _get(

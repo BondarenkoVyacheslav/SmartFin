@@ -34,9 +34,9 @@ from app.marketdata.services.redis_cache import RedisCacheService
 
 @strawberry.type
 class MOEXQuery:
-    def __init__(self, moex_provider: MOEXProvider, cache: RedisCacheService):
+    def __init__(self, moex_provider: MOEXProvider, cache: Optional[RedisCacheService] = None):
         self.moex_provider = moex_provider
-        self.cache = cache
+        self.cache = cache or moex_provider.cache
 
     # ---- /iss/securities.json ----
     @strawberry.field

@@ -34,9 +34,9 @@ from app.marketdata.services.redis_cache import RedisCacheService
 
 @strawberry.type
 class CoinGeckoQuery:
-    def __init__(self, coin_gecko_provider: CoinGeckoProvider, cache: RedisCacheService):
+    def __init__(self, coin_gecko_provider: CoinGeckoProvider, cache: Optional[RedisCacheService] = None):
         self.coin_gecko_provider = coin_gecko_provider
-        self.cache = cache
+        self.cache = cache or coin_gecko_provider.cache
 
     # ---- /ping ----
     @strawberry.field

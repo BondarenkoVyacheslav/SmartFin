@@ -81,15 +81,19 @@ class CoinGeckoProvider(Provider):
 
     def __init__(
             self,
-            cache: RedisCacheService,
+            cache: Optional[RedisCacheService] = None,
             *,
+            redis_url: Optional[str] = None,
             api_key: str = os.getenv("COIN_GECKO_API_DEMO_KEY"),
             base_url: str = "https://api.coingecko.com/api/v3",
             timeout_s: int = 12,
             user_agent: str = "SmartFin/CoinGeckoProvider/1.0",
             pass_key_in_query: bool = False,  # альтернативная подача ключа через query
     ) -> None:
-        super().__init__(cache)
+        super().__init__(
+            cache_service=cache,
+            redis_url=redis_url,
+        )
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.pass_key_in_query = pass_key_in_query
