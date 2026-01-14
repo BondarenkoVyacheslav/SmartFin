@@ -17,6 +17,10 @@ from apps.marketdata.MOEX.dto.stock_shares_TQBR_securities import MOEXSharesTQBR
     parse_moex_shares_tqbr_securities_response
 from apps.marketdata.MOEX.dto.stock_shares_TQTF_securities import \
     MOEXStockSharesTQTFSecurities, parse_moex_security_detail_response
+from apps.marketdata.MOEX.dto.currency_selt_CETS_securities import (
+    MOEXCurrencySeltCETSSecurities,
+    parse_moex_currency_selt_cets_securities_response,
+)
 from apps.marketdata.provider import Provider
 from apps.marketdata.services.redis_cache import RedisCacheService
 from apps.marketdata.MOEX.cache_keys import MOEXCacheKeys
@@ -45,6 +49,8 @@ class MOEXProvider(Provider):
     TTL_STOCK_SHARES_TQBR_SECURITIES = 30  # рекомендация разбить по таблицам. Securities 24 часа, marketdata 5 - 10 секунд, dataversion 5 - 10 секунд.
     TTL_STOCK_SHARES_TQTF_SECURITIES = 30
     TTL_STOCK_BONDS_TQCB_SECURITIES = 30
+    TTL_STOCK_BONDS_TQOB_SECURITIES = 30
+    TTL_CURRENCY_SELT_CETS_SECURITIES = 30
 
     BASE_URL = "http://iss.moex.com"
 
@@ -275,19 +281,50 @@ class MOEXProvider(Provider):
         await self.cache.set(key, stock_bonds_tqcb_securities.to_redis_value(), ttl=self.TTL_STOCK_BONDS_TQCB_SECURITIES)
         return stock_bonds_tqcb_securities
 
-    async def stock_bonds_TQOB_securities(self, securities: str = None) -> None:
+    async def stock_bonds_TQOB_securities(
+        self,
+        securities: str = None,
+    ) -> MOEXStockBondsTQOBSecuritiesResponse:
         """
             TQOB — T+ Гособлигации (state bonds / ОФЗ и т.п.)
         """
         params = {
-            "iss.meta" : "off"
+            "iss.meta": "off",
+            "securities": securities,
         }
         data = await self._get("/iss/engines/stock/markets/bonds/boards/TQOB/securities.json", params)
 
         key = self.Keys.stock_bound_TQOB_securities(securities)
-        stock_bonds_TQOB_securities: MOEXStockBondsTQOBSecuritiesResponse = MOEXStockBondsTQOBSecuritiesResponse.from_payload(data)
+        stock_bonds_tqob_securities: MOEXStockBondsTQOBSecuritiesResponse = (
+            MOEXStockBondsTQOBSecuritiesResponse.from_payload(data)
+        )
 
-        await self.cache.set(key, )
+        await self.cache.set(
+            key,
+            stock_bonds_tqob_securities.to_redis_value(),
+            ttl=self.TTL_STOCK_BONDS_TQOB_SECURITIES,
+        )
+        return stock_bonds_tqob_securities
 
-    async def currency_selt_CETS_securities(self) -> None:
-        pass
+    async def currency_selt_CETS_securities(self, securities: str = None) -> MOEXCurrencySeltCETSSecurities:
+        """
+            CETS — основной борд валютного рынка (engine=currency, market=selt).
+        """
+        params = {
+            "iss.meta": "off",
+            "iss.only": "securities,marketdata,dataversion",
+            "securities": securities,
+        }
+
+        data = await self._get("/iss/engines/currency/markets/selt/boards/CETS/securities.json", params)
+        currency_cets_securities: MOEXCurrencySeltCETSSecurities = (
+            parse_moex_currency_selt_cets_securities_response(data)
+        )
+
+        key = self.Keys.currency_selt_CETS_securities(securities)
+        await self.cache.set(
+            key,
+            currency_cets_securities.to_redis_value(),
+            ttl=self.TTL_CURRENCY_SELT_CETS_SECURITIES,
+        )
+        return currency_cets_securities

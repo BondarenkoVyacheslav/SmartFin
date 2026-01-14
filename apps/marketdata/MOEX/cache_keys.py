@@ -172,3 +172,16 @@ class MOEXCacheKeys:
             f"board:TQOB:"
             f"securities{":" + securities if securities else ""}"
         )
+
+    @classmethod
+    def currency_selt_CETS_securities(cls, securities: str = None) -> str:
+        """
+            Ключ для https://iss.moex.com/iss/engines/currency/markets/selt/boards/CETS/securities.json
+        """
+
+        return (
+            f"{cls.KP}:engine:currency:"
+            f"market:selt:"
+            f"board:CETS:"
+            f"securities{":" + securities if securities else ""}"
+        )
