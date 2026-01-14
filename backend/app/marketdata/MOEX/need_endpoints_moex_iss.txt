@@ -1,0 +1,286 @@
+# =========================================
+# SmartFin x MOEX ISS — endpoints summary
+# =========================================
+
+# -----------------------------------------
+# 1. Справочники инструментов (legacy + 2.0)
+# -----------------------------------------
+
+/iss/securities
+    # Общий список бумаг (legacy-справочник).
+
+/iss/securities/[security]
+    # Спецификация инструмента: валюта, номинал, ISIN и др.
+
+/iss/referencedata/engines/stock/markets/all/securities
+    # Reference Data 2.0: полный список инструментов фондового рынка
+    # с актуальной торгуемостью и атрибутами.
+
+/iss/referencedata/engines/futures/markets/[market]/securities
+    # Reference Data 2.0 для срочного рынка (фьючерсы/опционы).
+
+/iss/securitygroups
+    # Справочник групп инструментов (классификация).
+
+/iss/securitygroups/[group]/collections/[collection]/securities
+    # Список инструментов в группе/коллекции.
+
+
+# -----------------------------------------
+# 2. Структура рынка (engines / markets / boards)
+# -----------------------------------------
+
+/iss/engines
+    # Список доступных торговых систем (stock, currency, futures, state, ...).
+
+/iss/engines/[engine]/markets
+    # Рынки внутри движка (shares, bonds, index, selt, forts и т.п.).
+
+/iss/engines/[engine]/markets/[market]/boards
+    # Режимы торгов (boards): TQBR, TQOB, CETS, RFUD и т.п.
+
+
+# -----------------------------------------
+# 3. Текущие цены (по всем активам)
+# -----------------------------------------
+
+/iss/statistics/engines/stock/currentprices
+    # Агрегированные текущие цены фондового рынка (LAST, LASTCHANGE и др.).
+
+/iss/engines/[engine]/markets/[market]/boards/[board]/securities
+    # Таблица инструментов по борду:
+    # справочные поля + текущие цены (LAST, BID, OFFER, VOLUME, VALTODAY, ...).
+
+/iss/engines/[engine]/markets/[market]/boards/[board]/securities/[security] -
+    # Данные по конкретному инструменту на конкретном борде (fallback/детализация).
+
+
+# -----------------------------------------
+# 4. История цен и свечи (EOD + intraday) # Пропускаем пока
+# -----------------------------------------
+
+/iss/history/engines/[engine]/markets/[market]/boards/[board]/securities/[security]
+    # EOD-история по бумаге:
+    # TRADEDATE, OPEN, HIGH, LOW, CLOSE, VOLUME и др.
+
+/iss/engines/[engine]/markets/[market]/boards/[board]/securities/[security]/candles
+    # Интрадей-свечи OHLCV по интервалам (interval, from, till, ...).
+
+/iss/engines/[engine]/markets/[market]/boards/[board]/securities/[security]/candleborders
+    # Доступные интервалы и диапазоны дат для свечей.
+
+
+# -----------------------------------------
+# 5. Индексы (список, показатели, история) # отсюдова может что то понадобиться
+# -----------------------------------------
+
+/iss/statistics/engines/stock/markets/index/analytics -
+    # Список индексов и их текущая статистика. Просто все индексы с Title и датой создания и уничтожения
+
+/iss/statistics/engines/stock/markets/index/analytics/[indexid] -
+    # Показатели по конкретному индексу за дату.
+
+/iss/statistics/engines/stock/markets/index/analytics/[indexid]/tickers
+    # Состав индекса — список тикеров.
+
+/iss/history/engines/stock/markets/index/securities
+    # История значений индексов (по датам).
+
+
+# -----------------------------------------
+# 6. Валюты и курсы (FX / ЦБ / фикcинги)
+# -----------------------------------------
+
+/iss/statistics/engines/currency/markets/selt/rates +
+    # Курсы ЦБ / расчетные курсы на валютном рынке (RUB к основным валютам).
+
+/iss/statistics/engines/currency/markets/fixing
+    # FX fixing: список инструментов фиксинга (USD/RUB_FX, EUR/RUB_FX и т.п.).
+
+/iss/statistics/engines/currency/markets/fixing/[security]
+    # Значения фиксинга по конкретному инструменту.
+
+
+# -----------------------------------------
+# 7. Облигации — НКД (опционально)
+# -----------------------------------------
+
+/iss/statistics/engines/stock/markets/bonds/monthendaccints
+    # НКД (accrued interest) на конец месяца по облигациям.
+
+
+# =====================================================
+# 8. Fundamentals / CCI — связь бумаг и компаний (NSD)
+# =====================================================
+
+/iss/cci/info-nsd/securities
+    # Выпуски (securities) NSD, связь бумага ↔ компания.
+
+/iss/cci/info-nsd/companies
+    # Список компаний NSD.
+
+/iss/cci/info-nsd/companies/[company]
+    # Профиль конкретной компании NSD.
+
+
+# -----------------------------------------
+# 9. Общий справочник компаний и отрасли
+# -----------------------------------------
+
+/iss/cci/info/companies
+    # Общий список организаций (поиск по ID/ИНН/ОГРН и др.).
+
+/iss/cci/info/companies/[company]
+    # Детальная справка по компании.
+
+/iss/cci/reference/industry-codes
+    # Справочник отраслевых кодов.
+
+/iss/cci/info/companies/industry-codes
+    # Таблица company ↔ industry_code (отрасль компании).
+
+
+# -----------------------------------------
+# 10. Финансовая отчетность (МСФО / РСБУ)
+# -----------------------------------------
+# accounting_type: msfo-short | msfo-full | rsbu
+
+/iss/cci/accounting/[accounting_type]/companies/[company]/reports
+    # Список всех доступных отчетов по компании.
+
+/iss/cci/accounting/[accounting_type]/companies/[company]/periods/[period]/reports
+    # Отчеты выбранного типа за конкретный период.
+
+/iss/cci/accounting/[accounting_type]/companies/[company]/reports/[report_id]
+    # Конкретный отчет (таблицы с данными).
+
+
+# -----------------------------------------
+# 11. Финансовые индикаторы и отраслевые средние (МСФО)
+# -----------------------------------------
+
+/iss/cci/accounting/msfo-full/indicators
+    # Справочник финансовых индикаторов (id, названия метрик).
+
+/iss/cci/accounting/msfo-full/companies/[company]/indicators
+    # Финансовые индикаторы по компании (по периодам).
+
+/iss/cci/accounting/msfo-full/indicators/[report_id]
+    # Детализированный отчет по набору индикаторов.
+
+/iss/cci/accounting/msfo-full/industry-indicators/reports
+    # Отраслевые средние значения индикаторов (список отчетов).
+
+/iss/cci/accounting/msfo-full/industry-indicators/reports/[indicator_id]
+    # Детализация отраслевых индикаторов по конкретному indicator_id.
+
+
+# -----------------------------------------
+# 12. Рейтинги эмитентов и выпусков
+# -----------------------------------------
+
+/iss/cci/rating/agg/companies
+    # Агрегированные рейтинги по компаниям (список).
+
+/iss/cci/rating/agg/companies/[company_id]
+    # Агрегированный рейтинг конкретной компании.
+
+/iss/cci/rating/agg/securities/[security_id]
+    # Агрегированный рейтинг конкретного выпуска (облигации и пр.).
+
+
+# -----------------------------------------
+# 13. Дивиденды, купоны, IR-календарь
+# -----------------------------------------
+
+/iss/cci/corp-actions/dividends
+    # Корпоративные действия по дивидендам (список/фильтрация).
+
+/iss/cci/corp-actions/dividends/[corp_action_id]
+    # Детали конкретного дивидендного события.
+
+/iss/cci/corp-actions/coupons
+    # Корпоративные действия по купонам облигаций.
+
+/iss/cci/corp-actions/coupons/[corp_action_id]
+    # Детали конкретного купонного события.
+
+/iss/cci/calendars/ir-calendar
+    # IR-календарь: отчеты, собрания акционеров, презентации и др.
+
+/iss/cci/corp-actions/meetings
+    # Список собраний акционеров (опционально).
+
+/iss/cci/corp-actions/meetings/[corp_action_id]
+    # Детали конкретного собрания (опционально).
+
+
+# -----------------------------------------
+# 14. Консенсус-прогнозы аналитиков
+# -----------------------------------------
+
+/iss/cci/consensus/shares-price
+    # Консенсус-прогнозы по акциям (таргет-цены и рекомендации).
+
+/iss/cci/consensus/shares-price/[security]
+    # Консенсус по конкретной акции.
+
+
+# -----------------------------------------
+# 15. Корпоративная информация и аффилированные лица
+# -----------------------------------------
+
+/iss/cci/reporting/corp-info/...
+    # отчёты по корпоративной информации (выпуск/выкуп акций, реорганизации, раскрытия и пр.).
+
+/iss/cci/reporting/affiliates/...
+    # отчёты об аффилированных лицах (структура владения, изменения долей и т.п.).
+
+
+# -----------------------------------------
+# 16. Сложные инструменты и “флажки риска”
+# -----------------------------------------
+
+/iss/statistics/complex/securities и /.../[security]
+    # флажки “complex product” для бумаг.
+
+/iss/statistics/markup/... и /iss/history/statistics/markup/...
+    # разметка сложных инструментов, исторические срезы.
+
+
+# -----------------------------------------
+# 17. Аггрегаты по рынку и капитализация
+# -----------------------------------------
+
+/iss/history/engines/stock/totals/...
+    # агрегированная инфа по фондовому рынку и по режимам (обороты, количество сделок и т.д.).
+
+/iss/statistics/engines/stock/capitalization
+    # капитализация рынка/сегментов.
+
+# -----------------------------------------
+# 18. Потоки и открытые интересы (аналитические продукты)
+# -----------------------------------------
+
+/iss/analyticalproducts/netflow2/securities
+    # денежные потоки по бумагам (net inflow/outflow).
+
+/iss/analyticalproducts/futoi/securities
+    # открытые позиции по фьючерсам (futures open interest).
+
+
+# -----------------------------------------
+# 19. Ставки/кривые как база для risk-free
+# -----------------------------------------
+
+/iss/statistics/engines/state/rates
+    # ключевые ставки/доходности гос-рынка.
+
+/iss/sdfi/curves и /iss/sdfi/curves/[curveid]
+    # своп-кривые на рынке СПФИ.
+
+
+
+# =========================================
+# Конец списка
+# =========================================

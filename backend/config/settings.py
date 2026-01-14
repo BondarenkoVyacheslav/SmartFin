@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'app.portfolio',
     'app.transaction',
     'app.integrations',
+    'app.marketdata',
 ]
 
 MIDDLEWARE = [
