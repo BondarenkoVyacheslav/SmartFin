@@ -20,6 +20,8 @@ class Transaction(models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name="transactions")
     transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
     amount = models.DecimalField(max_digits=20, decimal_places=8)
+    price = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True)
+    price_currency = models.CharField(max_length=10, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     source = models.CharField(
         max_length=20,

@@ -21,6 +21,8 @@ class PortfolioAssetType:
     asset: AssetTypeGQL
     portfolio: PortfolioType
     quantity: auto
+    avg_buy_price: auto
+    buy_currency: auto
     updated_at: auto
 
 @strawberry.type
