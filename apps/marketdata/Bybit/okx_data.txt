@@ -1,0 +1,126 @@
+# Order Book Trading / Market Data
+
+## REST
+
+* `GET /api/v5/market/tickers` — последние снэпшоты цен по всем инструментам выбранного типа: last, lastSz, best bid/ask (bidPx/askPx, bidSz/askSz), open/high/low/vol24h и др. ([OKX United States][1])
+* `GET /api/v5/market/ticker` — то же, но по одному `instId`. ([OKX United States][1])
+* `GET /api/v5/market/books` — срез книги заявок (asks/bids с ценой и объёмом) по инструменту. ([OKX United States][1])
+* `GET /api/v5/market/books-full` — «полная» книга заявок (глубокий срез, параметр `sz` — число уровней). ([OKX United States][1])
+* `GET /api/v5/market/candles` — текущие свечи OHLCV по инструменту (интервалы задаются параметром `bar`). ([OKX United States][1])
+* `GET /api/v5/market/history-candles` — исторические OHLCV (пагинация, за прошлые годы). ([OKX United States][1])
+* `GET /api/v5/market/trades` — последние сделки по инструменту (цена, размер, сторона, время, id). ([OKX United States][1])
+* `GET /api/v5/market/history-trades` — история сделок (последние 3 мес., с пагинацией). ([OKX United States][1])
+
+## WebSocket (публичные каналы)
+
+* **Tickers channel** — поток тикеров (last, bid/ask, 24h статистика). ([OKX United States][1])
+* **Candlesticks channel** — поток свечей по выбранному интервалу. ([OKX United States][1])
+* **Trades channel** — сделки по конкретному инструменту. ([OKX United States][1])
+* **All trades channel** — все сделки по рынку (агрегированный поток). ([OKX United States][1])
+* **Order book channel** — инкрементальные обновления книги заявок; в сообщениях есть `seqId/prevSeqId` для сборки последовательности и `checksum` для проверки целостности. ([OKX United States][1])
+
+### Примечание про low-latency каналы (WS)
+
+Для инструментов/книги заявок доступны «тонкие» каналы TBT (best bid/offer и L2) наподобие `bbo-tbt`, `books-l2-tbt`, `books50-l2-tbt`, а также легковесный `books5`. Их используют для высокой частоты обновлений; конфигурация инструментов и обновления (tick size и т.п.) также приходят через WS **instruments**. ([OKX][2])
+
+---
+
+# Order Book Trading / **SBE Market Data**
+
+Это отдельная **низко-латентная** лента рыночных данных в бинарном формате **SBE (Simple Binary Encoding)**. В документации раздел включает:
+
+* **Overview**, **XML Schema**, **General Information**, **Integration Information**, **SBE Order book**, **New error code**, **Upgrade**. ([OKX][3])
+
+OKX официально объявил запуск SBE Market Data (в т.ч. «SBE Order book») — ориентирована на быстрые инкрементальные обновления стакана. Детали формата/сообщений и процесс интеграции описаны в их SBE-разделе и релиз-логах. ([OKX][4])
+
+> Практически: SBE — альтернатива JSON-WS для стакана (наименьшая задержка и нагрузка). Вы получаете бинарные сообщения с уровнями книги, порядковыми номерами/последовательностью и отдельными кодами ошибок по SBE. (Полный список полей/структур — в их SBE-доках по ссылкам выше.)
+
+---
+
+# Public Data (общедоступные метаданные рынка)
+
+## REST
+
+* `GET /api/v5/public/instruments` — список доступных инструментов (метаданные: id, тип, базовая/котируемая, шаг цены/лота, статусы листинга и др.). ([OKX United States][5])
+* `GET /api/v5/public/time` — текущее системное время OKX. ([OKX United States][1])
+
+## WebSocket
+
+* **Instruments channel** — поток обновлений по инструментам (например, изменение tick size, новые листинги). Рекомендуется подписка для онлайновой синхронизации конфигурации. ([OKX][2])
+
+---
+
+# Trading Statistics (рыночная статистика по деривативам)
+
+Раздел **Trading Statistics** (Data API) покрывает агрегированную статистику по контрактам. В релиз-логах OKX перечислены ключевые эндпоинты:
+
+* **Get contract open interest history** — временной ряд открытого интереса (OI) по контракту/семейству. ([OKX][6])
+* **Get contract taker volume** — объёмы taker-покупок/продаж (buy/sell taker) за период (для анализа потоков агрессора). ([OKX][6])
+* **Get top traders contract long/short ratio** — лонг/шорт-соотношение у топ-трейдеров (по счетам). ([OKX][6])
+* **Get top traders contract long/short ratio (by position)** — то же, но рассчитано по позициям. ([OKX][6])
+* **Get contract long/short ratio** — сводное лонг/шорт-соотношение по рынку. ([OKX][6])
+* (Также фигурирует **Get premium history** — история премии индекса/базиса.) ([OKX][6])
+
+> Что возвращают: для каждого из этих запросов — серии по времени с метками `ts`, привязками к инструменту/семейству (`instId`/`instFamily`) и значениями соответствующих метрик (`oi`, `volBuy/volSell` и т.п.). Полные поля и параметры фильтрации смотрите на страницах эндпоинтов, на которые указывает официальный **Change Log**. ([OKX][6])
+
+---
+
+# Funding Account (данные о движении средств) — то, что полезно для мониторинга ончейн/вводов-выводов
+
+> Эти точки требуют аутентификации, но их данные часто нужны в бекэнде для статусов депозитов/выводов, фиата и конверта. Привожу те, что типично «данные», а не операции.
+
+## REST (основные «читающие» эндпоинты)
+
+* `GET /api/v5/asset/currencies` — перечень поддерживаемых валют/сетей (для вашего KYC-субъекта). ([OKX United States][1])
+* `GET /api/v5/asset/balances` — баланс Funding (раздел «Get balance» в Funding). ([OKX United States][1])
+* `GET /api/v5/asset/non-tradable-assets` — список неторгуемых активов на аккаунте. ([OKX United States][1])
+* `GET /api/v5/asset/asset-valuation` — оценка активов по аккаунтам (funding/trading/earn). ([OKX United States][1])
+* `GET /api/v5/asset/transfer-state` — статус перевода (tracking). ([OKX United States][1])
+* `GET /api/v5/asset/bills` и `GET /api/v5/asset/bills-archive` — детали и история биллов Funding. ([OKX United States][1])
+* `GET /api/v5/asset/deposit-address` — депоз. адреса (адрес, tag/memo, сеть, выбранный по умолчанию и т.д.). ([OKX United States][1])
+* `GET /api/v5/asset/deposit-history` — история депозитов (100 последних по умолчанию). ([OKX United States][1])
+* `GET /api/v5/asset/withdrawal-history` — история выводов. ([OKX United States][1])
+* `GET /api/v5/asset/deposit-withdraw-status` — сводка статусов деп/вывода по валютам/сетям. ([OKX United States][1])
+* **FIAT-подраздел**: `GET /api/v5/fiat/deposit-order-history`, `GET /api/v5/fiat/withdrawal-order-history`, `GET /api/v5/fiat/withdrawal`, `GET /api/v5/fiat/deposit` — детализация по фиатным платёжным ордерам. ([OKX United States][1])
+* **Convert** (агрегатор обмена): справочники и история — `GET /api/v5/asset/convert/currencies`, `GET /api/v5/asset/convert/currency-pair`, `GET /api/v5/asset/convert/history`. ([OKX United States][1])
+* Публичный справочник обменников: `GET /api/v5/asset/exchange-list` (без авторизации). ([OKX United States][1])
+
+> (Операционные POST/DELETE для переводов/выводов я опустил, т.к. вы просили именно «данные по рынку/статусы», но они тоже есть в том же разделе Funding.)
+
+## WebSocket (приватные каналы)
+
+* **Deposit info channel** — онлайн-пуш статусов новых депозитов на ваш аккаунт. ([OKX United States][1])
+* **Withdrawal info channel** — онлайн-пуш статусов выводов. ([OKX United States][1])
+
+---
+
+# Status (состояние системы)
+
+* **REST**: `GET /api/v5/system/status` — события обновления/работоспособности сервисов (можно фильтровать по `state`). ([OKX United States][1])
+* **WebSocket**: **Status channel** — уведомления о статусе (в т.ч. спец-сообщение `event: notice` за 30 сек до технологического дисконнекта WS при апгрейде, код `64008`). ([OKX United States][1])
+
+---
+
+## Важные примечания по стримам книги заявок
+
+* Все инкрементальные каналы стакана сопровождаются `seqId/prevSeqId` (сборка последовательности) и `checksum` для валидации; если долгих апдейтов нет, может прийти heartbeat-сообщение с пустыми `asks`/`bids`. Это критично для корректного восстановления L2. ([OKX United States][1])
+
+---
+
+### Если коротко: что «закрывает» ваш кейс мониторинга рынка
+
+1. **Market Data (REST+WS)** — оперативные цены/сделки/свечи/стакан. ([OKX United States][1])
+2. **Public Data** — справочник инструментов и их онлайновые обновления через WS. ([OKX][2])
+3. **Trading Statistics** — агрегаты рынка (OI, taker-потоки, long/short-ratio) для аналитики. ([OKX][6])
+4. **Funding Account (WS+REST)** — статусы депозитов/выводов/фиата/convert для пользовательских операций (пригодится бекэнду). ([OKX United States][1])
+5. **Status (REST+WS)** — следить за состоянием API/апгрейдами, чтобы корректно переключать стримы/повторять запросы. ([OKX United States][1])
+6. **SBE Market Data** — если нужна минимальная задержка по стакану (бинарный фид). ([OKX][3])
+
+Хочешь — соберу это в YAML/Markdown-спеку под ваш **MarketDataAPI** (с пометками: публичный/приватный, rate-limits, ключевые поля ответа) — прямо готовую для импорта в проект.
+
+[1]: https://my.okx.com/docs-v5/en/ "OKX API guide | OKX technical support | OKX"
+[2]: https://www.okx.com/docs-v5/trick_en/?utm_source=chatgpt.com "Instrument configuration – OKX API guide"
+[3]: https://www.okx.com/docs-v5/en/?utm_source=chatgpt.com "Overview – OKX API guide | OKX technical support"
+[4]: https://www.okx.com/docs-v5/log_en/?utm_source=chatgpt.com "Upcoming Changes – OKX API guide | OKX technical support"
+[5]: https://my.okx.com/docs-v5/en/?utm_source=chatgpt.com "Overview – OKX API guide | OKX technical support"
+[6]: https://www.okx.com/docs-v5/log_en/ "OKX API guide | OKX technical support | OKX"

@@ -1,0 +1,75 @@
+Окей, родной — вот мой приоритетный «шорт-лист» провайдеров для анализа крипторынка + как их встроить так, чтобы бэк работал стабильно и с фолбэком.
+
+# Тier 0 (ядро: «качество + покрытие»)
+1. **CoinGecko (агрегатор, REST)** — отличное покрытие монет/бирж и метаданных, есть DEX/ончейн через GeckoTerminal. Для MVP даёт максимум «за свои деньги/бесплатно», а на Pro раскрывается ещё больше. Я беру его как базовый справочник монет, рынков, OHLCV, маркета и метадаты. ([CoinGecko API][1])
+2. **CoinAPI (агрегатор, REST/WS/FIX)** — институциональный уровень: нормализованные trades/L2-книга/ohlcv, исторический тик-левел, >400 бирж, унифицированные схемы и стримы. Отлично для архивов, бэктестов и консолидации. Я бы ставил как «источник истины» для истории/тик-данных. ([coinapi.io][2])
+3. **Kaiko (институциональные фиды, REST/стрим)** — высоконадежные рыночные фиды, бенчмарк-индексы, охват спота/деривативов, enterprise-инфраструктура (в т.ч. через партнёрство с LSEG). Хорош для продвинутой аналитики ликвидности/глубины/качества рынка. ([docs.kaiko.com][3])
+4. **Биржевые API (низкая задержка, WS + REST):**
+   — **Binance:** полный набор маркет-эндпоинтов/маркет-дата-нод (data-api) для публичных данных.
+   — **OKX:** очень быстрые WS-каналы (books5/bbo-tbt), богатый маркет-дата стек.
+   — **Kraken:** чёткие публичные эндпоинты + Futures/WS/FIX.
+   — **Bybit v5:** единый API для Spot/Derivatives/Options; удобные маркет-методы.
+   Для «живых» тиков, книг и funding-метрик я всегда иду на WS бирж напрямую, а агрегатором закрываю историю и консолидацию. ([developers.binance.com][4])
+
+# Tier 1 (надёжные альтернативы и доп. источники)
+5. **CoinMarketCap (агрегатор, REST)** — близок к CoinGecko по классу задач: котировки, пары, исторические OHLCV, листинги, рейтинги. Часто удобен как «второе мнение» и фолбэк по справочным данным. ([CoinMarketCap][5])
+6. **CCData / CryptoCompare (агрегатор, REST/WS)** — известен «CCCAGG» (volume-weighted) и новостями; годится как резервный провайдер цен/истории и новостного потока. ([CryptoCompare][6])
+7. **Cryptowatch (от Kraken, REST/WS)** — бесплатные публичные рыночные данные по множеству бирж, хорошо подходит как лёгкий фолбэк/дашборд-фид. ([rdocumentation.org][7])
+
+# Tier 2 (ончейн-аналитика и деривативы)
+8. **Glassnode (ончейн + офчейн метрики, REST)** — 900+ метрик, институциональная инфраструктура; хорошо для сигналов спроса/предложения, циклов, UTXO-когорт и т.д. ([docs.glassnode.com][8])
+9. **Coin Metrics (ончейн/рыночные, REST/WS)** — богатый каталог сетевых и рыночных метрик, community + pro-слои; удобные клиенты/каталог. Отличный фолбэк/«второе мнение» к Glassnode. ([docs.coinmetrics.io][9])
+10. **Messari (маркет, деривативы, on-chain, ресёрч)** — цены/объёмы по 34k+ активов, 210+ бирж; есть funding, OI и ресёрч-эндпоинты. Удобно закрывает сводные маркет-метрики, деривативы и профили активов. ([Messari][10])
+11. **Dune / Flipside (SQL-доступ к ончейн-датасетам)** — когда нужны кастомные on-chain выборки (DEX-объёмы, активность адресов, мосты и т.п.) — превращаете SQL-запросы в API эндпоинты. Отличный гибкий фолбэк. ([docs.dune.com][11])
+
+# Tier 3 (новости/соц-сентимент)
+12. **CryptoPanic (новости/сентимент, REST)** — агрегатор новостей с простым API; идеален как «системный» источник новостной ленты и тегов сентимента. ([CryptoPanic][12])
+13. **LunarCrush (соц-данные/сентимент)** — соц-метрики, тренды, «narratives»; используется крупными игроками, полезен для сигналов и алертов. ([lunarcrush.com][13])
+14. **Alternative.me (Fear & Greed)** — простой и популярный индекс настроений как дополнительный индикатор. ([alternative.me][14])
+
+# Рекомендованная матрица фолбэков (MVP → прод)
+* **Живые тики/книга/фандинг:** WS **бирж** (Binance/OKX/Kraken/Bybit) → фолбэк: агрегированный REST (**CoinAPI/Kaiko**) для краткого окна/«догрузки». ([developers.binance.com][15])
+* **OHLCV/котировки/метаданные активов:** **CoinGecko** → фолбэк: **CoinMarketCap** / **CCData**. ([CoinGecko API][1])
+* **Глубокая история (тик-левел) и нормализация по множеству бирж:** **CoinAPI** / **Kaiko** (primary) → фолбэк: биржевые REST-дампы/исторические архивы (где доступны). ([coinapi.io][2])
+* **Ончейн-метрики:** **Glassnode** (primary) → фолбэк: **Coin Metrics** → кастом по **Dune/Flipside**. ([docs.glassnode.com][8])
+* **Новости/соц-сигналы:** **CryptoPanic** (primary) → **LunarCrush** → доп. **Fear & Greed**. ([CryptoPanic][12])
+
+# Как встроить для стабильной работы бэка (практика)
+* **WS-первым делом для рыночных стримов**, REST — для снапшотов, бэкфилла и проверок целостности. Биржевые WS дают минимальную задержку; агрегаторы — «золотая копия» истории. ([OKX][16])
+* **Кэш/буферизация:** Redis для последних снапшотов/книги, дисковый «журнал» для реплея тиков на случай рестарта (write-ahead log).
+* **Ретрай/бэк-офф + Circuit Breaker:** ориентируйтесь на заголовки лимитов провайдеров и собственные окна (например, 429/5xx → экспоненциальный бэк-офф; трип-брейкер → переключение на фолбэк).
+* **Фолбэк-матрица** в конфиге (DB/YAML), а не в коде — чтобы переключать провайдеры без деплоя.
+* **Унификация символов/ринков:** хранить внутренний справочник `asset`/`market` с маппингами на идентификаторы у каждого провайдера (Gecko id, CMC id, биржевой символ). Это снимет боль при сводной аналитике.
+* **Контроль качества данных:** сверки источников (например, Gecko vs CMC), фильтры выбросов, «gap-fill» при разрывах стрима.
+* **Здоровье и телеметрия:** heartbeat на WS-каналы, лаг по времени последнего апдейта, метрики дропов/рестартов.
+* **Юридика и регионы:** у некоторых бирж/агрегаторов есть региональные ограничения; держите *как минимум два независимых* источника на каждый критичный тип данных (см. матрицу выше).
+
+---
+
+## Короткий ответ «что брать прямо сейчас для SmartFin (MVP)»
+1. **CoinGecko** — базовый агрегатор рынков/метаданных/OHLCV. ([CoinGecko API][1])
+2. **Биржевые WS** (Binance/OKX/Kraken/Bybit) для онлайна: тики/книга/funding/ohlc-стрим. ([developers.binance.com][15])
+3. **CoinAPI** как источник «чистой» истории (тик-левел) и нормализации. ([coinapi.io][2])
+4. **Glassnode** для ключевых ончейн-сигналов по BTC/ETH/топ-сетям. ([docs.glassnode.com][8])
+5. **CryptoPanic** (новости) + **LunarCrush** (соц-сигналы). ([CryptoPanic][12])
+
+План B на случай блокировок/падений: **CoinMarketCap / CCData(CryptoCompare) / Cryptowatch / Coin Metrics / Dune / Flipside / Alternative.me** — подключаем как резервные провайдеры по соответствующим типам данных (см. уровни выше). ([CoinMarketCap][5])
+
+Если хочешь — сразу накину YAML «фолбэк-матрицу» под твой MarketDataAPI и шаблон ретраев/квот в Redis.
+
+[1]: https://docs.coingecko.com/?utm_source=chatgpt.com "CoinGecko API: Introduction"
+[2]: https://www.coinapi.io/products/market-data-api?utm_source=chatgpt.com "Crypto Market Data API | Real-Time & Historical"
+[3]: https://docs.kaiko.com/?utm_source=chatgpt.com "About the Developer Hub | Developer Hub - Kaiko"
+[4]: https://developers.binance.com/docs/binance-spot-api-docs/rest-api?utm_source=chatgpt.com "General API Information | Binance Open Platform"
+[5]: https://coinmarketcap.com/api/documentation/v1/?utm_source=chatgpt.com "CoinMarketCap API Documentation"
+[6]: https://www.cryptocompare.com/media/37746014/cccagg_index_methodology_2021_02.pdf?utm_source=chatgpt.com "CCCAGG Index Methodology"
+[7]: https://www.rdocumentation.org/packages/cryptowatchR/versions/0.2.0?utm_source=chatgpt.com "cryptowatchR package"
+[8]: https://docs.glassnode.com/basic-api/api?utm_source=chatgpt.com "the Glassnode API documentation."
+[9]: https://docs.coinmetrics.io/api/v4/?utm_source=chatgpt.com "Coin Metrics API v4"
+[10]: https://messari.io/api?utm_source=chatgpt.com "Messari API"
+[11]: https://docs.dune.com/api-reference/overview/introduction?utm_source=chatgpt.com "Dune API Overview"
+[12]: https://cryptopanic.com/developers/api/?utm_source=chatgpt.com "API Reference"
+[13]: https://lunarcrush.com/developers/api/endpoints?utm_source=chatgpt.com "LunarCrush API Documentation v4 RESTful JSON API"
+[14]: https://alternative.me/crypto/fear-and-greed-index/?utm_source=chatgpt.com "Crypto Fear & Greed Index - Bitcoin Sentiment"
+[15]: https://developers.binance.com/docs/binance-spot-api-docs/rest-api/market-data-endpoints?utm_source=chatgpt.com "Market Data endpoints | Binance Open Platform"
+[16]: https://www.okx.com/docs-v5/en/?utm_source=chatgpt.com "Overview – OKX API guide | OKX technical support"
