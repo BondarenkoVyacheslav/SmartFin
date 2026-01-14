@@ -13,8 +13,6 @@ class TransactionType:
     asset: AssetTypeGQL
     transaction_type: auto
     amount: auto
-    price: auto
-    price_currency: auto
     created_at: auto
 
 

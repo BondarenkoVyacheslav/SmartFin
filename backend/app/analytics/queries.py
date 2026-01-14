@@ -2,14 +2,14 @@ import strawberry
 from strawberry import auto
 from typing import List
 from app.analytics.models import PortfolioDailySnapshot, PortfolioAssetDailySnapshot
-from app.portfolio.queries import Portfolio
+from app.portfolio.queries import PortfolioType
 from app.assets.queries import AssetTypeGQL
 
 
 @strawberry.django.type(PortfolioDailySnapshot)
 class PortfolioDailySnapshotGQL:
     id: auto
-    portfolio: Portfolio
+    portfolio: PortfolioType
     snapshot_date: auto
     capital: auto
     created_at: auto
@@ -18,7 +18,7 @@ class PortfolioDailySnapshotGQL:
 @strawberry.django.type(PortfolioAssetDailySnapshot)
 class PortfolioAssetDailySnapshotGQL:
     id: auto
-    portfolio: Portfolio
+    portfolio: PortfolioType
     asset_type: AssetTypeGQL
     snapshot_date: auto
     snapshot: auto

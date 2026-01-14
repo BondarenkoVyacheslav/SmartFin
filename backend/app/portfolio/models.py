@@ -21,6 +21,4 @@ class PortfolioAsset(models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.PROTECT)
     portfolio = models.ForeignKey(Portfolio, on_delete=models.CASCADE)
     quantity = models.DecimalField(max_digits=20, decimal_places=8)
-    avg_price = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True)
-    avg_price_currency = models.CharField(max_length=10) # валюта в которой храниться avg_price
     updated_at = models.DateTimeField(auto_now=True)

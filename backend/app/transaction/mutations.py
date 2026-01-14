@@ -26,7 +26,7 @@ def _to_decimal(value: str, field_name: str) -> Decimal:
 class TransactionMutations:
     @strawberry.mutation
     def create_transaction(self, portfolio_id: int, asset_id: int, transaction_type: str, amount: float,
-                           price: float = None, price_currency: str = "USD") -> TransactionType:
+                           ) -> TransactionType:
         portfolio = Portfolio.objects.get(id=portfolio_id)
         asset = Asset.objects.get(id=asset_id)
         return Transaction.objects.create(
@@ -34,8 +34,6 @@ class TransactionMutations:
             asset=asset,
             transaction_type=transaction_type,
             amount=amount,
-            price=price,
-            price_currency=price_currency,
         )
 
 
@@ -46,18 +44,13 @@ class TransactionMutations:
             asset_id: int,
             transaction_type: str, # "buy"/"sell"
             amount: str,
-            price: str,
-            price_currency: str = "USD",
             source: str | None = "MANUAL",
     ) -> ApplyTransactionPayload:
         # 1) Валидация входа
         amount_d = _to_decimal(amount, "amount")
-        price_d = _to_decimal(price, "price")
 
         if amount_d <= 0:
             raise ValidationError("amount must be > 0")
-        if price_d <= 0:
-            raise ValidationError("price must be > 0")
         if transaction_type not in ("buy", "sell"):
             raise ValidationError("transaction_type must be 'buy' or 'sell'")
 
@@ -80,8 +73,6 @@ class TransactionMutations:
                 asset=asset,
                 transaction_type=transaction_type,
                 amount=amount_d,
-                price=price_d,
-                price_currency=price_currency,
                 source=source,
             )
 
@@ -93,23 +84,17 @@ class TransactionMutations:
                         portfolio=portfolio,
                         asset=asset,
                         quantity=amount_d,
-                        avg_price=price_d,
                     )
                 else:
-                    # BUY MORE (пересчёт средневзвешенной)
-                    old_qty = position.quantity
-                    old_avg = position.avg_price or Decimal("0")
-                    new_qty = old_qty + amount_d
+                    # BUY MORE
+                    new_qty = position.quantity + amount_d
 
                     # защита от деления на 0
                     if new_qty <= 0:
                         raise ValidationError("invalid quantity after buy")
 
-                    new_avg = (old_qty * old_avg + amount_d * price_d) / new_qty
-
                     position.quantity = new_qty
-                    position.avg_price = new_avg
-                    position.save(update_fields=["quantity", "avg_price", "updated_at"])
+                    position.save(update_fields=["quantity", "updated_at"])
 
                 return ApplyTransactionPayload(transaction=tx, position=position)
 
@@ -129,7 +114,6 @@ class TransactionMutations:
 
             # SELL PART
             position.quantity = new_qty
-            # avg_price обычно не меняют при sell (если модель учёта = average cost)
             position.save(update_fields=["quantity", "updated_at"])
 
             return ApplyTransactionPayload(transaction=tx, position=position)
