@@ -121,10 +121,16 @@ class BybitAdapter:
         self,
         *,
         categories: Sequence[str] = ("linear", "inverse"),
+        settle_coins: Optional[Sequence[str]] = None,
     ) -> List[BybitPosition]:
         positions: List[BybitPosition] = []
+        settle_map = _build_settle_map(categories, settle_coins)
         for category in categories:
-            resp = await self._call(self._client.get_positions, category=category)
+            payload = {"category": category}
+            settle_coin = settle_map.get(category)
+            if settle_coin:
+                payload["settleCoin"] = settle_coin
+            resp = await self._call(self._client.get_positions, **payload)
             for p in _result_list(resp):
                 if not isinstance(p, dict):
                     continue
@@ -178,9 +184,10 @@ class BybitAdapter:
         since: Optional[datetime] = None,
         limit: int = 200,
         quote_assets: Optional[Sequence[str]] = None,
+        settle_coins: Optional[Sequence[str]] = None,
     ) -> BybitSnapshot:
         balances = await self.fetch_balances(account_type=account_type)
-        positions = await self.fetch_positions(categories=categories)
+        positions = await self.fetch_positions(categories=categories, settle_coins=settle_coins)
         activities = await self.fetch_activities(
             since=since,
             limit=limit,
@@ -277,6 +284,23 @@ def _normalize_quote_assets(
 ) -> Tuple[str, ...]:
     items = custom if custom is not None else defaults
     return tuple(str(a).upper() for a in items if a)
+
+
+def _build_settle_map(
+    categories: Sequence[str],
+    settle_coins: Optional[Sequence[str]],
+) -> Dict[str, str]:
+    if settle_coins:
+        mapped: Dict[str, str] = {}
+        for category, coin in zip(categories, settle_coins):
+            if category and coin:
+                mapped[str(category)] = str(coin).upper()
+        return mapped
+
+    return {
+        "linear": "USDT",
+        "inverse": "BTC",
+    }
 
 
 def _result_list(resp: Dict[str, Any]) -> List[Dict[str, Any]]:

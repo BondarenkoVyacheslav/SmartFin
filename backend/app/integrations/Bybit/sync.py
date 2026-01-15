@@ -20,6 +20,7 @@ class BybitSettings:
     client_params: Dict[str, Any] = field(default_factory=dict)
     account_type: str = "UNIFIED"
     categories: List[str] = field(default_factory=lambda: ["linear", "inverse"])
+    settle_coins: Optional[List[str]] = None
     quote_assets: Optional[List[str]] = None
 
     @classmethod
@@ -31,6 +32,7 @@ class BybitSettings:
             client_params=dict(raw.get("client_params") or {}),
             account_type=_normalize_str(raw.get("account_type")) or "UNIFIED",
             categories=_normalize_list(raw.get("categories")) or ["linear", "inverse"],
+            settle_coins=_normalize_list(raw.get("settle_coins")),
             quote_assets=_normalize_list(raw.get("quote_assets")),
         )
 
@@ -130,6 +132,7 @@ async def fetch_bybit_snapshot(
         since=since,
         limit=limit,
         quote_assets=settings.quote_assets,
+        settle_coins=settings.settle_coins,
     )
 
 
