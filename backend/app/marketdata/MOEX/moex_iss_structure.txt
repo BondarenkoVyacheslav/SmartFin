@@ -83,7 +83,7 @@ engine:
     "state" - "Рынок ГЦБ (размещение)"
     market:
         "index" - "Индексы ГКО/ОФЗ"
-        "bonds" - "Облигации ГЦБ"
+        "bonds" - "Облигации ГЦБ"ы
         "repo" - "Междилерское РЕПО"
         "ndm" - "Внесистемные сделки"
 
@@ -93,6 +93,7 @@ engine:
         "selt" - "Биржевые сделки с ЦК" +
         board:
             "CETS" - "Системные сделки - безадрес." +
+            В "CETS" также Драгметалы GLDRUB_TOM, GLDRUB_TOD, SLVRUB_TOM, SLVRUB_TOD, PLTRUB_TOM, PALLRUB_TOM"
 
         "futures" - "Поставочные фьючерсы"
         "index" - "Валютный фиксинг"

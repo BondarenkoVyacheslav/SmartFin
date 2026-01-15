@@ -5,6 +5,27 @@ from datetime import datetime, date
 from typing import Any, Dict, List, Optional
 from app.marketdata.services.redis_cache import RedisCacheService
 
+
+@dataclass
+class Quote:
+    symbol: str
+    last: Optional[float]
+    bid: Optional[float]
+    ask: Optional[float]
+    ts: datetime
+
+
+@dataclass
+class Candle:
+    symbol: str
+    interval: str
+    ts: datetime
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: float
+
 class Provider(ABC):
     code: str
     name: str

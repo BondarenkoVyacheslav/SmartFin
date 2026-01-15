@@ -27,7 +27,7 @@ class USAStockProvider(Provider):
 
     def __init__(
         self,
-        cache: Optional[RedisCacheService] = None,
+        cache: RedisCacheService | None = None,
         *,
         redis_url: Optional[str] = None,
         base_url: str = BASE_URL,
@@ -150,32 +150,4 @@ class USAStockProvider(Provider):
 
     async def aclose(self) -> None:
         await self.http.aclose()
-
-    def get_quotes(self, symbols: List[str]) -> List[Quote]:
-        """Sync wrapper. Use quotes() in async code."""
-        try:
-            asyncio.get_running_loop()
-        except RuntimeError:
-            quotes = asyncio.run(self.quotes(symbols))
-        else:
-            raise RuntimeError("USAStockProvider.get_quotes cannot be called from a running event loop")
-
-        return [
-            Quote(
-                symbol=q.symbol,
-                last=q.last,
-                bid=q.bid,
-                ask=q.ask,
-                ts=q.ts,
-            )
-            for q in quotes
-        ]
-
-    def get_candles(
-        self,
-        symbol: str,
-        interval: str,
-        start: date,
-        end: Optional[date] = None,
-    ):
-        raise NotImplementedError("USAStockProvider candles are not implemented yet")
+        

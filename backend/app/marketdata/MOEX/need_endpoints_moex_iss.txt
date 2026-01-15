@@ -280,6 +280,9 @@
     # своп-кривые на рынке СПФИ.
 
 
+https://iss.moex.com/iss/engines/currency/markets/selt/boards/METL/securities/GLDRUB_TOM.json - цена на золото
+
+
 
 # =========================================
 # Конец списка
