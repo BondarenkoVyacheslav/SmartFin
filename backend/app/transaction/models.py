@@ -10,6 +10,11 @@ class Transaction(models.Model):
     TRANSACTION_TYPES = [
         ("buy", "Покупка"),
         ("sell", "Продажа"),
+        ("deposit", "Депозит"),
+        ("withdrawal", "Вывод"),
+        ("conversion", "Конвертация"),
+        ("futures_buy", "Фьючерсы: покупка"),
+        ("futures_sell", "Фьючерсы: продажа"),
     ]
     SOURCE_TYPES = [
         ("MANUAL", "Вручную"),
@@ -22,6 +27,7 @@ class Transaction(models.Model):
     amount = models.DecimalField(max_digits=20, decimal_places=8)
     price = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True)
     price_currency = models.CharField(max_length=10, null=True, blank=True)
+    executed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     source = models.CharField(
         max_length=20,

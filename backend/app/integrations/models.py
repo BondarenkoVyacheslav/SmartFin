@@ -9,5 +9,9 @@ class Exchange(models.Model):
 
 class Integration(models.Model):
     key = models.CharField(max_length=50)
+    api_key = models.CharField(max_length=255)
+    api_secret = models.CharField(max_length=255)
+    passphrase = models.CharField(max_length=255, blank=True, null=True)
+    extra_params = models.JSONField(default=dict, blank=True)
     portfolio_id = models.ForeignKey(Portfolio, on_delete=models.CASCADE)
     exchange_id = models.ForeignKey(Exchange, on_delete=models.CASCADE)

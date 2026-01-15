@@ -14,6 +14,10 @@ class ExchangeType:
 class IntegrationType:
     id: auto
     key: auto
+    api_key: auto
+    api_secret: auto
+    passphrase: auto
+    extra_params: auto
     portfolio_id = auto
     exchange_id = auto
 

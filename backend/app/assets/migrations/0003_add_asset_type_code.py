@@ -13,6 +13,8 @@ def populate_asset_type_codes(apps, schema_editor):
         "Облигации": "bond",
         "Валюты": "currency",
         "Драгоценные металлы": "metal",
+        "Индексы": "index",
+        "Фьючерсы": "futures",
     }
 
     for name, code in mapping.items():

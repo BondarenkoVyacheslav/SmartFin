@@ -30,8 +30,7 @@ class MOEXEngineMarkets(RedisJSON):
     """
     items: List[MOEXEngineMarket] = strawberry.field(default_factory=list)
     columns: List[str] = strawberry.field(default_factory=list)
-    metadata: Optional[JSON] = None
-
+    metadata: JSON | None = None
 
 def _to_int(value: Any) -> Optional[int]:
     if value is None:
