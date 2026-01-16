@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import asyncio
+import time
+from collections import deque
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, List, Optional
@@ -66,6 +68,8 @@ class BcsAdapter:
     LIMITS_PATH = "/trade-api-bff-limit/api/v1/limits"
     PORTFOLIO_PATH = "/trade-api-bff-portfolio/api/v1/portfolio"
     ORDERS_PATH = "/trade-api-bff-operations/api/v1/orders"  # POST create; list may or may not exist for your access
+    LIMITS_RPS = 10
+    PORTFOLIO_RPS = 10
 
     def __init__(
         self,
@@ -103,6 +107,10 @@ class BcsAdapter:
             timeout=self._timeout,
             verify=verify_tls,
         )
+        self._rate_limits = {
+            self.LIMITS_PATH: _RateLimiter(self.LIMITS_RPS, 1.0),
+            self.PORTFOLIO_PATH: _RateLimiter(self.PORTFOLIO_RPS, 1.0),
+        }
         self._auth_client = httpx.AsyncClient(
             base_url=self._base_url,
             headers={"Accept": "application/json"},
@@ -215,6 +223,9 @@ class BcsAdapter:
         json: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         await self._ensure_access_token()
+        limiter = self._rate_limits.get(path)
+        if limiter is not None:
+            await limiter.acquire()
         resp = await self._client.request(method, path, params=params, json=json)
         resp.raise_for_status()
         data = resp.json()
@@ -475,6 +486,29 @@ def _coerce_list(x: Any) -> List[Any]:
             if isinstance(x.get(key), list):
                 return x[key]
     return []
+
+
+class _RateLimiter:
+    def __init__(self, max_requests: int, interval_s: float) -> None:
+        self._max_requests = max(1, int(max_requests))
+        self._interval_s = max(0.001, float(interval_s))
+        self._timestamps: deque[float] = deque()
+        self._lock = asyncio.Lock()
+
+    async def acquire(self) -> None:
+        while True:
+            sleep_for = None
+            async with self._lock:
+                now = time.monotonic()
+                cutoff = now - self._interval_s
+                while self._timestamps and self._timestamps[0] <= cutoff:
+                    self._timestamps.popleft()
+                if len(self._timestamps) < self._max_requests:
+                    self._timestamps.append(now)
+                    return
+                sleep_for = (self._timestamps[0] + self._interval_s) - now
+            if sleep_for and sleep_for > 0:
+                await asyncio.sleep(sleep_for)
 
 
 def _to_iso_utc(dt: datetime) -> str:
