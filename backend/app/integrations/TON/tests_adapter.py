@@ -87,6 +87,27 @@ class TONAdapterLiveTests(unittest.IsolatedAsyncioTestCase):
     async def asyncTearDown(self):
         await self.adapter.aclose()
 
+    async def test_ping(self):
+        res = await self.adapter.ping()
+        self.assertIsInstance(res.ok, bool)
+        self.assertGreaterEqual(len(res.ok_addresses) + len(res.failed_addresses), 1)
+        if _debug_enabled():
+            print(
+                "ping:",
+                "ok=",
+                res.ok,
+                "ok_addresses=",
+                res.ok_addresses,
+                "failed_addresses=",
+                res.failed_addresses,
+                "message=",
+                res.message,
+                "error_code=",
+                res.error_code,
+                "status_code=",
+                res.status_code,
+            )
+
     async def test_fetch_balances(self):
         balances = await self.adapter.fetch_balances(
             include_jettons=self.__class__.include_jettons,

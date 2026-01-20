@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import asyncio
+import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import httpx
 
@@ -46,6 +47,20 @@ class TONSnapshot:
     balances: List[TONBalance]
     positions: List[TONPosition]
     activities: List[ActivityLine]
+
+
+@dataclass(frozen=True)
+class TONPingResult:
+    """Result of an address reachability/validity check."""
+
+    ok: bool
+    ok_addresses: List[str]
+    failed_addresses: List[str]
+    message: Optional[str] = None
+    error_type: Optional[str] = None
+    error_code: Optional[str] = None
+    status_code: Optional[int] = None
+    raw_error: Optional[str] = None
 
 
 class TONAdapter:
@@ -116,6 +131,54 @@ class TONAdapter:
         await self._toncenter_client.aclose()
         if self._tonapi_client is not None:
             await self._tonapi_client.aclose()
+
+    async def ping(self, addresses: Optional[Sequence[str] | str] = None) -> TONPingResult:
+        """
+        Validate that provided TON address(es) are reachable via the configured read-only APIs.
+
+        Strategy:
+        - If TonAPI client is configured: call GET /v2/address/{address}
+        - Else: call Toncenter GET /getAddressBalance?address=...
+        """
+        targets = _normalize_addresses(addresses if addresses is not None else self._address)
+        if not targets:
+            return TONPingResult(
+                ok=False,
+                ok_addresses=[],
+                failed_addresses=[],
+                message="Empty address list",
+                error_type="ValueError",
+                error_code="EMPTY_ADDRESS",
+            )
+
+        ok: List[str] = []
+        failed: List[str] = []
+        first_error: Optional[Exception] = None
+
+        for addr in targets:
+            try:
+                await self._ping_address(addr)
+            except Exception as exc:
+                failed.append(addr)
+                if first_error is None:
+                    first_error = exc
+            else:
+                ok.append(addr)
+
+        if not failed:
+            return TONPingResult(ok=True, ok_addresses=ok, failed_addresses=[], message="OK")
+
+        msg, etype, ecode, scode = _classify_ton_ping_error(first_error)
+        return TONPingResult(
+            ok=False,
+            ok_addresses=ok,
+            failed_addresses=failed,
+            message=msg,
+            error_type=etype,
+            error_code=ecode,
+            status_code=scode,
+            raw_error=_safe_repr(first_error),
+        )
 
     async def fetch_balances(
         self,
@@ -385,6 +448,12 @@ class TONAdapter:
             return {}
         return data
 
+    async def _ping_address(self, address: str) -> None:
+        if self._tonapi_client is not None:
+            await self._tonapi_request("GET", f"/v2/address/{address}")
+            return
+        await self._toncenter_request("GET", "/getAddressBalance", params={"address": address})
+
 
 class _RateLimiter:
     def __init__(self, rps: int) -> None:
@@ -643,3 +712,65 @@ def _is_rate_limit_error(exc: httpx.HTTPStatusError) -> bool:
     if response is None:
         return False
     return response.status_code in {401, 403, 429}
+
+
+def _normalize_addresses(value: Any) -> List[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        raw = value.strip()
+        if not raw:
+            return []
+        parts = re.split(r"[,\s;]+", raw)
+        return _dedupe([p.strip() for p in parts if p and p.strip()])
+    if isinstance(value, (list, tuple)):
+        out: List[str] = []
+        for item in value:
+            if item is None:
+                continue
+            if isinstance(item, str) and item.strip():
+                out.append(item.strip())
+        return _dedupe(out)
+    return []
+
+
+def _dedupe(items: List[str]) -> List[str]:
+    seen: set[str] = set()
+    out: List[str] = []
+    for item in items:
+        if item in seen:
+            continue
+        seen.add(item)
+        out.append(item)
+    return out
+
+
+def _classify_ton_ping_error(exc: Optional[Exception]) -> Tuple[str, str, str, Optional[int]]:
+    if exc is None:
+        return ("Unknown error", "RuntimeError", "UNKNOWN", None)
+
+    if isinstance(exc, httpx.HTTPStatusError):
+        status = exc.response.status_code if exc.response is not None else None
+        if status in {400, 404}:
+            return ("Invalid TON address", "HTTPStatusError", "INVALID_ADDRESS", status)
+        if status in {401, 403}:
+            return ("Unauthorized (check API keys / rate limits)", "HTTPStatusError", "UNAUTHORIZED", status)
+        if status == 429:
+            return ("Rate limited by upstream", "HTTPStatusError", "RATE_LIMIT", status)
+        if status is not None and status >= 500:
+            return ("Upstream service error", "HTTPStatusError", "UPSTREAM_ERROR", status)
+        return ("HTTP error from upstream", "HTTPStatusError", "HTTP_ERROR", status)
+
+    if isinstance(exc, httpx.RequestError):
+        return ("Network error while calling upstream", "RequestError", "NETWORK_ERROR", None)
+
+    return (str(exc) or "Runtime error", type(exc).__name__, "RUNTIME_ERROR", None)
+
+
+def _safe_repr(exc: Optional[BaseException]) -> Optional[str]:
+    if exc is None:
+        return None
+    try:
+        return repr(exc)
+    except Exception:
+        return f"<{type(exc).__name__}>"
