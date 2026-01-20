@@ -1,8 +1,17 @@
-from .api import MarketDataAPI
-import os
+from django.utils.functional import LazyObject
 
-# Создаем глобальный экземпляр API
-market_data_api = MarketDataAPI()
 
-# Экспортируем основной API класс и экземпляр
-__all__ = ['MarketDataAPI', 'market_data_api']
+def _load_market_data_api():
+    from .api import MarketDataAPI
+
+    return MarketDataAPI()
+
+
+class _LazyMarketDataApi(LazyObject):
+    def _setup(self):
+        self._wrapped = _load_market_data_api()
+
+
+market_data_api = _LazyMarketDataApi()
+
+__all__ = ["market_data_api"]
