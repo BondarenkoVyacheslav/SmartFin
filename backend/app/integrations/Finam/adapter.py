@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import base64
+import json
+import re
 import asyncio
 import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 from urllib.parse import quote
+
 import httpx
 
 
@@ -117,11 +121,9 @@ class FinamAdapter:
             self._GetTradesRequest,
         ) = _load_finam_sdk()
 
-        # REST client (fallback)
-        self._rest = httpx.AsyncClient(
-            base_url="https://api.finam.ru",
-            timeout=httpx.Timeout(15.0),
-        )
+        # REST client (fallback) — важно: НЕ создаём сразу, потому что в IsolatedAsyncioTestCase новый loop на каждый тест
+        self._rest: Optional[httpx.AsyncClient] = None
+        self._rest_loop_id: Optional[int] = None
 
         self._rest_jwt_token: Optional[str] = None
         self._rest_jwt_expire_at: float = 0.0
@@ -286,10 +288,13 @@ class FinamAdapter:
                 self._client = None
 
         # REST close
-        try:
-            await self._rest.aclose()
-        except Exception:
-            pass
+        if self._rest is not None:
+            try:
+                await self._rest.aclose()
+            except Exception:
+                pass
+            self._rest = None
+            self._rest_loop_id = None
 
         self._sdk_jwt_expires_at = None
         self._current_secret = None
@@ -353,9 +358,43 @@ class FinamAdapter:
         details = await self._rl_call("auth", client.access_tokens.get_jwt_token_details)
         self._sdk_jwt_expires_at = _parse_expires_at(details)
 
+    async def _get_rest_client(self) -> httpx.AsyncClient:
+        """
+        Важно для тестов на IsolatedAsyncioTestCase:
+        новый event loop на каждый тест => AsyncClient должен жить внутри актуального loop.
+        """
+        loop_id = id(asyncio.get_running_loop())
+
+        if self._rest is not None and self._rest_loop_id == loop_id:
+            return self._rest
+
+        # loop сменился — закрываем старый клиент
+        if self._rest is not None:
+            try:
+                await self._rest.aclose()
+            except Exception:
+                pass
+            self._rest = None
+            self._rest_loop_id = None
+
+        self._rest = httpx.AsyncClient(
+            base_url="https://api.finam.ru",
+            timeout=httpx.Timeout(15.0),
+            http2=True,
+            headers={"User-Agent": "SmartFin/1.0"},
+        )
+        self._rest_loop_id = loop_id
+        return self._rest
+
     async def _ensure_rest_jwt(self) -> str:
         """
         REST JWT for fallback requests (POST /v1/sessions).
+
+        Делаем совместимость по форматам запроса:
+          - json {"secret": "..."}
+          - form secret=...
+          - query ?secret=...
+        + проверка, что token похож на JWT (a.b.c).
         """
         now = time.time()
         if self._rest_jwt_token and now < (self._rest_jwt_expire_at - 20):
@@ -367,48 +406,96 @@ class FinamAdapter:
                 return self._rest_jwt_token
 
             secret = self._get_secret()
-            resp = await self._rest.post("/v1/sessions", json={"secret": secret})
-            resp.raise_for_status()
-            data = resp.json()
-            token = data.get("token")
-            if not token:
-                raise RuntimeError(f"Finam Auth returned no token: {data!r}")
+            rest = await self._get_rest_client()
 
-            # ставим TTL 14 минут (безопасно)
-            self._rest_jwt_token = token
-            self._rest_jwt_expire_at = time.time() + 14 * 60
-            return token
+            attempts = [
+                ("json", dict(json={"secret": secret})),
+                ("form", dict(data={"secret": secret})),
+                ("query", dict(params={"secret": secret})),
+            ]
 
-    async def _rest_get(self, path: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        jwt = await self._ensure_rest_jwt()
+            last_err: Optional[BaseException] = None
 
-        # Небольшой retry на 5xx, потому что у Finam иногда бывают transient ошибки
-        last_exc: Optional[BaseException] = None
-        for attempt in range(3):
-            resp = await self._rest.get(
-                path,
-                params=params,
-                headers={"Authorization": f"Bearer {jwt}"},
-            )
-            try:
-                # ВАЖНО: на ошибках читаем тело и закрываем соединение сами,
-                # иначе потом вылезает "Event loop is closed"
-                if resp.status_code >= 400:
-                    body = await resp.aread()  # bytes
-                    # если 401/403 — возможно, протух jwt, пробуем обновить 1 раз
-                    if resp.status_code in (401, 403) and attempt == 0:
-                        self._rest_jwt_token = None
-                        self._rest_jwt_expire_at = 0.0
-                        jwt = await self._ensure_rest_jwt()
+            for mode, kwargs in attempts:
+                resp = await rest.post("/v1/sessions", **kwargs)
+                try:
+                    if resp.status_code >= 400:
+                        body = await resp.aread()
+                        snippet = body[:500].decode("utf-8", errors="replace")
+                        last_err = RuntimeError(f"Finam Auth {resp.status_code} ({mode}) /v1/sessions: {snippet}")
                         continue
 
-                    # retry только на 5xx
+                    data = resp.json()
+                    if not isinstance(data, dict):
+                        last_err = RuntimeError(f"Finam Auth ({mode}) returned non-object JSON: {data!r}")
+                        continue
+
+                    token = (data.get("token") or "").strip()
+                    if not token:
+                        last_err = RuntimeError(f"Finam Auth ({mode}) returned no token: {data!r}")
+                        continue
+
+                    if not _looks_like_jwt(token):
+                        last_err = RuntimeError(f"Finam Auth ({mode}) returned non-JWT token: {token!r}")
+                        continue
+
+                    # ставим TTL 14 минут (консервативно)
+                    self._rest_jwt_token = token
+                    self._rest_jwt_expire_at = time.time() + 14 * 60
+                    return token
+                finally:
+                    await resp.aclose()
+
+            raise last_err or RuntimeError("Finam Auth failed: no successful attempts")
+
+    async def _rest_get(
+        self,
+        path: str,
+        params: Optional[Dict[str, Any]] = None,
+        *,
+        jwt_override: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        rest = await self._get_rest_client()
+        jwt = jwt_override or await self._ensure_rest_jwt()
+        jwt = _normalize_bearer_token(jwt)
+
+        last_exc: Optional[BaseException] = None
+
+        auth_mode = "raw"  # сначала пробуем без Bearer
+
+        for attempt in range(3):
+            headers = {"Authorization": jwt} if auth_mode == "raw" else {"Authorization": f"Bearer {jwt}"}
+            resp = await rest.get(path, params=params, headers=headers)
+
+            try:
+                if resp.status_code >= 400:
+                    body = await resp.aread()
+                    snippet = body[:500].decode("utf-8", errors="replace")
+
+                    # Finam иногда возвращает 500 на проблемы JWT — делаем refresh и пробуем снова
+                    if ("Jwt token check failed" in snippet) and attempt == 0:
+                        # если raw не прокатил — попробуем Bearer на следующей попытке
+                        if auth_mode == "raw":
+                            auth_mode = "bearer"
+                        self._rest_jwt_token = None
+                        self._rest_jwt_expire_at = 0.0
+                        jwt = _normalize_bearer_token(await self._ensure_rest_jwt())
+                        continue
+
+                    # 401/403 — возможно протух jwt или неверный формат auth header
+                    if resp.status_code in (401, 403) and attempt == 0:
+                        if auth_mode == "raw":
+                            auth_mode = "bearer"  # переключимся и попробуем ещё раз
+                        self._rest_jwt_token = None
+                        self._rest_jwt_expire_at = 0.0
+                        jwt = _normalize_bearer_token(await self._ensure_rest_jwt())
+                        continue
+
+                    # retry на 5xx (транзиенты)
                     if 500 <= resp.status_code <= 599 and attempt < 2:
                         await asyncio.sleep(0.3 * (attempt + 1))
                         continue
 
-                    # выдаём понятную ошибку
-                    snippet = body[:500].decode("utf-8", errors="replace")
                     raise RuntimeError(f"Finam REST {resp.status_code} for {path}: {snippet}")
 
                 data = resp.json()
@@ -420,10 +507,8 @@ class FinamAdapter:
                 last_exc = exc
                 raise
             finally:
-                # закрываем response всегда
                 await resp.aclose()
 
-        # на всякий случай, если цикл завершился
         raise RuntimeError(f"Finam REST failed for {path}") from last_exc
 
 
@@ -437,18 +522,59 @@ class FinamAdapter:
         try:
             return await self._rl_call("accounts", client.account.get_account_info, account_id)
         except Exception as exc:
-            safe_account_id = quote(account_id, safe="")
-            raw = await self._rest_get(f"/v1/accounts/{safe_account_id}")
+            # SDK иногда падает на pydantic-моделях (missing fields).
+            # Для REST endpoint обычно нужен числовой account_id (без префикса КЛФ).
+            rest_account_id = _rest_account_id(account_id)
+            safe_account_id = quote(rest_account_id, safe="")
+
+            jwt_sdk = self._extract_sdk_jwt(client)
+            # На всякий случай: не используем override, если вдруг это не JWT
+            if jwt_sdk and not _looks_like_jwt(jwt_sdk):
+                jwt_sdk = None
+
+            raw = await self._rest_get(
+                f"/v1/accounts/{safe_account_id}",
+                jwt_override=jwt_sdk,
+            )
 
             raw["_source"] = "rest_fallback"
             raw["_sdk_error"] = repr(exc)
+            raw["_jwt_source"] = "sdk" if jwt_sdk else "rest_sessions"
             return raw
+
 
     async def _rl_call(self, key: str, fn: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
         limiter = self._rate_limiters.get(key)
         if limiter:
             await limiter.acquire()
         return await fn(*args, **kwargs)
+    
+    def _extract_sdk_jwt(self, client: Any) -> Optional[str]:
+        # Пытаемся найти jwt по типичным атрибутам разных реализаций SDK
+        candidates = []
+
+        access_tokens = getattr(client, "access_tokens", None)
+        if access_tokens is not None:
+            for name in ("jwt_token", "token", "_jwt_token", "_token"):
+                candidates.append(getattr(access_tokens, name, None))
+
+        token_manager = getattr(client, "token_manager", None) or getattr(client, "_token_manager", None)
+        if token_manager is not None:
+            for name in ("jwt_token", "token", "_jwt_token", "_token"):
+                candidates.append(getattr(token_manager, name, None))
+
+        # Иногда токен лежит прямо на клиенте
+        for name in ("jwt_token", "_jwt_token", "token"):
+            candidates.append(getattr(client, name, None))
+
+        for c in candidates:
+            if isinstance(c, str) and c.strip():
+                t = _normalize_bearer_token(c)
+                if _looks_like_jwt(t):
+                    return t
+
+        return None
+
 
 
 # ======================
@@ -651,7 +777,7 @@ def _parse_transactions(resp: Any) -> List[ActivityLine]:
         ts = _parse_dt(getattr(tx, "timestamp", None))
 
         change_money = getattr(tx, "change", None)
-        quote = _first_str(
+        quote_ccy = _first_str(
             getattr(change_money, "currency_code", None),
             getattr(change_money, "currencyCode", None),
             getattr(change_money, "currency", None),
@@ -676,7 +802,7 @@ def _parse_transactions(resp: Any) -> List[ActivityLine]:
                 activity_type=activity_type,
                 symbol=symbol,
                 base_asset=None,
-                quote_asset=quote,
+                quote_asset=quote_ccy,
                 side=side,
                 amount=size,
                 price=price,
@@ -943,8 +1069,51 @@ def _classify_ping_error(exc: BaseException) -> Tuple[str, str, str]:
     return msg, etype, ecode
 
 
+def _rest_account_id(account_id: str) -> str:
+    """
+    Finam REST /v1/accounts/{account_id} часто ожидает только числовой id
+    (без префикса КЛФ, например из TRQD05:413249 -> 413249).
+    """
+    s = (account_id or "").strip()
+    m = re.search(r"(\d+)$", s)
+    return m.group(1) if m else s
+
+
+def _looks_like_jwt(token: str) -> bool:
+    """
+    Строгая проверка JWT: token должен иметь 3 части и
+    header/payload должны быть валидным base64url JSON.
+    """
+    t = (token or "").strip()
+    parts = t.split(".")
+    if len(parts) != 3:
+        return False
+
+    for part in parts[:2]:
+        pad = "=" * ((4 - (len(part) % 4)) % 4)
+        try:
+            raw = base64.urlsafe_b64decode((part + pad).encode("utf-8"))
+            json.loads(raw.decode("utf-8"))
+        except Exception:
+            return False
+
+    return True
+
+
 # ✅ Лучше как утилита на уровне модуля (чистая функция)
 def _money_to_float(m: Dict[str, Any]) -> float:
     units = float(m.get("units", 0) or 0)
     nanos = float(m.get("nanos", 0) or 0)
     return units + nanos / 1_000_000_000
+
+
+def _normalize_bearer_token(token: str) -> str:
+    t = (token or "").strip().strip('"').strip("'")
+    # если сервер вернул "Bearer <jwt>" — вытащим только jwt
+    if " " in t:
+        parts = [p for p in t.split() if p]
+        if parts and _looks_like_jwt(parts[-1]):
+            t = parts[-1]
+    if t.lower().startswith("bearer "):
+        t = t[7:].strip()
+    return t
