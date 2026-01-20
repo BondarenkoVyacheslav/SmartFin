@@ -52,6 +52,18 @@ class BcsSnapshot:
     activities: List[ActivityLine]
 
 
+@dataclass(frozen=True)
+class BcsPingResult:
+    """Result of a credentials/token check."""
+    ok: bool
+    message: Optional[str] = None
+    error_type: Optional[str] = None
+    error_code: Optional[str] = None
+    status_code: Optional[int] = None
+    raw_error: Optional[str] = None
+
+
+
 class BcsAdapter:
     """
     BCS Trade API adapter (unofficial), focused on:
@@ -121,6 +133,63 @@ class BcsAdapter:
     async def aclose(self) -> None:
         await self._client.aclose()
         await self._auth_client.aclose()
+
+    async def ping(self) -> BcsPingResult:
+        """
+        Validate that the provided BCS credentials work.
+
+        Strategy (same spirit as TAdapter.ping):
+        - If refresh_token is present: try to refresh and obtain access_token (JWT). If returned -> OK.
+        - Else (fallback): try a lightweight authorized call with existing access_token.
+        """
+        if not (self._refresh_token or self._access_token):
+            return BcsPingResult(
+                ok=False,
+                message="Empty credentials (refresh_token/access_token missing)",
+                error_type="ValueError",
+                error_code="EMPTY_TOKEN",
+                status_code=None,
+                raw_error=None,
+            )
+
+        try:
+            # Preferred path: validate refresh_token by obtaining JWT
+            if self._refresh_token:
+                async with self._token_lock:
+                    await self._refresh_access_token()
+                # if _refresh_access_token succeeded, we have a JWT in self._access_token
+                if not self._access_token:
+                    return BcsPingResult(
+                        ok=False,
+                        message="BCS token endpoint returned no access_token",
+                        error_type="RuntimeError",
+                        error_code="NO_ACCESS_TOKEN",
+                        status_code=None,
+                        raw_error=None,
+                    )
+                return BcsPingResult(ok=True, message="OK")
+
+            # Fallback: validate existing access_token by calling an endpoint directly
+            # (do NOT use _request_json because it may require refresh_token depending on expires fields)
+            resp = await self._client.get(self.LIMITS_PATH)
+            resp.raise_for_status()
+            return BcsPingResult(ok=True, message="OK")
+
+        except Exception as exc:
+            msg, etype, ecode, scode = _classify_bcs_ping_error(exc)
+            return BcsPingResult(
+                ok=False,
+                message=msg,
+                error_type=etype,
+                error_code=ecode,
+                status_code=scode,
+                raw_error=_safe_repr(exc),
+            )
+
+    async def validate_token(self) -> bool:
+        """Boolean-only shortcut for ping()."""
+        return (await self.ping()).ok
+
 
     async def fetch_limits_raw(self) -> Dict[str, Any]:
         """
@@ -577,3 +646,52 @@ def _add_seconds(now: datetime, value: Any) -> Optional[datetime]:
     if seconds is None:
         return None
     return now + timedelta(seconds=seconds)
+
+
+def _safe_repr(exc: BaseException) -> str:
+    try:
+        return repr(exc)
+    except Exception:
+        try:
+            return str(exc)
+        except Exception:
+            return "<unreprable error>"
+
+
+def _classify_bcs_ping_error(exc: BaseException) -> tuple[str, str, str, Optional[int]]:
+    """
+    Normalize BCS auth/network errors into stable codes for the frontend.
+    Returns: (message, error_type, error_code, http_status_code)
+    """
+    etype = type(exc).__name__
+    msg = str(exc) or "Token validation failed"
+    ecode = "UNKNOWN"
+    status_code: Optional[int] = None
+
+    # HTTP errors
+    if isinstance(exc, httpx.HTTPStatusError):
+        status_code = exc.response.status_code
+        if status_code == 401:
+            return "Unauthenticated (invalid/expired token)", etype, "UNAUTHENTICATED", status_code
+        if status_code == 403:
+            return "Permission denied (insufficient scope)", etype, "PERMISSION_DENIED", status_code
+        if status_code == 429:
+            return "Rate limit exceeded", etype, "RATE_LIMIT", status_code
+        if 500 <= status_code <= 599:
+            return "Service unavailable (BCS backend error)", etype, "UNAVAILABLE", status_code
+        return msg, etype, f"HTTP_{status_code}", status_code
+
+    # Network / timeouts
+    if isinstance(exc, httpx.TimeoutException):
+        return "Request timeout", etype, "TIMEOUT", None
+    if isinstance(exc, httpx.RequestError):
+        return "Network error while contacting BCS", etype, "NETWORK_ERROR", None
+
+    # Local/runtime errors
+    low = (msg or "").lower()
+    if "refresh_token is required" in low:
+        return "Missing refresh_token", etype, "MISSING_REFRESH_TOKEN", None
+    if "missing access_token" in low or "no access_token" in low:
+        return "BCS token response missing access_token", etype, "NO_ACCESS_TOKEN", None
+
+    return msg, etype, ecode, status_code

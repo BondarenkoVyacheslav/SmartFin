@@ -46,6 +46,18 @@ class TSnapshot:
     activities: List[ActivityLine]
 
 
+@dataclass(frozen=True)
+class TPingResult:
+    """Result of a credentials/token check."""
+
+    ok: bool
+    account_ids: List[str]
+    message: Optional[str] = None
+    error_type: Optional[str] = None
+    error_code: Optional[str] = None
+    raw_error: Optional[str] = None
+
+
 class TAdapter:
     """
     T-Bank Invest API adapter powered by the official tinkoff-investments client.
@@ -74,6 +86,49 @@ class TAdapter:
         self._client_cls = _load_client_class()
         self._last_cursor: Optional[str] = None
         self._rate_limiters = _build_rate_limiters(rate_limits)
+
+    async def ping(self) -> TPingResult:
+        """Validate that the provided token works.
+
+        Implementation strategy: try to authorize and read the user's accounts.
+        If the token is invalid / revoked / has insufficient scope, the SDK will raise.
+        """
+
+        if not (self._token_provider or self._token):
+            return TPingResult(
+                ok=False,
+                account_ids=[],
+                message="Empty token",
+                error_type="ValueError",
+                error_code="EMPTY_TOKEN",
+                raw_error=None,
+            )
+
+        try:
+            resp = await self._call(lambda client: _get_accounts(client), rate_key="users")
+            accounts = getattr(resp, "accounts", None) or []
+            ids: List[str] = []
+            for acc in accounts:
+                acc_id = _to_str(getattr(acc, "id", None) or getattr(acc, "account_id", None))
+                if acc_id:
+                    ids.append(acc_id)
+            # Even if the user has zero accounts, a successful response means the token is valid.
+            return TPingResult(ok=True, account_ids=ids, message="OK")
+        except Exception as exc:
+            msg, etype, ecode = _classify_ping_error(exc)
+            return TPingResult(
+                ok=False,
+                account_ids=[],
+                message=msg,
+                error_type=etype,
+                error_code=ecode,
+                raw_error=_safe_repr(exc),
+            )
+
+    async def validate_token(self) -> bool:
+        """Boolean-only shortcut for ping()."""
+
+        return (await self.ping()).ok
 
     async def fetch_accounts(self) -> List[str]:
         resp = await self._call(lambda client: _get_accounts(client), rate_key="users")
@@ -785,3 +840,74 @@ def _to_iso_utc(dt: Optional[datetime]) -> Optional[str]:
     if dt is None:
         return None
     return dt.isoformat().replace("+00:00", "Z")
+
+
+def _safe_repr(exc: BaseException) -> str:
+    try:
+        return repr(exc)
+    except Exception:
+        try:
+            return str(exc)
+        except Exception:
+            return "<unreprable error>"
+
+
+def _classify_ping_error(exc: BaseException) -> tuple[str, str, str]:
+    """Normalize SDK/network errors into stable codes for the frontend."""
+
+    etype = type(exc).__name__
+    # Defaults
+    msg = str(exc) or "Token validation failed"
+    ecode = "UNKNOWN"
+
+    # gRPC errors (tinkoff-investments uses gRPC under the hood)
+    try:
+        import grpc  # type: ignore
+
+        if isinstance(exc, grpc.RpcError):
+            try:
+                status = exc.code()
+                if status is not None:
+                    ecode = getattr(status, "name", None) or str(status)
+            except Exception:
+                pass
+            try:
+                details = exc.details()
+                if details:
+                    msg = details
+            except Exception:
+                pass
+            # Friendly mapping for the most common auth failures
+            upper = (ecode or "").upper()
+            if "UNAUTHENTICATED" in upper:
+                return "Unauthenticated (invalid/expired token)", etype, "UNAUTHENTICATED"
+            if "PERMISSION_DENIED" in upper:
+                return "Permission denied (insufficient token scope)", etype, "PERMISSION_DENIED"
+            if "RESOURCE_EXHAUSTED" in upper:
+                return "Rate limit exceeded", etype, "RATE_LIMIT"
+            if "DEADLINE_EXCEEDED" in upper:
+                return "Request timeout", etype, "TIMEOUT"
+            if "UNAVAILABLE" in upper:
+                return "Service unavailable", etype, "UNAVAILABLE"
+            return msg, etype, ecode or "GRPC_ERROR"
+    except Exception:
+        pass
+
+    # Some SDK variants wrap errors into RequestError (best-effort introspection)
+    for attr in ("code", "status", "status_code"):
+        val = getattr(exc, attr, None)
+        if val is not None:
+            try:
+                sval = str(getattr(val, "name", None) or val)
+                if sval:
+                    ecode = sval
+            except Exception:
+                pass
+            break
+
+    # Heuristics
+    low = (msg or "").lower()
+    if "unauth" in low or "invalid token" in low or "permission" in low or "denied" in low:
+        ecode = "AUTH_FAILED"
+
+    return msg, etype, ecode
