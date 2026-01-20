@@ -1,6 +1,7 @@
 import asyncio
 import os
 import unittest
+from pathlib import Path
 from typing import List, Optional
 
 from backend.app.integrations.OKX.adapter import OKXAdapter
@@ -30,9 +31,29 @@ def _print_lines(lines: List[str]) -> None:
         print(line)
 
 
+def _load_env_from_dotenv() -> None:
+    if _env("OKX_API_KEY") and _env("OKX_API_SECRET") and _env("OKX_PASSPHRASE"):
+        return
+
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / ".env"
+        if candidate.is_file():
+            for line in candidate.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                key = key.strip()
+                value = value.strip().strip('"').strip("'")
+                if key:
+                    os.environ.setdefault(key, value)
+            return
+
+
 class OKXAdapterLiveTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        _load_env_from_dotenv()
         cls.api_key = _env("OKX_API_KEY")
         cls.api_secret = _env("OKX_API_SECRET")
         cls.passphrase = _env("OKX_PASSPHRASE")
@@ -53,6 +74,19 @@ class OKXAdapterLiveTests(unittest.TestCase):
         cls.quote_assets = _env_list("OKX_QUOTE_ASSETS")
         cls.inst_ids = _env_list("OKX_INST_IDS")
         cls.ccy = _env("OKX_CCY")
+
+    def test_ping(self):
+        res = asyncio.run(self.adapter.ping())
+        self.assertIsInstance(res.ok, bool)
+        if _debug_enabled():
+            _print_lines(
+                [
+                    "ping:",
+                    f"  ok={res.ok}",
+                    f"  message={res.message}",
+                    f"  error_code={res.error_code}",
+                ]
+            )
 
     def test_fetch_balances(self):
         balances = asyncio.run(self.adapter.fetch_balances(ccy=self.ccy))

@@ -47,6 +47,18 @@ class BybitSnapshot:
     activities: List[ActivityLine]
 
 
+@dataclass(frozen=True)
+class BybitPingResult:
+    """Result of a credentials check."""
+
+    ok: bool
+    message: Optional[str] = None
+    error_type: Optional[str] = None
+    error_code: Optional[str] = None
+    status_code: Optional[int] = None
+    raw_error: Optional[str] = None
+
+
 class BybitAdapter:
     """
     Bybit adapter powered by the official pybit client.
@@ -65,13 +77,58 @@ class BybitAdapter:
         recv_window: int = 5000,
         extra_params: Optional[Dict[str, Any]] = None,
     ) -> None:
+        self._api_key = (api_key or "").strip()
+        self._api_secret = (api_secret or "").strip()
         self._client = self._make_client(
-            api_key=api_key,
-            api_secret=api_secret,
+            api_key=self._api_key,
+            api_secret=self._api_secret,
             testnet=testnet,
             recv_window=recv_window,
             extra_params=extra_params or {},
         )
+
+    async def ping(self, *, account_type: str = "UNIFIED") -> BybitPingResult:
+        """
+        Validate that the provided API key/secret work.
+
+        Strategy: call a lightweight authorized endpoint and check Bybit retCode.
+        """
+        if not self._api_key or not self._api_secret:
+            return BybitPingResult(
+                ok=False,
+                message="Empty api_key/api_secret",
+                error_type="ValueError",
+                error_code="EMPTY_KEYS",
+                status_code=None,
+                raw_error=None,
+            )
+
+        try:
+            resp = await self._call(
+                self._client.get_wallet_balance,
+                accountType=account_type,
+            )
+            ret_code, ret_msg = _extract_ret_code(resp)
+            if ret_code is not None and ret_code != 0:
+                return BybitPingResult(
+                    ok=False,
+                    message=ret_msg or "Bybit API error",
+                    error_type="BybitError",
+                    error_code=f"RET_{ret_code}",
+                    status_code=None,
+                    raw_error=_safe_repr(ret_msg),
+                )
+            return BybitPingResult(ok=True, message="OK")
+        except Exception as exc:
+            msg, etype, ecode = _classify_bybit_ping_error(exc)
+            return BybitPingResult(
+                ok=False,
+                message=msg,
+                error_type=etype,
+                error_code=ecode,
+                status_code=None,
+                raw_error=_safe_repr(exc),
+            )
 
     @staticmethod
     def _make_client(
@@ -449,3 +506,28 @@ def _to_str(value: Any) -> Optional[str]:
         return None
     s = str(value).strip()
     return s or None
+
+
+def _extract_ret_code(resp: Any) -> Tuple[Optional[int], Optional[str]]:
+    if not isinstance(resp, dict):
+        return None, None
+    code = resp.get("retCode") or resp.get("ret_code")
+    msg = _to_str(resp.get("retMsg") or resp.get("ret_msg") or resp.get("msg"))
+    try:
+        return (int(code), msg)
+    except (TypeError, ValueError):
+        return None, msg
+
+
+def _classify_bybit_ping_error(exc: Exception) -> Tuple[str, str, str]:
+    msg = str(exc) or "Runtime error"
+    return msg, type(exc).__name__, "RUNTIME_ERROR"
+
+
+def _safe_repr(exc: Any) -> Optional[str]:
+    if exc is None:
+        return None
+    try:
+        return repr(exc)
+    except Exception:
+        return f"<{type(exc).__name__}>"

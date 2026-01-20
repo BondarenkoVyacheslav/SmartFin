@@ -47,6 +47,18 @@ class BinanceSnapshot:
     activities: List[ActivityLine]
 
 
+@dataclass(frozen=True)
+class BinancePingResult:
+    """Result of a credentials check."""
+
+    ok: bool
+    message: Optional[str] = None
+    error_type: Optional[str] = None
+    error_code: Optional[str] = None
+    status_code: Optional[int] = None
+    raw_error: Optional[str] = None
+
+
 class BinanceAdapter:
     """
     Binance adapter powered by the official binance-connector client.
@@ -67,25 +79,67 @@ class BinanceAdapter:
         extra_params: Optional[Dict[str, Any]] = None,
     ) -> None:
         params = extra_params or {}
+        self._api_key = (api_key or "").strip()
+        self._api_secret = (api_secret or "").strip()
         self._spot = self._make_spot_client(
-            api_key=api_key,
-            api_secret=api_secret,
+            api_key=self._api_key,
+            api_secret=self._api_secret,
             testnet=testnet,
             extra_params=_pick_client_params(params, "spot"),
         )
         self._um_futures = self._make_um_futures_client(
-            api_key=api_key,
-            api_secret=api_secret,
+            api_key=self._api_key,
+            api_secret=self._api_secret,
             testnet=testnet,
             extra_params=_pick_client_params(params, "um_futures"),
         )
         self._cm_futures = self._make_cm_futures_client(
-            api_key=api_key,
-            api_secret=api_secret,
+            api_key=self._api_key,
+            api_secret=self._api_secret,
             testnet=testnet,
             extra_params=_pick_client_params(params, "cm_futures"),
         )
         self._recv_window = recv_window
+
+    async def ping(self) -> BinancePingResult:
+        """
+        Validate that the provided API key/secret work.
+
+        Strategy: call a lightweight signed endpoint and check response code.
+        """
+        if not self._api_key or not self._api_secret:
+            return BinancePingResult(
+                ok=False,
+                message="Empty api_key/api_secret",
+                error_type="ValueError",
+                error_code="EMPTY_KEYS",
+                status_code=None,
+                raw_error=None,
+            )
+
+        try:
+            resp = await self._call(self._spot.account, signed=True)
+            code, msg = _extract_binance_code(resp)
+            if code is not None and code != 0:
+                return BinancePingResult(
+                    ok=False,
+                    message=msg or "Binance API error",
+                    error_type="BinanceError",
+                    error_code=f"CODE_{code}",
+                    status_code=None,
+                    raw_error=_safe_repr(msg),
+                )
+            return BinancePingResult(ok=True, message="OK")
+        except Exception as exc:
+            msg, etype, ecode, scode = _classify_binance_ping_error(exc)
+            return BinancePingResult(
+                ok=False,
+                message=msg,
+                error_type=etype,
+                error_code=ecode,
+                status_code=scode,
+                raw_error=_safe_repr(exc),
+            )
 
     @staticmethod
     def _make_spot_client(
@@ -700,3 +754,40 @@ def _sum_optional(first: Optional[float], second: Optional[float]) -> Optional[f
     if first is None and second is None:
         return None
     return (first or 0.0) + (second or 0.0)
+
+
+def _extract_binance_code(resp: Any) -> Tuple[Optional[int], Optional[str]]:
+    if not isinstance(resp, dict):
+        return None, None
+    code = resp.get("code")
+    msg = _to_str(resp.get("msg"))
+    try:
+        return (int(code), msg)
+    except (TypeError, ValueError):
+        return None, msg
+
+
+def _classify_binance_ping_error(exc: Exception) -> Tuple[str, str, str, Optional[int]]:
+    client_error = None
+    try:
+        from binance.error import ClientError  # type: ignore
+    except Exception:
+        ClientError = None
+
+    if ClientError is not None and isinstance(exc, ClientError):
+        status = getattr(exc, "status_code", None)
+        code = getattr(exc, "error_code", None)
+        msg = getattr(exc, "error_message", None) or str(exc) or "Binance error"
+        error_code = f"CODE_{code}" if code is not None else "CLIENT_ERROR"
+        return msg, "ClientError", error_code, status
+
+    return str(exc) or "Runtime error", type(exc).__name__, "RUNTIME_ERROR", None
+
+
+def _safe_repr(exc: Any) -> Optional[str]:
+    if exc is None:
+        return None
+    try:
+        return repr(exc)
+    except Exception:
+        return f"<{type(exc).__name__}>"

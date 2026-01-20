@@ -1,6 +1,7 @@
 import asyncio
 import os
 import unittest
+from pathlib import Path
 from typing import List, Optional
 
 from backend.app.integrations.Bybit.adapter import BybitAdapter
@@ -25,9 +26,29 @@ def _debug_enabled() -> bool:
     return (_env("BYBIT_DEBUG") or "").lower() in {"1", "true", "yes"}
 
 
+def _load_env_from_dotenv() -> None:
+    if _env("BYBIT_API_KEY") and _env("BYBIT_API_SECRET"):
+        return
+
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / ".env"
+        if candidate.is_file():
+            for line in candidate.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                key = key.strip()
+                value = value.strip().strip('"').strip("'")
+                if key:
+                    os.environ.setdefault(key, value)
+            return
+
+
 class BybitAdapterLiveTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        _load_env_from_dotenv()
         cls.api_key = _env("BYBIT_API_KEY")
         cls.api_secret = _env("BYBIT_API_SECRET")
         if not cls.api_key or not cls.api_secret:
@@ -54,6 +75,20 @@ class BybitAdapterLiveTests(unittest.TestCase):
             print(f"balances: {len(balances)}")
             for item in balances[:5]:
                 print(f"  {item.asset}: free={item.free} locked={item.locked} total={item.total}")
+
+    def test_ping(self):
+        res = asyncio.run(self.adapter.ping(account_type=self.account_type))
+        self.assertIsInstance(res.ok, bool)
+        if _debug_enabled():
+            print(
+                "ping:",
+                "ok=",
+                res.ok,
+                "message=",
+                res.message,
+                "error_code=",
+                res.error_code,
+            )
 
     def test_fetch_positions(self):
         positions = asyncio.run(

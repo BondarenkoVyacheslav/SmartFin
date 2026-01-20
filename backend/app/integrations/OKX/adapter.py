@@ -48,6 +48,18 @@ class OKXSnapshot:
     activities: List[ActivityLine]
 
 
+@dataclass(frozen=True)
+class OKXPingResult:
+    """Result of a credentials check."""
+
+    ok: bool
+    message: Optional[str] = None
+    error_type: Optional[str] = None
+    error_code: Optional[str] = None
+    status_code: Optional[int] = None
+    raw_error: Optional[str] = None
+
+
 class OKXAdapter:
     """
     OKX adapter powered by the official okx-python SDK.
@@ -69,32 +81,76 @@ class OKXAdapter:
         use_server_time: bool = False,
         extra_params: Optional[Dict[str, Any]] = None,
     ) -> None:
+        self._api_key = (api_key or "").strip()
+        self._api_secret = (api_secret or "").strip()
+        self._passphrase = (passphrase or "").strip()
         params = extra_params or {}
         resolved_flag = flag if flag is not None else ("1" if testnet else "0")
         self._account = self._make_account_client(
-            api_key=api_key,
-            api_secret=api_secret,
-            passphrase=passphrase,
+            api_key=self._api_key,
+            api_secret=self._api_secret,
+            passphrase=self._passphrase,
             flag=resolved_flag,
             use_server_time=use_server_time,
             extra_params=_pick_client_params(params, "account"),
         )
         self._trade = self._make_trade_client(
-            api_key=api_key,
-            api_secret=api_secret,
-            passphrase=passphrase,
+            api_key=self._api_key,
+            api_secret=self._api_secret,
+            passphrase=self._passphrase,
             flag=resolved_flag,
             use_server_time=use_server_time,
             extra_params=_pick_client_params(params, "trade"),
         )
         self._funding = self._make_funding_client(
-            api_key=api_key,
-            api_secret=api_secret,
-            passphrase=passphrase,
+            api_key=self._api_key,
+            api_secret=self._api_secret,
+            passphrase=self._passphrase,
             flag=resolved_flag,
             use_server_time=use_server_time,
             extra_params=_pick_client_params(params, "funding"),
         )
+
+    async def ping(self) -> OKXPingResult:
+        """
+        Validate that the provided API credentials work.
+
+        Strategy: call a lightweight authorized endpoint and check OKX code.
+        """
+        if not self._api_key or not self._api_secret or not self._passphrase:
+            return OKXPingResult(
+                ok=False,
+                message="Empty api_key/api_secret/passphrase",
+                error_type="ValueError",
+                error_code="EMPTY_KEYS",
+                status_code=None,
+                raw_error=None,
+            )
+
+        try:
+            method = _resolve_method(self._account, "get_account_config", "get_config")
+            resp = await self._call(method)
+            code, msg = _extract_okx_code(resp)
+            if code is not None and code != "0":
+                return OKXPingResult(
+                    ok=False,
+                    message=msg or "OKX API error",
+                    error_type="OKXError",
+                    error_code=f"CODE_{code}",
+                    status_code=None,
+                    raw_error=_safe_repr(msg),
+                )
+            return OKXPingResult(ok=True, message="OK")
+        except Exception as exc:
+            msg, etype, ecode = _classify_okx_ping_error(exc)
+            return OKXPingResult(
+                ok=False,
+                message=msg,
+                error_type=etype,
+                error_code=ecode,
+                status_code=None,
+                raw_error=_safe_repr(exc),
+            )
 
     @staticmethod
     def _make_account_client(
@@ -630,3 +686,25 @@ def _sum_optional(first: Optional[float], second: Optional[float]) -> Optional[f
     if first is None and second is None:
         return None
     return (first or 0.0) + (second or 0.0)
+
+
+def _extract_okx_code(resp: Any) -> Tuple[Optional[str], Optional[str]]:
+    if not isinstance(resp, dict):
+        return None, None
+    code = _to_str(resp.get("code") or resp.get("error_code"))
+    msg = _to_str(resp.get("msg") or resp.get("error_message"))
+    return code, msg
+
+
+def _classify_okx_ping_error(exc: Exception) -> Tuple[str, str, str]:
+    msg = str(exc) or "Runtime error"
+    return msg, type(exc).__name__, "RUNTIME_ERROR"
+
+
+def _safe_repr(exc: Any) -> Optional[str]:
+    if exc is None:
+        return None
+    try:
+        return repr(exc)
+    except Exception:
+        return f"<{type(exc).__name__}>"
