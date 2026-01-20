@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'strawberry.django',
 
     'app.account',
+    'app.billing',
     'app.analytics',
     'app.assets',
     'app.portfolio',
