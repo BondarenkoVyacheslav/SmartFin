@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from app.billing.services import get_entitlements, get_plan_code
 from .serializers import LoginSerializer, RegisterSerializer, TokenPairSerializer
 
 User = get_user_model()
@@ -47,4 +48,11 @@ class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        return Response({"email": request.user.email, "username": request.user.username})
+        return Response(
+            {
+                "email": request.user.email,
+                "username": request.user.username,
+                "plan": get_plan_code(request.user),
+                "entitlements": get_entitlements(request.user),
+            }
+        )
