@@ -206,5 +206,62 @@ class FinamAdapterLiveTests(unittest.IsolatedAsyncioTestCase):
             print("===========================\n")
 
 
+class FinamAdapterFallbackTests(unittest.IsolatedAsyncioTestCase):
+    class _Adapter(FinamAdapter):
+        def __init__(self) -> None:
+            super().__init__(secret="dummy", account_id=None)
+            self.rest_paths = []
+            self.rest_responses = {}
+
+        async def _get_client(self):
+            return object()
+
+        async def _ensure_sdk_jwt(self, client):  # type: ignore[override]
+            return None
+
+        async def _rl_call(self, key, fn, *args, **kwargs):  # type: ignore[override]
+            raise Exception("pydantic validation error")
+
+        def _extract_sdk_jwt(self, client):  # type: ignore[override]
+            return None
+
+        async def _rest_get(self, path, params=None, *, jwt_override=None):  # type: ignore[override]
+            self.rest_paths.append(path)
+            resp = self.rest_responses.get(path)
+            if isinstance(resp, BaseException):
+                raise resp
+            if resp is None:
+                raise RuntimeError(f"unexpected path: {path}")
+            return resp
+
+    async def test_rest_fallback_tries_full_account_id_first(self):
+        adapter = self._Adapter()
+        try:
+            full_path = "/v1/accounts/TRQD05%3A413249"
+            adapter.rest_responses[full_path] = {"cash": [], "positions": []}
+
+            info = await adapter._get_account_info("TRQD05:413249")
+            self.assertEqual(adapter.rest_paths, [full_path])
+            self.assertIsInstance(info, dict)
+            self.assertEqual(info.get("_source"), "rest_fallback")
+        finally:
+            await adapter.aclose()
+
+    async def test_rest_fallback_tries_numeric_suffix_after_404(self):
+        adapter = self._Adapter()
+        try:
+            full_path = "/v1/accounts/TRQD05%3A413249"
+            numeric_path = "/v1/accounts/413249"
+            adapter.rest_responses[full_path] = RuntimeError("Finam REST 404 for /v1/accounts/TRQD05%3A413249: not found")
+            adapter.rest_responses[numeric_path] = {"cash": [], "positions": []}
+
+            info = await adapter._get_account_info("TRQD05:413249")
+            self.assertEqual(adapter.rest_paths, [full_path, numeric_path])
+            self.assertIsInstance(info, dict)
+            self.assertEqual(info.get("_source"), "rest_fallback")
+        finally:
+            await adapter.aclose()
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

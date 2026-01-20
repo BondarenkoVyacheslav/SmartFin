@@ -523,19 +523,41 @@ class FinamAdapter:
             return await self._rl_call("accounts", client.account.get_account_info, account_id)
         except Exception as exc:
             # SDK иногда падает на pydantic-моделях (missing fields).
-            # Для REST endpoint обычно нужен числовой account_id (без префикса КЛФ).
-            rest_account_id = _rest_account_id(account_id)
-            safe_account_id = quote(rest_account_id, safe="")
+            # Finam REST может ожидать как полный id (например TRQD05:413249),
+            # так и числовой суффикс (413249) — попробуем оба.
+            candidates: List[str] = []
+            original = (account_id or "").strip()
+            if original:
+                candidates.append(original)
+
+            rest_suffix = _rest_account_id(original)
+            if rest_suffix and rest_suffix != original:
+                candidates.append(rest_suffix)
 
             jwt_sdk = self._extract_sdk_jwt(client)
             # На всякий случай: не используем override, если вдруг это не JWT
             if jwt_sdk and not _looks_like_jwt(jwt_sdk):
                 jwt_sdk = None
 
-            raw = await self._rest_get(
-                f"/v1/accounts/{safe_account_id}",
-                jwt_override=jwt_sdk,
-            )
+            last_rest_exc: Optional[BaseException] = None
+            raw: Optional[Dict[str, Any]] = None
+            for cid in candidates:
+                safe_account_id = quote(cid, safe="")
+                try:
+                    raw = await self._rest_get(
+                        f"/v1/accounts/{safe_account_id}",
+                        jwt_override=jwt_sdk,
+                    )
+                    break
+                except RuntimeError as rest_exc:
+                    last_rest_exc = rest_exc
+                    # Если аккаунт не найден — пробуем следующий формат id.
+                    if "Finam REST 404" in str(rest_exc):
+                        continue
+                    raise
+
+            if raw is None:
+                raise RuntimeError("Finam REST fallback failed for account info") from (last_rest_exc or exc)
 
             raw["_source"] = "rest_fallback"
             raw["_sdk_error"] = repr(exc)
