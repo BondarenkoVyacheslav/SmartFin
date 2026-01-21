@@ -143,5 +143,9 @@ def build_portfolio_daily_snapshot(portfolio_id: int, snapshot_date: date) -> Po
             },
         )
 
-    return valuation
+        PortfolioPositionDaily.objects.filter(
+            portfolio_id=portfolio_id,
+            snapshot_date__lt=snapshot_date - timedelta(days=1),
+        ).delete()
 
+    return valuation
