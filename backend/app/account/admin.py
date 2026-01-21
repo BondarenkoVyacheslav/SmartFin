@@ -1,9 +1,9 @@
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 
-import app.account.models
+from app.account.models import User
 
 
-@admin.register(app.account.models.User)
+@admin.register(User)
 class UserAdmin(ModelAdmin):
     pass

@@ -26,13 +26,3 @@ class RegisterSerializer(serializers.ModelSerializer):
             password=validated_data['password']
         )
         return user
-
-
-class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    password = serializers.CharField(write_only=True)
-
-
-class TokenPairSerializer(serializers.Serializer):
-    refresh = serializers.CharField()
-    access = serializers.CharField()
