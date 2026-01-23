@@ -5,8 +5,8 @@ from typing import Any, Dict, List, Optional, Sequence
 
 import httpx
 
-from app.marketdata.Alpaca.cache_keys import AlpacaCacheKeys
-from app.marketdata.Alpaca.dto.quote import AlpacaStockQuote, parse_alpaca_snapshots
+from .cache_keys import AlpacaCacheKeys
+from .dto.quote import AlpacaStockQuote, parse_alpaca_snapshots
 from app.marketdata.provider import Provider
 from app.marketdata.services.redis_cache import RedisCacheService
 
