@@ -308,3 +308,14 @@ class MOEXCurrencySeltMETLSecuritiesResponse(RedisJSON):
             dataversion=_parse_single(payload, "dataversion", MoexDataversionRow),
             marketdata_yields=_parse_table(payload, "marketdata_yields", MoexSeltMetlMarketdataYieldsRow),
         )
+
+
+# Backward-compatible alias expected by MOEX provider import.
+class MOEXCurrencySeltCETSSecurities(MOEXCurrencySeltMETLSecuritiesResponse):
+    pass
+
+
+def parse_moex_currency_selt_cets_securities_response(
+    payload: Dict[str, Any],
+) -> MOEXCurrencySeltCETSSecurities:
+    return MOEXCurrencySeltCETSSecurities.from_payload(payload)
