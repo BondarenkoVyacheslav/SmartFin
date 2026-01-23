@@ -19,6 +19,9 @@ class Exchange(models.Model):
     description = models.TextField(blank=True, null=True)
     kind = models.CharField(max_length=20, choices=KIND_CHOICES, default=KIND_EXCHANGE)
 
+    class Meta:
+        db_table = '"integrations"."exchange"'
+
 
 class Integration(models.Model):
     key = models.CharField(max_length=50)
@@ -37,6 +40,9 @@ class Integration(models.Model):
     portfolio_id = models.ForeignKey(Portfolio, on_delete=models.CASCADE)
     exchange_id = models.ForeignKey(Exchange, on_delete=models.CASCADE)
 
+    class Meta:
+        db_table = '"integrations"."integration"'
+
 
 class WalletAddress(models.Model):
     portfolio_id = models.ForeignKey(Portfolio, on_delete=models.CASCADE)
@@ -48,3 +54,6 @@ class WalletAddress(models.Model):
     asset_symbol = models.CharField(max_length=32, blank=True, null=True)
     is_active = models.BooleanField(default=True)
     extra_params = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        db_table = '"integrations"."walletaddress"'

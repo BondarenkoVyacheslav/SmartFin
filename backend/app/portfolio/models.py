@@ -16,6 +16,9 @@ class Portfolio(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     base_currency = models.CharField(max_length=10, default="USD")
 
+    class Meta:
+        db_table = '"portfolio"."portfolio"'
+
 
 class PortfolioAsset(models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.PROTECT)
@@ -24,3 +27,6 @@ class PortfolioAsset(models.Model):
     avg_buy_price = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True)
     buy_currency = models.CharField(max_length=10, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = '"portfolio"."portfolioasset"'

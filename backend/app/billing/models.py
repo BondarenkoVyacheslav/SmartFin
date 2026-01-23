@@ -15,6 +15,9 @@ class Plan(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        db_table = '"billing"."plan"'
+
     def __str__(self):
         return f"{self.code}"
 
@@ -46,6 +49,7 @@ class Subscription(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        db_table = '"billing"."subscription"'
         ordering = ['-created_at']
 
     def __str__(self):

@@ -20,6 +20,7 @@ class PortfolioDailySnapshot(models.Model):
     margin = models.DecimalField(max_digits=20, decimal_places=8)
 
     class Meta:
+        db_table = '"analytics"."portfoliodailysnapshot"'
         constraints = [
             models.UniqueConstraint(
                 fields=["portfolio", "snapshot_date"],
@@ -49,6 +50,7 @@ class PortfolioAssetDailySnapshot(models.Model):
     margin = models.DecimalField(max_digits=20, decimal_places=8)
 
     class Meta:
+        db_table = '"analytics"."portfolioassetdailysnapshot"'
         constraints = [
             models.UniqueConstraint(
                 fields=["portfolio", "asset_type", "snapshot_date"],
@@ -72,6 +74,7 @@ class PortfolioValuationDaily(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        db_table = '"analytics"."portfoliovaluationdaily"'
         constraints = [
             models.UniqueConstraint(
                 fields=["portfolio", "snapshot_date"],
@@ -95,6 +98,7 @@ class PortfolioPositionDaily(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        db_table = '"analytics"."portfoliopositiondaily"'
         constraints = [
             models.UniqueConstraint(
                 fields=["portfolio", "asset", "snapshot_date"],

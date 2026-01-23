@@ -36,6 +36,7 @@ class Transaction(models.Model):
     )
 
     class Meta:
+        db_table = '"transaction"."transaction"'
         verbose_name = "Транзакция"
         verbose_name_plural = "Транзакции"
 
