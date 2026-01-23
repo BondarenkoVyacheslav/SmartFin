@@ -5,6 +5,8 @@ from datetime import date, datetime, timezone
 from typing import Any, Dict, List, Optional, Sequence
 
 from app.assets.models import Asset, AssetType
+from app.marketdata.Alpaca.alpaca import AlpacaProvider
+from app.marketdata.Alpaca.dto.quote import AlpacaStockQuote
 from app.marketdata.CoinGecko.cache_keys import CoinGeckoCacheKeys
 from app.marketdata.CoinGecko.coingecko import CoinGeckoProvider
 from app.marketdata.CoinGecko.dto.coins_list import CoinsList
@@ -12,9 +14,6 @@ from app.marketdata.CoinGecko.dto.simple_price import ListSimplePricesEntry
 from app.marketdata.MOEX.cache_keys import MOEXCacheKeys
 from app.marketdata.MOEX.dto.stock_shares_TQBR_securities import MOEXSharesTQBRSecurities
 from app.marketdata.MOEX.moex import MOEXProvider
-from app.marketdata.USA.cache_keys import USAStockCacheKeys
-from app.marketdata.USA.dto.quote import USAStockQuote
-from app.marketdata.USA.usa import USAStockProvider
 from app.marketdata.provider import Quote, Candle
 
 
@@ -26,7 +25,7 @@ class MarketDataAPI:
     }
 
     def __init__(self, *, redis_url: Optional[str] = None) -> None:
-        self.usa_provider = USAStockProvider(redis_url=redis_url)
+        self.alpaca_provider = AlpacaProvider(redis_url=redis_url)
         self.moex_provider = MOEXProvider(redis_url=redis_url)
         self.coin_gecko_provider = CoinGeckoProvider(redis_url=redis_url)
         self._asset_type_id_to_provider: Optional[Dict[int, str]] = None
@@ -142,7 +141,7 @@ class MarketDataAPI:
         return {}
 
     @staticmethod
-    def _quote_from_usa_dto(dto: USAStockQuote) -> Quote:
+    def _quote_from_alpaca_dto(dto: AlpacaStockQuote) -> Quote:
         return Quote(
             symbol=dto.symbol,
             last=dto.last,
@@ -151,46 +150,23 @@ class MarketDataAPI:
             ts=dto.ts,
         )
 
-    async def _get_usa_quote_from_cache(self, symbol: str) -> Optional[Quote]:
-        key = USAStockCacheKeys.quote(symbol)
-        cached = await self.usa_provider.cache.get(key)
-        dto = USAStockQuote.from_redis_value(cached)
-        if dto is None:
-            return None
-        return self._quote_from_usa_dto(dto)
+    def _alpaca_enabled(self) -> bool:
+        return bool(self.alpaca_provider.api_key and self.alpaca_provider.api_secret)
 
     async def _get_usa_quote(self, symbol: str) -> Optional[Quote]:
-        cached = await self._get_usa_quote_from_cache(symbol)
-        if cached is not None and cached.last is not None:
-            return cached
-
-        dto = await self.usa_provider.quote(symbol)
-        if dto is None:
-            return None
-        return self._quote_from_usa_dto(dto)
+        quotes = await self._get_usa_quotes([symbol])
+        return quotes[0] if quotes else None
 
     async def _get_usa_quotes(self, symbols: Sequence[str]) -> List[Quote]:
+        return await self._get_alpaca_quotes(symbols)
+
+    async def _get_alpaca_quotes(self, symbols: Sequence[str]) -> List[Quote]:
         normalized = self._normalize_symbols(symbols)
-        if not normalized:
+        if not normalized or not self._alpaca_enabled():
             return []
 
-        keys = [USAStockCacheKeys.quote(symbol) for symbol in normalized]
-        cached = await self.usa_provider.cache.get_many(keys)
-
-        cached_quotes: Dict[str, USAStockQuote] = {}
-        missing: List[str] = []
-
-        for symbol in normalized:
-            cache_key = USAStockCacheKeys.quote(symbol)
-            dto = USAStockQuote.from_redis_value(cached.get(cache_key))
-            if dto is not None and dto.last is not None:
-                cached_quotes[symbol] = dto
-            else:
-                missing.append(symbol)
-
-        fresh_quotes = await self.usa_provider.quotes(missing)
-        merged: Dict[str, USAStockQuote] = {**cached_quotes, **{q.symbol: q for q in fresh_quotes}}
-        return [self._quote_from_usa_dto(merged[s]) for s in normalized if s in merged]
+        quotes = await self.alpaca_provider.quotes(normalized)
+        return [self._quote_from_alpaca_dto(dto) for dto in quotes]
 
     @staticmethod
     def _quote_from_moex_dto(dto: MOEXSharesTQBRSecurities, symbol: str) -> Optional[Quote]:
