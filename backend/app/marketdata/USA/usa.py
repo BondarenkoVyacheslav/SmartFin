@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from datetime import date, datetime, timezone
 from typing import Any, Dict, List, Optional, Sequence
 
@@ -39,6 +40,10 @@ class USAStockProvider(Provider):
             redis_url=redis_url,
         )
         self.base_url = base_url.rstrip("/")
+        user_agent = os.getenv(
+            "MARKETDATA_USA_USER_AGENT",
+            user_agent,
+        )
         self.http = httpx.AsyncClient(
             base_url=self.base_url,
             timeout=timeout_s,
