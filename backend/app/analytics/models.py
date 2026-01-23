@@ -1,6 +1,6 @@
 from django.db import models
 
-from app.assets.models import AssetType
+from app.assets.models import Asset, AssetType
 from app.portfolio.models import Portfolio
 
 
@@ -53,6 +53,52 @@ class PortfolioAssetDailySnapshot(models.Model):
             models.UniqueConstraint(
                 fields=["portfolio", "asset_type", "snapshot_date"],
                 name="portfolio_asset_type_day_snapshot",
+            )
+        ]
+        ordering = ["-snapshot_date", "-id"]
+
+
+class PortfolioValuationDaily(models.Model):
+    portfolio = models.ForeignKey(
+        Portfolio,
+        on_delete=models.CASCADE,
+        related_name="valuation_daily",
+    )
+    snapshot_date = models.DateField()
+    base_currency = models.CharField(max_length=10)
+    value_base = models.DecimalField(max_digits=20, decimal_places=8)
+    net_flow_base = models.DecimalField(max_digits=20, decimal_places=8, default=0)
+    pnl_base = models.DecimalField(max_digits=20, decimal_places=8, default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["portfolio", "snapshot_date"],
+                name="portfolio_valuation_daily_unique",
+            )
+        ]
+        ordering = ["-snapshot_date", "-id"]
+
+
+class PortfolioPositionDaily(models.Model):
+    portfolio = models.ForeignKey(
+        Portfolio,
+        on_delete=models.CASCADE,
+        related_name="position_daily",
+    )
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
+    snapshot_date = models.DateField()
+    quantity = models.DecimalField(max_digits=20, decimal_places=8)
+    price_base = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True)
+    value_base = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["portfolio", "asset", "snapshot_date"],
+                name="portfolio_position_daily_unique",
             )
         ]
         ordering = ["-snapshot_date", "-id"]
