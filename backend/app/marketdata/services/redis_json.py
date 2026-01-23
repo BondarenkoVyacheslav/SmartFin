@@ -20,7 +20,7 @@ from typing import (
     get_type_hints,
 )
 
-T = TypeVar("T", bound="RedisJSONMixin")
+T = TypeVar("T", bound="RedisJSON")
 
 
 def _redis_default_encoder(obj: Any) -> Any:
