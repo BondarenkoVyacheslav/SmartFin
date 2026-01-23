@@ -73,6 +73,7 @@ from app.marketdata.api import MarketDataAPI
 
 
 DEFAULT_US_SYMBOLS = ["AAPL", "GOOGL", "NVDA", "SPY", "QQQ"]
+US_WATCHLIST = ["AAPL", "GOOGL", "NVDA", "SPY", "QQQ"]
 
 
 def _print_quotes(title: str, quotes) -> None:
@@ -119,6 +120,19 @@ def _env_list(name: str, default: Sequence[str]) -> List[str]:
     if not raw:
         return list(default)
     return [item.strip() for item in raw.split(",") if item.strip()]
+
+
+def _normalize_symbols(symbols: Sequence[str]) -> List[str]:
+    seen = set()
+    ordered: List[str] = []
+    for symbol in symbols:
+        if not symbol:
+            continue
+        normalized = symbol.strip().upper()
+        if normalized and normalized not in seen:
+            seen.add(normalized)
+            ordered.append(normalized)
+    return ordered
 
 
 def _maybe_latency_limit() -> float | None:
@@ -186,6 +200,7 @@ class MarketDataAPILiveTests(unittest.TestCase):
             cls.us_symbols = []
         else:
             cls.us_symbols = _env_list("MARKETDATA_US_SYMBOLS", DEFAULT_US_SYMBOLS)
+        cls.us_watchlist = list(US_WATCHLIST)
         cls.ru_symbols = _env_list("MARKETDATA_RU_SYMBOLS", ["SBER"])
         cls.crypto_symbols = _env_list("MARKETDATA_CRYPTO_SYMBOLS", ["BTC"])
 
@@ -232,10 +247,11 @@ class MarketDataAPILiveTests(unittest.TestCase):
         if not self.us_symbols:
             self.skipTest("US symbols not configured or Alpaca disabled")
         try:
+            symbols = _normalize_symbols(self.us_symbols + self.us_watchlist)
             quotes = self._timed(
                 "USA quotes",
                 self.api.get_quotes,
-                self.us_symbols,
+                symbols,
                 "stock-us",
             )
         except httpx.HTTPStatusError as exc:
