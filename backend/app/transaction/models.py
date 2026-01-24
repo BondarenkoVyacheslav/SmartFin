@@ -1,6 +1,7 @@
 from django.db import models
 
 from app.assets.models import Asset
+from app.integrations.models import Integration
 from app.portfolio.models import Portfolio
 
 
@@ -34,11 +35,25 @@ class Transaction(models.Model):
         choices=SOURCE_TYPES,
         default="MANUAL",
     )
+    integration = models.ForeignKey(
+        Integration,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="transactions",
+    )
+    dedupe_key = models.CharField(max_length=64, null=True, blank=True, db_index=True)
 
     class Meta:
         db_table = '"transaction"."transaction"'
         verbose_name = "Транзакция"
         verbose_name_plural = "Транзакции"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["integration", "dedupe_key"],
+                name="transaction_unique_integration_dedupe",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.transaction_type.upper()} {self.asset.symbol or self.asset.name}"
