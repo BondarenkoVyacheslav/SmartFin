@@ -13,6 +13,9 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+from celery.schedules import crontab
+from kombu import Queue
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -53,6 +56,7 @@ INSTALLED_APPS = [
     'app.transaction',
     'app.integrations',
     'app.marketdata',
+    'app.pipeline',
 ]
 
 MIDDLEWARE = [
@@ -166,3 +170,45 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Celery
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "amqp://guest:guest@rabbitmq:5672//")
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "redis://redis:6379/1")
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = os.environ.get("CELERY_TIMEZONE", "Europe/Berlin")
+CELERY_ENABLE_UTC = True
+CELERY_TASK_TRACK_STARTED = True
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+CELERY_TASK_DEFAULT_QUEUE = "default"
+CELERY_TASK_QUEUES = (
+    Queue("default"),
+    Queue("sync_ru_brokers"),
+    Queue("sync_crypto"),
+    Queue("sync_ton"),
+    Queue("analytics"),
+)
+
+CELERY_TASK_ROUTES = ("app.pipeline.routing.route_task",)
+
+CELERY_TASK_ANNOTATIONS = {
+    "app.pipeline.tasks.sync_connector": {
+        "rate_limit": os.environ.get("CELERY_RATE_LIMIT_SYNC_CRYPTO", "30/m"),
+    }
+}
+
+CELERY_BEAT_SCHEDULE = {
+    "nightly-pipeline": {
+        "task": "app.pipeline.tasks.nightly_pipeline",
+        "schedule": crontab(hour=2, minute=30),
+        "options": {"queue": "default"},
+    }
+}
+CELERY_BEAT_SCHEDULE_FILENAME = os.environ.get(
+    "CELERY_BEAT_SCHEDULE_FILENAME",
+    "/tmp/celerybeat-schedule",
+)
+
+REDIS_URL = os.environ.get("REDIS_URL", "redis://redis:6379/0")

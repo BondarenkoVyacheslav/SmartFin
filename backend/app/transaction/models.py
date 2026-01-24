@@ -34,11 +34,18 @@ class Transaction(models.Model):
         choices=SOURCE_TYPES,
         default="MANUAL",
     )
+    integration_dedupe_key = models.CharField(max_length=255, null=True, blank=True)
 
     class Meta:
         db_table = '"transaction"."transaction"'
         verbose_name = "Транзакция"
         verbose_name_plural = "Транзакции"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["portfolio", "integration_dedupe_key"],
+                name="tx_integration_dedupe_unique",
+            )
+        ]
 
     def __str__(self):
         return f"{self.transaction_type.upper()} {self.asset.symbol or self.asset.name}"
