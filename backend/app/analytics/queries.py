@@ -15,7 +15,7 @@ from app.analytics.models import (
     PortfolioPositionDaily,
     PortfolioValuationDaily,
 )
-from app.analytics.services import _build_fx_rates, _normalize_currency, _to_decimal
+from backend.app.analytics.utils import _build_fx_rates, _normalize_currency, _to_decimal
 from app.assets.models import AssetType
 from app.assets.queries import AssetTypeGQL
 from app.portfolio.models import Portfolio
