@@ -222,7 +222,7 @@ class MOEXProvider(Provider):
             "securities": securities
         }
 
-        data = await self._get(f"/iss/engines/stock/markets/index/boards/SNDX/securities", params)
+        data = await self._get(f"/iss/engines/stock/markets/index/boards/SNDX/securities.json", params)
         stock_index_sndx_securities: MOEXStockIndexSndxSecurities = parse_moex_sndx_securities_response(data)
 
         key = self.Keys.stock_index_SNDX_securities()
