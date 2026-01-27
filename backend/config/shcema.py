@@ -1,6 +1,5 @@
 import strawberry
 from app.analytics.schema import PortfolioSnapshotsQueries
-from app.account.schema import UserQuery, UserMutation
 from app.assets.schema import AssetQuery, AssetMutation
 from app.integrations.schema import IntegrationQuery, IntegrationMutation
 from app.marketdata.schema import Query as MarketDataQuery, Mutation as MarketDataMutation
@@ -16,7 +15,6 @@ class Query(
     TransactionQuery,
     PortfolioSnapshotsQueries,
     LLMChatQuery,
-    UserQuery,
     IntegrationQuery,
     MarketDataQuery,
 ):
@@ -29,7 +27,6 @@ class Mutation(
     PortfolioMutation,
     TransactionMutation,
     LLMChatMutation,
-    UserMutation,
     IntegrationMutation,
     MarketDataMutation,
 ):

@@ -50,45 +50,45 @@ services:
   redis:
     image: redis:7-alpine
 
-  frontend:
-    image: node:20-alpine
-    working_dir: /app
-    volumes:
-      - ./frontend/smartfin-front:/app
-    ports:
-      - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
-    command: sh -c "npm install && npm run dev -- --hostname 0.0.0.0 --port 3000"
-    depends_on:
-      - web
+  # frontend:
+  #   image: node:20-alpine
+  #   working_dir: /app
+  #   volumes:
+  #     - ./frontend/smartfin-front:/app
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - NEXT_PUBLIC_API_URL=http://localhost:8000
+  #   command: sh -c "npm install && npm run dev -- --hostname 0.0.0.0 --port 3000"
+  #   depends_on:
+  #     - web
 
-  celery_worker_sync:
-    build:
-      context: .
-      args:
-        APP_UID: ${APP_UID:-1000}
-        APP_GID: ${APP_GID:-1000}
-    working_dir: /app/backend
-    user: "${APP_UID:-1000}:${APP_GID:-1000}"
-    volumes:
-      - ./backend:/app/backend
-    environment:
-      - PYTHONPATH=/app
-      - DB_HOST=database
-      - DB_NAME=dbname
-      - DB_USER=dbuser
-      - DB_PASS=dbpass
-      - CELERY_BROKER_URL=amqp://${RABBITMQ_DEFAULT_USER:-guest}:${RABBITMQ_DEFAULT_PASS:-guest}@rabbitmq:5672//
-      - CELERY_RESULT_BACKEND=redis://redis:6379/1
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_RATE_LIMIT_SYNC_CRYPTO=${CELERY_RATE_LIMIT_SYNC_CRYPTO:-30/m}
-    depends_on:
-      - database
-      - rabbitmq
-      - redis
-    command: >
-      sh -c "celery -A config worker -Q default,sync_ru_brokers,sync_crypto,sync_ton -c ${CELERY_SYNC_CONCURRENCY:-8} -l info"
+  # celery_worker_sync:
+  #   build:
+  #     context: .
+  #     args:
+  #       APP_UID: ${APP_UID:-1000}
+  #       APP_GID: ${APP_GID:-1000}
+  #   working_dir: /app/backend
+  #   user: "${APP_UID:-1000}:${APP_GID:-1000}"
+  #   volumes:
+  #     - ./backend:/app/backend
+  #   environment:
+  #     - PYTHONPATH=/app
+  #     - DB_HOST=database
+  #     - DB_NAME=dbname
+  #     - DB_USER=dbuser
+  #     - DB_PASS=dbpass
+  #     - CELERY_BROKER_URL=amqp://${RABBITMQ_DEFAULT_USER:-guest}:${RABBITMQ_DEFAULT_PASS:-guest}@rabbitmq:5672//
+  #     - CELERY_RESULT_BACKEND=redis://redis:6379/1
+  #     - REDIS_URL=redis://redis:6379/0
+  #     - CELERY_RATE_LIMIT_SYNC_CRYPTO=${CELERY_RATE_LIMIT_SYNC_CRYPTO:-30/m}
+  #   depends_on:
+  #     - database
+  #     - rabbitmq
+  #     - redis
+  #   command: >
+  #     sh -c "celery -A config worker -Q default,sync_ru_brokers,sync_crypto,sync_ton -c ${CELERY_SYNC_CONCURRENCY:-8} -l info"
 
   celery_worker_analytics:
     build:
