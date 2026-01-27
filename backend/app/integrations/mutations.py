@@ -1,6 +1,7 @@
 from datetime import datetime
 
 import strawberry
+from strawberry.scalars import JSON
 from .queries import IntegrationType, WalletAddressType
 
 
@@ -23,7 +24,7 @@ class IntegrationMutations:
         account_id: str | None = None,
         token_expires_at: datetime | None = None,
         refresh_expires_at: datetime | None = None,
-        extra_params: dict | None = None,
+        extra_params: JSON | None = None,
     ) -> IntegrationType:
         return IntegrationType.objects.create(
             portfolio_id=portfolio_id,
@@ -54,7 +55,7 @@ class IntegrationMutations:
         label: str | None = None,
         asset_symbol: str | None = None,
         is_active: bool = True,
-        extra_params: dict | None = None,
+        extra_params: JSON | None = None,
     ) -> WalletAddressType:
         return WalletAddressType.objects.create(
             portfolio_id=portfolio_id,

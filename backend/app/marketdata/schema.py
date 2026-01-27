@@ -1,5 +1,6 @@
 # apps/marketdata/schema.py
 import strawberry
+from strawberry.scalars import JSON
 from datetime import datetime, date
 from typing import Optional, List, Dict, Any
 from app.marketdata import market_data_api
@@ -38,7 +39,7 @@ class FxRateGQL:
 
 @strawberry.type
 class Query:
-    health: Dict[str, Any] = strawberry.field(resolver=lambda: market_data_api.health())
+    health: JSON = strawberry.field(resolver=lambda: market_data_api.health())
 
     @strawberry.field
     def quotes(self, symbols: List[str], asset_class: AssetClass) -> List[QuoteGQL]:
