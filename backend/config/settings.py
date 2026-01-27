@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'app.integrations',
     'app.marketdata',
     'app.pipeline',
+    'app.llm_chats',
 ]
 
 MIDDLEWARE = [
@@ -189,6 +190,8 @@ CELERY_TASK_QUEUES = (
     Queue("sync_crypto"),
     Queue("sync_ton"),
     Queue("analytics"),
+    Queue("llm_realtime"),
+    Queue("llm_analytics"),
 )
 
 CELERY_TASK_ROUTES = ("app.pipeline.routing.route_task",)
