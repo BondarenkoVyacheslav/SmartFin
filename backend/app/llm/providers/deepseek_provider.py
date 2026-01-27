@@ -2,23 +2,23 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.llm_chats.providers.base import LLMChatRequest, LLMChatResponse, LLMProviderError
-from app.llm_chats.providers.config import get_env, get_provider_config
-from app.llm_chats.providers.http_provider import HTTPProvider
+from app.llm.providers.base import LLMChatRequest, LLMChatResponse, LLMProviderError
+from app.llm.providers.config import get_env, get_provider_config
+from app.llm.providers.http_provider import HTTPProvider
 
 
-class OpenAIProvider(HTTPProvider):
-    name = "openai"
+class DeepSeekProvider(HTTPProvider):
+    name = "deepseek"
 
     def __init__(self):
         cfg = get_provider_config(self.name)
-        api_key = cfg.get("api_key") or get_env("OPENAI_API_KEY")
-        base_url = cfg.get("base_url") or get_env("OPENAI_BASE_URL")
-        path = cfg.get("chat_path") or get_env("OPENAI_CHAT_PATH")
+        api_key = cfg.get("api_key") or get_env("DEEPSEEK_API_KEY")
+        base_url = cfg.get("base_url") or get_env("DEEPSEEK_BASE_URL")
+        path = cfg.get("chat_path") or get_env("DEEPSEEK_CHAT_PATH")
         if not api_key or not base_url or not path:
             raise LLMProviderError(
                 code="missing_config",
-                message="OpenAI provider configuration is missing",
+                message="DeepSeek provider configuration is missing",
                 retriable=False,
             )
         self.chat_path = path
@@ -38,10 +38,10 @@ class OpenAIProvider(HTTPProvider):
             "Content-Type": "application/json",
         }
         data = self._post_json(self.chat_path, payload, headers=headers)
-        return _parse_openai_response(data)
+        return _parse_chat_response(data)
 
 
-def _parse_openai_response(data: dict[str, Any]) -> LLMChatResponse:
+def _parse_chat_response(data: dict[str, Any]) -> LLMChatResponse:
     choices = data.get("choices", [])
     message = choices[0].get("message", {}) if choices else {}
     text = message.get("content", "")

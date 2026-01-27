@@ -57,7 +57,7 @@ INSTALLED_APPS = [
     'app.integrations',
     'app.marketdata',
     'app.pipeline',
-    'app.llm_chats',
+    'app.llm',
 ]
 
 MIDDLEWARE = [

@@ -5,12 +5,12 @@ from typing import List
 import strawberry
 from strawberry import auto
 
-from app.llm_chats.models import LLMChat, LLMMessage, ChatSettings
-from app.llm_chats.services.chat_service import ChatService
-from app.llm_chats.services.model_registry import list_models
-from app.llm_chats.services.token_accounting import calculate_token_limits, estimate_message_tokens
-from app.llm_chats.services.prompt_templates import build_system_prompt, build_context_prompt
-from app.llm_chats.services.context_builder import build_context_pack
+from app.llm.models import LLMChat, LLMMessage, ChatSettings
+from app.llm.services.chat_service import ChatService
+from app.llm.services.model_registry import list_models
+from app.llm.services.token_accounting import calculate_token_limits, estimate_message_tokens
+from app.llm.services.prompt_templates import build_system_prompt, build_context_prompt
+from app.llm.services.context_builder import build_context_pack
 
 
 @strawberry.django.type(ChatSettings)

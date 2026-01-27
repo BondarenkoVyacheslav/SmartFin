@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.llm_chats.providers.base import LLMChatRequest, LLMChatResponse, LLMProviderError
-from app.llm_chats.providers.config import get_env, get_provider_config
-from app.llm_chats.providers.http_provider import HTTPProvider
+from app.llm.providers.base import LLMChatRequest, LLMChatResponse, LLMProviderError
+from app.llm.providers.config import get_env, get_provider_config
+from app.llm.providers.http_provider import HTTPProvider
 
 
 class GeminiProvider(HTTPProvider):

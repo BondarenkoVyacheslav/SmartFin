@@ -3,7 +3,7 @@ from app.analytics.schema import PortfolioSnapshotsQueries
 from app.assets.schema import AssetQuery, AssetMutation
 from app.portfolio.schema import PortfolioQuery, PortfolioMutation
 from app.transaction.schema import TransactionQuery, TransactionMutation
-from app.llm_chats.schema import LLMChatQuery, LLMChatMutation
+from app.llm.schema import LLMChatQuery, LLMChatMutation
 
 
 @strawberry.type

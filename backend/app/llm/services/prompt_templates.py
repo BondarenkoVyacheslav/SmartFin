@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.llm_chats.models import LLMChat
+from app.llm.models import LLMChat
 
 
 BASE_SYSTEM_PROMPT = (

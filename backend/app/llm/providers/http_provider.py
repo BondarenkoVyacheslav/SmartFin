@@ -6,7 +6,7 @@ from typing import Any
 
 import httpx
 
-from app.llm_chats.providers.base import LLMProvider, LLMProviderError
+from app.llm.providers.base import LLMProvider, LLMProviderError
 
 
 class HTTPProvider(LLMProvider):

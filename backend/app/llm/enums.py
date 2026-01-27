@@ -3,7 +3,7 @@ from __future__ import annotations
 import enum
 import strawberry
 
-from app.llm_chats.models import LLMChat, ChatSettings
+from app.llm.models import LLMChat, ChatSettings
 
 
 @strawberry.enum

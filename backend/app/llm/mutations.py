@@ -4,11 +4,11 @@ from typing import Optional
 
 import strawberry
 
-from app.llm_chats.models import LLMChat, LLMMessage
-from app.llm_chats.enums import ChatModeEnum, ContextModeEnum, AnalysisTypeEnum
-from app.llm_chats.queries import LLMChatType, LLMMessageType
-from app.llm_chats.services.chat_service import ChatService, BudgetExceededError
-from app.llm_chats.tasks import run_analysis_task
+from app.llm.models import LLMChat, LLMMessage
+from app.llm.enums import ChatModeEnum, ContextModeEnum, AnalysisTypeEnum
+from app.llm.queries import LLMChatType, LLMMessageType
+from app.llm.services.chat_service import ChatService, BudgetExceededError
+from app.llm.tasks import run_analysis_task
 
 
 @strawberry.type

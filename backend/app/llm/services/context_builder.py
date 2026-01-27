@@ -7,8 +7,8 @@ from django.utils import timezone
 
 from app.portfolio.models import PortfolioAsset, Portfolio
 from app.transaction.models import Transaction
-from app.llm_chats.models import ChatSettings, ContextSnapshot
-from app.llm_chats.services.token_accounting import estimate_tokens
+from app.llm.models import ChatSettings, ContextSnapshot
+from app.llm.services.token_accounting import estimate_tokens
 
 
 @dataclass

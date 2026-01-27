@@ -7,9 +7,9 @@ from django.test import TestCase, override_settings
 from django.contrib.auth import get_user_model
 
 from config.shcema import schema
-from app.llm_chats.models import LLMChat, TokenUsage
-from app.llm_chats.providers.base import LLMChatResponse, LLMProvider
-from app.llm_chats.services.chat_service import ChatService
+from app.llm.models import LLMChat, TokenUsage
+from app.llm.providers.base import LLMChatResponse, LLMProvider
+from app.llm.services.chat_service import ChatService
 
 
 class StubProvider(LLMProvider):
@@ -55,7 +55,7 @@ class LLMChatServiceTests(TestCase):
 
     def test_send_message_records_usage(self):
         chat = ChatService.create_chat(user=self.user, title="Test")
-        with patch("app.llm_chats.services.chat_service.get_provider", return_value=StubProvider()):
+        with patch("app.llm.services.chat_service.get_provider", return_value=StubProvider()):
             result = ChatService.send_message(user=self.user, chat=chat, content="Hello")
         self.assertEqual(result.assistant_message.content, "stub reply")
         usage_rows = TokenUsage.objects.filter(user=self.user, usage_type=TokenUsage.UsageType.MESSAGE)
@@ -74,7 +74,7 @@ class LLMChatServiceTests(TestCase):
             }
         """
         ctx = SimpleNamespace(request=SimpleNamespace(user=self.user))
-        with patch("app.llm_chats.services.chat_service.get_provider", return_value=StubProvider()):
+        with patch("app.llm.services.chat_service.get_provider", return_value=StubProvider()):
             result = schema.execute_sync(
                 mutation,
                 variable_values={"chatId": chat.id, "content": "Hi"},

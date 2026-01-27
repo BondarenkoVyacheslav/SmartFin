@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from celery import shared_task
 
-from app.llm_chats.models import LLMChat
-from app.llm_chats.services.chat_service import ChatService
+from app.llm.models import LLMChat
+from app.llm.services.chat_service import ChatService
 
 
-@shared_task(name="app.llm_chats.tasks.run_analysis")
+@shared_task(name="app.llm.tasks.run_analysis")
 def run_analysis_task(chat_id: int, user_id: int, analysis_type: str) -> dict:
     """Run heavier analysis flows asynchronously."""
     chat = LLMChat.objects.get(id=chat_id, user_id=user_id)

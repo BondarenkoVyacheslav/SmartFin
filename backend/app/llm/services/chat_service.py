@@ -6,16 +6,16 @@ from typing import Iterable
 from django.db import transaction
 from django.utils import timezone
 
-from app.llm_chats.models import LLMChat, LLMMessage, ChatSettings, ContextSnapshot
-from app.llm_chats.providers.base import LLMChatRequest, LLMMessagePayload, LLMProviderError
-from app.llm_chats.providers.registry import get_provider
-from app.llm_chats.services.context_builder import (
+from app.llm.models import LLMChat, LLMMessage, ChatSettings, ContextSnapshot
+from app.llm.providers.base import LLMChatRequest, LLMMessagePayload, LLMProviderError
+from app.llm.providers.registry import get_provider
+from app.llm.services.context_builder import (
     build_context_pack,
     build_snapshot_from_messages,
 )
-from app.llm_chats.services.model_registry import get_default_model, get_model_spec
-from app.llm_chats.services.prompt_templates import build_context_prompt, build_system_prompt
-from app.llm_chats.services.token_accounting import (
+from app.llm.services.model_registry import get_default_model, get_model_spec
+from app.llm.services.prompt_templates import build_context_prompt, build_system_prompt
+from app.llm.services.token_accounting import (
     TokenLimits,
     estimate_message_tokens,
     record_token_usage,

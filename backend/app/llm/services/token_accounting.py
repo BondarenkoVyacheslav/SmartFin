@@ -9,7 +9,7 @@ from django.db import models
 from django.utils import timezone
 
 from app.billing.models import Subscription
-from app.llm_chats.models import TokenUsage, LLMMessage
+from app.llm.models import TokenUsage, LLMMessage
 
 
 @dataclass(frozen=True)

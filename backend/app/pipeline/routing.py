@@ -29,7 +29,7 @@ def route_task(
     if name == "app.pipeline.tasks.run_user_analytics":
         return {"queue": "analytics"}
 
-    if name == "app.llm_chats.tasks.run_analysis":
+    if name == "app.llm.tasks.run_analysis":
         return {"queue": "llm_analytics"}
 
     return None
