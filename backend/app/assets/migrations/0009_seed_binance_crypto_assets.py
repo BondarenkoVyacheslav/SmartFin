@@ -95,7 +95,7 @@ def unseed_binance_crypto_assets(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("assets", "0012_seed_alpaca_us_equity"),
+        ("assets", "0008_seed_alpaca_us_equity"),
     ]
 
     operations = [

@@ -103,7 +103,7 @@ def unseed_alpaca_us_equity(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("assets", "0011_seed_moex_currency_cets"),
+        ("assets", "0007_seed_moex_shares"),
     ]
 
     operations = [
