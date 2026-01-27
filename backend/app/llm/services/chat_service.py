@@ -13,7 +13,7 @@ from app.llm.services.context_builder import (
     build_context_pack,
     build_snapshot_from_messages,
 )
-from app.llm.services.model_registry import get_default_model, get_model_spec
+from app.llm.services.model_registry import get_default_model
 from app.llm.services.prompt_templates import build_context_prompt, build_system_prompt
 from app.llm.services.token_accounting import (
     TokenLimits,
@@ -45,7 +45,8 @@ class ChatService:
         temperature: float | None = None,
         system_prompt: str | None = None,
     ) -> LLMChat:
-        spec = get_model_spec(model_id) if model_id else get_default_model()
+        _ = model_id
+        spec = get_default_model()
         with transaction.atomic():
             chat = LLMChat.objects.create(
                 user=user,
@@ -72,10 +73,20 @@ class ChatService:
         content: str,
         model_id: str | None = None,
     ) -> SendMessageResult:
+        _ = model_id
         if chat.user_id != user.id:
             raise PermissionError("Chat does not belong to user")
         settings = chat.settings
-        spec = get_model_spec(model_id or settings.model_id)
+        spec = get_default_model()
+        if _sync_chat_settings(settings, spec):
+            settings.save(update_fields=[
+                "model_id",
+                "provider",
+                "max_context_tokens_per_request",
+                "max_output_tokens",
+                "context_window_tokens",
+                "updated_at",
+            ])
         provider = get_provider(spec.provider)
 
         system_prompt = build_system_prompt(chat.mode, settings.system_prompt)
@@ -254,3 +265,23 @@ class ChatService:
             raise BudgetExceededError("Daily token budget exceeded")
         if token_limits.user_tokens_remaining_monthly is not None and token_limits.user_tokens_remaining_monthly <= 0:
             raise BudgetExceededError("Monthly token budget exceeded")
+
+
+def _sync_chat_settings(settings: ChatSettings, spec) -> bool:
+    changed = False
+    if settings.model_id != spec.model_id:
+        settings.model_id = spec.model_id
+        changed = True
+    if settings.provider != spec.provider:
+        settings.provider = spec.provider
+        changed = True
+    if settings.max_context_tokens_per_request != spec.max_context_tokens_per_request:
+        settings.max_context_tokens_per_request = spec.max_context_tokens_per_request
+        changed = True
+    if settings.max_output_tokens != spec.max_output_tokens:
+        settings.max_output_tokens = spec.max_output_tokens
+        changed = True
+    if settings.context_window_tokens != spec.context_window_tokens:
+        settings.context_window_tokens = spec.context_window_tokens
+        changed = True
+    return changed

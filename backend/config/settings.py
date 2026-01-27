@@ -215,3 +215,9 @@ CELERY_BEAT_SCHEDULE_FILENAME = os.environ.get(
 )
 
 REDIS_URL = os.environ.get("REDIS_URL", "redis://redis:6379/0")
+
+# LLM (ProxyAPI) configuration
+LLM_PROXYAPI_BASE_URL = os.environ.get("LLM_PROXYAPI_BASE_URL", "https://api.proxyapi.ru/openai/v1")
+LLM_PROXYAPI_KEY = os.environ.get("PROXY_API_KEY") or os.environ.get("PROXYAPI_KEY")
+LLM_PROXYAPI_TIMEOUT_S = float(os.environ.get("LLM_PROXYAPI_TIMEOUT_S", "30"))
+LLM_PROXYAPI_MAX_RETRIES = int(os.environ.get("LLM_PROXYAPI_MAX_RETRIES", "2"))

@@ -8,6 +8,7 @@ from app.llm.models import LLMChat, LLMMessage
 from app.llm.enums import ChatModeEnum, ContextModeEnum, AnalysisTypeEnum
 from app.llm.queries import LLMChatType, LLMMessageType
 from app.llm.services.chat_service import ChatService, BudgetExceededError
+from app.llm.services.model_registry import get_default_model
 from app.llm.tasks import run_analysis_task
 
 
@@ -55,7 +56,7 @@ class LLMChatMutations:
             user=user,
             title=title,
             mode=mode.value if mode else None,
-            model_id=model_id,
+            model_id=None,
         )
         return chat
 
@@ -70,7 +71,7 @@ class LLMChatMutations:
         user = _require_user(info)
         chat = LLMChat.objects.get(id=chat_id, user=user)
         try:
-            result = ChatService.send_message(user=user, chat=chat, content=content, model_id=model_id)
+            result = ChatService.send_message(user=user, chat=chat, content=content, model_id=None)
         except BudgetExceededError as exc:
             raise ValueError(str(exc))
         msg = result.assistant_message
@@ -100,8 +101,14 @@ class LLMChatMutations:
         user = _require_user(info)
         chat = LLMChat.objects.get(id=chat_id, user=user)
         settings = chat.settings
-        if model_id is not None:
-            settings.model_id = model_id
+        fixed_spec = get_default_model()
+        if model_id is not None and model_id != fixed_spec.model_id:
+            raise ValueError(f"Only model '{fixed_spec.model_id}' is supported")
+        settings.model_id = fixed_spec.model_id
+        settings.provider = fixed_spec.provider
+        settings.max_context_tokens_per_request = fixed_spec.max_context_tokens_per_request
+        settings.max_output_tokens = fixed_spec.max_output_tokens
+        settings.context_window_tokens = fixed_spec.context_window_tokens
         if temperature is not None:
             settings.temperature = temperature
         if system_prompt is not None:

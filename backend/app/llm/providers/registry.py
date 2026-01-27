@@ -3,17 +3,11 @@ from __future__ import annotations
 from typing import Type
 
 from app.llm.providers.base import LLMProvider
-from app.llm.providers.deepseek_provider import DeepSeekProvider
-from app.llm.providers.gemini_provider import GeminiProvider
-from app.llm.providers.openai_provider import OpenAIProvider
-from app.llm.providers.qwen_provider import QwenProvider
+from app.llm.providers.proxyapi_provider import ProxyAPIProvider
 
 
 _PROVIDER_MAP: dict[str, Type[LLMProvider]] = {
-    OpenAIProvider.name: OpenAIProvider,
-    GeminiProvider.name: GeminiProvider,
-    QwenProvider.name: QwenProvider,
-    DeepSeekProvider.name: DeepSeekProvider,
+    ProxyAPIProvider.name: ProxyAPIProvider,
 }
 
 

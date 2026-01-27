@@ -42,11 +42,11 @@ class ChatSettings(models.Model):
         OFF = "OFF", "Off"
 
     chat = models.OneToOneField(LLMChat, on_delete=models.CASCADE, related_name="settings")
-    model_id = models.CharField(max_length=128)
-    provider = models.CharField(max_length=64)
+    model_id = models.CharField(max_length=128, default="gpt-5.2-chat-latest")
+    provider = models.CharField(max_length=64, default="proxyapi")
     temperature = models.DecimalField(max_digits=3, decimal_places=2, default=0.2)
-    max_context_tokens_per_request = models.PositiveIntegerField(default=8000)
-    max_output_tokens = models.PositiveIntegerField(default=1200)
+    max_context_tokens_per_request = models.PositiveIntegerField(default=20000)
+    max_output_tokens = models.PositiveIntegerField(default=4096)
     context_window_tokens = models.PositiveIntegerField(default=128000)
     system_prompt = models.TextField(blank=True, default="")
     context_mode = models.CharField(

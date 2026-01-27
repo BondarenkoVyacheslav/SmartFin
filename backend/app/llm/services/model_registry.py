@@ -3,9 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable
 
-from django.conf import settings
-
-
 @dataclass(frozen=True)
 class LLMModelSpec:
     model_id: str
@@ -17,42 +14,28 @@ class LLMModelSpec:
     title: str
 
 
-DEFAULT_MODEL_SPECS: dict[str, LLMModelSpec] = {
-    "openai:gpt-4o-mini": LLMModelSpec(
-        model_id="openai:gpt-4o-mini",
-        provider="openai",
-        context_window_tokens=128000,
-        max_output_tokens=4096,
-        max_context_tokens_per_request=20000,
-        default_temperature=0.2,
-        title="OpenAI GPT-4o mini",
-    ),
-}
+PROXYAPI_PROVIDER = "proxyapi"
+FIXED_MODEL_ID = "gpt-5.2-chat-latest"
+FIXED_MODEL_TITLE = "ChatGPT 5.2"
+# Token limits based on existing project defaults.
+FIXED_CONTEXT_WINDOW_TOKENS = 128000
+FIXED_MAX_OUTPUT_TOKENS = 4096
+FIXED_MAX_CONTEXT_TOKENS_PER_REQUEST = 20000
+FIXED_DEFAULT_TEMPERATURE = 0.2
 
-
-def _load_from_settings() -> dict[str, LLMModelSpec]:
-    models_cfg = getattr(settings, "LLM_MODELS", None)
-    if not models_cfg:
-        return {}
-    registry: dict[str, LLMModelSpec] = {}
-    for item in models_cfg:
-        spec = LLMModelSpec(
-            model_id=item["model_id"],
-            provider=item["provider"],
-            context_window_tokens=int(item["context_window_tokens"]),
-            max_output_tokens=int(item.get("max_output_tokens", 2048)),
-            max_context_tokens_per_request=int(item.get("max_context_tokens_per_request", 12000)),
-            default_temperature=float(item.get("default_temperature", 0.2)),
-            title=str(item.get("title", item["model_id"])),
-        )
-        registry[spec.model_id] = spec
-    return registry
+FIXED_MODEL_SPEC = LLMModelSpec(
+    model_id=FIXED_MODEL_ID,
+    provider=PROXYAPI_PROVIDER,
+    context_window_tokens=FIXED_CONTEXT_WINDOW_TOKENS,
+    max_output_tokens=FIXED_MAX_OUTPUT_TOKENS,
+    max_context_tokens_per_request=FIXED_MAX_CONTEXT_TOKENS_PER_REQUEST,
+    default_temperature=FIXED_DEFAULT_TEMPERATURE,
+    title=FIXED_MODEL_TITLE,
+)
 
 
 def get_model_registry() -> dict[str, LLMModelSpec]:
-    registry = DEFAULT_MODEL_SPECS.copy()
-    registry.update(_load_from_settings())
-    return registry
+    return {FIXED_MODEL_SPEC.model_id: FIXED_MODEL_SPEC}
 
 
 def get_model_spec(model_id: str) -> LLMModelSpec:
@@ -67,10 +50,4 @@ def list_models() -> Iterable[LLMModelSpec]:
 
 
 def get_default_model() -> LLMModelSpec:
-    registry = get_model_registry()
-    default_id = getattr(settings, "LLM_DEFAULT_MODEL", None)
-    if default_id and default_id in registry:
-        return registry[default_id]
-    if registry:
-        return next(iter(registry.values()))
-    raise ValueError("No LLM models configured")
+    return FIXED_MODEL_SPEC
