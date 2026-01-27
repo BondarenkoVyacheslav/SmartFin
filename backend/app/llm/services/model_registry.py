@@ -15,7 +15,7 @@ class LLMModelSpec:
 
 
 PROXYAPI_PROVIDER = "proxyapi"
-FIXED_MODEL_ID = "gpt-5.2-chat-latest"
+FIXED_MODEL_ID = "gpt-5.2-chat"
 FIXED_MODEL_TITLE = "ChatGPT 5.2"
 # Token limits based on existing project defaults.
 FIXED_CONTEXT_WINDOW_TOKENS = 128000
