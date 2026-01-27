@@ -4,7 +4,10 @@ import time
 import logging
 from typing import Any
 
-import httpx
+try:
+    import httpx
+except Exception:  # pragma: no cover - optional dependency for lightweight tests
+    httpx = None
 
 from app.llm.providers.base import LLMProvider, LLMProviderError
 
@@ -23,6 +26,13 @@ class HTTPProvider(LLMProvider):
         headers = headers or {}
         last_error: Exception | None = None
         logger = logging.getLogger(__name__)
+
+        if httpx is None:
+            raise LLMProviderError(
+                code="missing_dependency",
+                message="httpx is required to perform HTTP requests",
+                retriable=False,
+            )
 
         for attempt in range(self.max_retries + 1):
             try:
