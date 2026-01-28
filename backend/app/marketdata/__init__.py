@@ -19,3 +19,11 @@ except ModuleNotFoundError:  # pragma: no cover - used in non-Django test runs
             if self._wrapped is None:
                 self._setup()
             setattr(self._wrapped, name, value)
+
+from .router import AssetPriceRequest, AssetPriceResult, MarketDataRouter
+
+__all__ = [
+    "AssetPriceRequest",
+    "AssetPriceResult",
+    "MarketDataRouter",
+]
