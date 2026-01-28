@@ -32,6 +32,8 @@ from app.marketdata.CoinGecko.dto.search_trending import SearchTrendingResult, p
 from app.marketdata.CoinGecko.dto.simpl_token_price import SimpleTokenPricesList, \
     parse_simple_token_prices
 from app.marketdata.CoinGecko.dto.simple_price import ListSimplePricesEntry, parse_list_simple_price
+from app.marketdata.CoinGecko.dto.simple_price_by_symbols import ListSimpleBySymbolsPricesEntry, \
+    parse_list_simple_price_by_symbols
 from app.marketdata.CoinGecko.dto.global_data import GlobalData, parse_global
 from app.marketdata.CoinGecko.dto.supported_vs_currencies import SupportedVSCurrencies, \
     parse_supported_vs_currencies
@@ -194,6 +196,9 @@ class CoinGeckoProvider(Provider):
 
     def k_simple_price(self, ids_sig: str, vs_sig: str, opts_sig: str) -> str:
         return self.Keys.simple_price(ids_sig, vs_sig, opts_sig)
+    
+    def k_simple_price_by_symbols(self, symbols_sig: str, vs_sig: str) -> str:
+        return self.Keys.simple_price_by_symbols(symbols_sig, vs_sig)
 
     def k_token_price(self, platform: str, addrs_sig: str, vs_sig: str, opts_sig: str) -> str:
         return self.Keys.token_price(platform, addrs_sig, vs_sig, opts_sig)
@@ -287,7 +292,7 @@ class CoinGeckoProvider(Provider):
     async def simple_price(
             self,
             ids: Sequence[str],
-            vs_currencies: Sequence[str],
+            vs_currencies: str,
             include_market_cap: bool = False,
             include_24hr_vol: bool = False,
             include_24hr_change: bool = False,
@@ -320,6 +325,29 @@ class CoinGeckoProvider(Provider):
 
         await self.cache.set(key, list_simple_prices_entry.to_redis_value(), ttl=self.TTL_SIMPLE_PRICE)
         return list_simple_prices_entry
+    
+    async def simple_price_by_symbols(
+            self,
+            symbols: Sequence[str],
+            vs_currencies: Sequence[str],
+    ) -> ListSimpleBySymbolsPricesEntry:
+        symbols_csv = self.csv(symbols)
+        vs_csv = self.csv(vs_currencies)
+        params = {
+            "symbols": symbols_csv,
+            "vs_currencies": vs_csv,
+        }
+        data = await self._get("/simple/price", params)
+
+        list_simple_prices_by_symbols_entry: ListSimpleBySymbolsPricesEntry = parse_list_simple_price_by_symbols(data)
+
+        key = self.k_simple_price_by_symbols(
+            symbols_sig=self.sig(symbols_csv),
+            vs_sig=self.sig(vs_csv),
+        )
+
+        await self.cache.set(key, list_simple_prices_by_symbols_entry.to_redis_value(), ttl=self.TTL_SIMPLE_PRICE)
+        return list_simple_prices_by_symbols_entry
 
     async def simple_token_price(
             self,

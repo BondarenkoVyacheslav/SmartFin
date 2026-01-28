@@ -19,6 +19,10 @@ class CoinGeckoCacheKeys:
     @classmethod
     def simple_price(cls, ids_sig: str, vs_sig: str, opts_sig: str) -> str:
         return f"{cls.KP}:dto:simple:price:{ids_sig}:{vs_sig}:{opts_sig}"
+    
+    @classmethod
+    def simple_price_by_symbols(cls, symbols_sig: str, vs_sig: str) -> str:
+        return f"{cls.KP}:dto:simple:price_by_symbols:{symbols_sig}:{vs_sig}"
 
     @classmethod
     def token_price(
